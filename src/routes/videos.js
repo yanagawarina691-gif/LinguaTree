@@ -13,6 +13,7 @@ import {
 } from '../services/deepenService.js';
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
+import { ensureCardArchived } from '../services/cardService.js';
 
 const router = Router();
 router.use(authRequired);
@@ -391,6 +392,104 @@ router.post('/:id/migration/skip', (req, res) => {
     const status = err.status || 500;
     res.status(status).json({ error: err.message });
   }
+});
+
+/**
+ * GET /api/videos/:id/progress  (M4)
+ * 获取三阶段学习进度（加深理解 / 内化 / 迁移 / 归档）
+ */
+router.get('/:id/progress', (req, res) => {
+  const video = db.prepare(`
+    SELECT id, title, status, deepen_completed, migration_completed, freeform_completed
+    FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  // 内化完成判定：该视频是否有 exercise_attempts 记录
+  const internalizeDone = db.prepare(`
+    SELECT COUNT(*) as c FROM exercise_attempts WHERE video_id = ? AND user_id = ?
+  `).get(req.params.id, req.userId)?.c > 0;
+
+  // 归档判定：主知识点是否有 srs_reviews 记录
+  const mainNode = db.prepare(`
+    SELECT vn.node_id FROM video_nodes vn
+    WHERE vn.video_id = ? AND vn.is_unclassified = 0
+    ORDER BY vn.weight DESC LIMIT 1
+  `).get(req.params.id);
+  const archived = mainNode ? !!db.prepare(
+    `SELECT 1 FROM srs_reviews WHERE user_id = ? AND node_id = ?`
+  ).get(req.userId, mainNode.node_id) : false;
+
+  res.json({
+    videoId: video.id,
+    title: video.title,
+    status: video.status,
+    stages: {
+      deepen: {
+        completed: !!video.deepen_completed,
+        skippable: true,
+      },
+      internalize: {
+        completed: internalizeDone,
+      },
+      migration: {
+        completed: !!video.migration_completed,
+        skippable: true,
+      },
+      archive: {
+        completed: archived,
+      },
+    },
+    // 全流程是否走完（三阶段都完成或跳过 + 已归档）
+    pipelineDone: !!video.deepen_completed && internalizeDone && (!!video.migration_completed || true) && archived,
+  });
+});
+
+/**
+ * POST /api/videos/:id/complete  (M4)
+ * 三阶段流程完结：确保相关知识节点归档到卡片
+ * 前端在迁移完成（或跳过）后调用，触发自动归档
+ */
+router.post('/:id/complete', (req, res) => {
+  const video = db.prepare(`
+    SELECT id, deepen_completed, migration_completed FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  // 获取该视频涉及的所有已分类知识节点，确保全部归档（初始化 SRS）
+  const nodes = db.prepare(`
+    SELECT DISTINCT node_id FROM video_nodes
+    WHERE video_id = ? AND is_unclassified = 0
+  `).all(req.params.id);
+
+  let archivedCount = 0;
+  for (const n of nodes) {
+    try {
+      ensureCardArchived(req.userId, n.node_id);
+      archivedCount++;
+    } catch (e) {
+      logger.warn(`[API] 归档节点 ${n.node_id} 失败: ${e.message}`);
+    }
+  }
+
+  logger.info(`[API] 视频 ${req.params.id} 三阶段完结，归档 ${archivedCount} 个知识节点`);
+
+  res.json({
+    ok: true,
+    videoId: req.params.id,
+    archivedNodes: archivedCount,
+    stages: {
+      deepen: !!video.deepen_completed,
+      migration: !!video.migration_completed,
+    },
+    next: '/archive',  // 提示前端跳转到归档页
+  });
 });
 
 export default router;

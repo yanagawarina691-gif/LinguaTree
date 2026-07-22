@@ -1,6 +1,7 @@
 import db from '../db/index.js';
 import { generateDeepenContent, generateDeepenContentStream } from './llmService.js';
 import { addNodeXP } from './treeService.js';
+import { buildAiSupplementBacklinks } from './cardService.js';
 import { logger } from '../utils/logger.js';
 
 /** 加深理解阶段完成奖励 XP（PRD v2 §6.1.4） */
@@ -119,6 +120,14 @@ export async function generateAndStoreDeepen(video, { stream = false, onChunk } 
   );
 
   logger.info(`[Deepen] 视频 ${video.id} 加深理解内容已生成并存储`);
+
+  // M3: 建立 AI 补充内容的 backlinks
+  try {
+    buildAiSupplementBacklinks(video.id, primary.node_id);
+  } catch (e) {
+    logger.warn(`[Deepen] backlinks 建立失败（非致命）: ${e.message}`);
+  }
+
   return result;
 }
 

@@ -7,6 +7,7 @@ import { extractAudio, extractKeyframes, imageToBase64, cleanupTempFiles } from 
 import { transcribeAudio } from './asrService.js';
 import { extractKnowledge, analyzeImage } from './llmService.js';
 import { updateTreeFromVideo } from './treeService.js';
+import { buildCoOccurrenceBacklinks } from './cardService.js';
 
 /**
  * 记录解析日志
@@ -257,6 +258,13 @@ export async function runPipeline(videoId, userId, url, manualTranscript = '') {
     );
 
     logParse(videoId, 'tree_update', 'success', `${treeResult.updatedNodes.length} 节点更新, ${treeResult.leveledUpNodes.length} 升级`);
+
+    // M3: 建立跨视频知识映射 backlinks（同一视频出现的知识点之间）
+    try {
+      buildCoOccurrenceBacklinks(videoId);
+    } catch (e) {
+      logger.warn(`[Pipeline] co_occurrence backlinks 建立失败（非致命）: ${e.message}`);
+    }
 
     // 清理临时文件
     cleanupTempFiles(tempFiles);

@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 import { generateMigrationScenario, evaluateMigration } from './llmService.js';
 import { addNodeXP } from './treeService.js';
+import { buildMigrationCoverBacklinks, ensureCardArchived } from './cardService.js';
 
 /** 迁移完成奖励 XP（PRD §6.1.7：完成迁移获得额外 XP） */
 export const MIGRATION_XP_BASE = 50;
@@ -237,6 +238,14 @@ export async function evaluateMigrationAttempt(videoId, userId, userInput) {
     db.prepare(`
       UPDATE videos SET migration_completed = 1, updated_at = datetime('now') WHERE id = ?
     `).run(videoId);
+
+    // M3: 建立 migration_cover backlinks + 确保归档
+    try {
+      buildMigrationCoverBacklinks(videoId, scenarioRow.node_id);
+      ensureCardArchived(userId, scenarioRow.node_id);
+    } catch (e) {
+      logger.warn(`[Migration] 归档/backlinks 建立失败（非致命）: ${e.message}`);
+    }
 
     logger.info(`[Migration] 用户 ${userId} 首次完成视频 ${videoId} 迁移: score=${evaluation.overall_score}, xp=+${xpGained}`);
   } else {

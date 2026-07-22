@@ -191,6 +191,40 @@ CREATE TABLE IF NOT EXISTS deepen_feedback (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- ========== M3: 归档复习层相关表 ==========
+
+-- 知识卡片双向链接表（Obsidian 式 backlinks）
+-- 双向性约定：插入 source→target 时同步插入 target→source（由应用层保证）
+CREATE TABLE IF NOT EXISTS card_backlinks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_node_id TEXT NOT NULL,           -- 链接来源节点
+    target_node_id TEXT NOT NULL,           -- 链接目标节点
+    link_type TEXT NOT NULL,                -- co_occurrence | ai_supplement | migration_cover | user_manual
+    source_videos TEXT DEFAULT '[]',        -- JSON 数组：来源视频 ID 列表
+    strength REAL DEFAULT 0.5,              -- 链接强度 0-1
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(source_node_id, target_node_id, link_type),
+    FOREIGN KEY (source_node_id) REFERENCES knowledge_nodes(node_id),
+    FOREIGN KEY (target_node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- SRS 间隔复习记录表（SuperMemo-2 简化版）
+CREATE TABLE IF NOT EXISTS srs_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    last_review_date TEXT,                  -- 最后复习时间
+    next_review_date TEXT,                  -- 下次推荐复习时间
+    review_interval INTEGER DEFAULT 1,      -- 当前间隔（天）
+    ease_factor REAL DEFAULT 2.5,           -- SM-2 难度系数
+    review_count INTEGER DEFAULT 0,         -- 已复习次数
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, node_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_user_nodes_user ON user_nodes(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_nodes_node ON user_nodes(node_id);
@@ -210,3 +244,8 @@ CREATE INDEX IF NOT EXISTS idx_migration_attempts_scenario ON migration_attempts
 CREATE INDEX IF NOT EXISTS idx_deepen_understanding_video ON deepen_understanding(video_id);
 CREATE INDEX IF NOT EXISTS idx_deepen_feedback_video ON deepen_feedback(video_id);
 CREATE INDEX IF NOT EXISTS idx_deepen_feedback_user ON deepen_feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_card_backlinks_source ON card_backlinks(source_node_id);
+CREATE INDEX IF NOT EXISTS idx_card_backlinks_target ON card_backlinks(target_node_id);
+CREATE INDEX IF NOT EXISTS idx_srs_reviews_user ON srs_reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_srs_reviews_node ON srs_reviews(node_id);
+CREATE INDEX IF NOT EXISTS idx_srs_reviews_next ON srs_reviews(next_review_date);

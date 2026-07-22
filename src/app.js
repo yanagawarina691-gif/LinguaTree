@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import videoRoutes from './routes/videos.js';
 import treeRoutes from './routes/tree.js';
 import userRoutes from './routes/user.js';
+import cardRoutes from './routes/cards.js';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/tree', treeRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/cards', cardRoutes);
 
 // 根路由 — API 信息
 app.get('/api/info', (req, res) => {
@@ -61,6 +63,8 @@ app.get('/api/info', (req, res) => {
         'GET /api/videos/:id/migration': '获取迁移场景（M2，无则自动生成）',
         'POST /api/videos/:id/migration/evaluate': '提交迁移回答并获取AI评估（M2，幂等防刷）',
         'POST /api/videos/:id/migration/skip': '跳过迁移环节（M2，记录行为）',
+        'GET /api/videos/:id/progress': '获取三阶段学习进度（M4）',
+        'POST /api/videos/:id/complete': '三阶段完结并归档到卡片（M4）',
       },
       tree: {
         'GET /api/tree': '获取完整知识树',
@@ -70,6 +74,12 @@ app.get('/api/info', (req, res) => {
       },
       user: {
         'GET /api/user/stats': '获取用户统计',
+      },
+      cards: {
+        'GET /api/cards': '获取知识卡片列表（M3，?review=1 返回今日推荐复习）',
+        'GET /api/cards/:nodeId': '获取单张卡片详情（M3）',
+        'GET /api/cards/:nodeId/backlinks': '获取卡片双向链接（M3）',
+        'POST /api/cards/:nodeId/review': '记录复习并更新 SRS（M3）',
       },
     },
   });

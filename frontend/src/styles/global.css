@@ -344,3 +344,75 @@ position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3),0 0 0 12px #2a2a4a,0 0 0
 
 /* Scrollbar hide */
 .page::-webkit-scrollbar{display:none}
+
+/* ====== M3: 归档页面 ====== */
+.archive-page{padding-bottom:100px}
+.archive-review-section{padding:12px 20px 0}
+.archive-section-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.archive-section-title .count{font-size:12px;font-weight:700;color:var(--text-lt);background:var(--bg-gray);padding:2px 8px;border-radius:10px}
+.archive-review-list{display:flex;flex-direction:column;gap:8px}
+.archive-review-item{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow);transition:transform .2s}
+.archive-review-item:active{transform:scale(.97)}
+.archive-review-name{font-size:14px;font-weight:800;color:var(--text)}
+.archive-review-meta{font-size:12px;font-weight:600;color:var(--text-lt)}
+.archive-tabs{display:flex;padding:16px 20px 8px;gap:8px}
+.archive-tab{flex:1;text-align:center;padding:10px;border-radius:12px;font-size:13px;font-weight:800;color:var(--text-lt);background:var(--bg-gray);transition:all .2s}
+.archive-tab.active{background:var(--primary);color:#fff}
+.archive-tab .count{font-size:11px;opacity:.8}
+.archive-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 20px}
+.archive-card{position:relative;background:#fff;border-radius:16px;padding:14px;box-shadow:var(--shadow);border:1.5px solid transparent;transition:transform .2s,border-color .2s;cursor:pointer}
+.archive-card:active{transform:scale(.97)}
+.archive-card.due{border-color:var(--orange);animation:pulse-border 2s infinite}
+@keyframes pulse-border{0%,100%{border-color:var(--orange)}50%{border-color:var(--yellow)}}
+.archive-due-badge{position:absolute;top:-6px;right:10px;background:var(--orange);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px}
+.archive-card-header{border-left:4px solid var(--primary);padding-left:8px;margin-bottom:8px}
+.archive-card-name{font-size:14px;font-weight:800;color:var(--text)}
+.archive-card-branch{font-size:10px;font-weight:700;color:var(--text-lt);margin-top:1px}
+.archive-card-def{font-size:12px;color:var(--text-lt);line-height:1.4;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.archive-card-mastery{display:flex;align-items:center;gap:6px}
+.archive-mastery-label{font-size:10px;font-weight:700;color:var(--text-lt);white-space:nowrap}
+.archive-mastery-bar-wrap{flex:1;height:6px;background:var(--bg-gray);border-radius:3px;overflow:hidden}
+.archive-mastery-bar{height:100%;border-radius:3px;transition:width .5s}
+.archive-mastery-pct{font-size:11px;font-weight:800;min-width:30px;text-align:right}
+.archive-card-next{font-size:10px;font-weight:600;color:var(--orange);margin-top:6px}
+.archive-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center}
+
+/* ====== M3: 卡片详情页 ====== */
+.card-detail-page{padding-bottom:90px}
+.card-detail-content{padding:0 20px}
+.card-detail-header{background:#fff;border-radius:16px;padding:16px;border-left:5px solid var(--primary);box-shadow:var(--shadow);margin-bottom:14px}
+.card-detail-name{font-size:20px;font-weight:900;color:var(--text)}
+.card-detail-path{font-size:12px;font-weight:700;color:var(--text-lt);margin-top:2px}
+.card-detail-meta{display:flex;gap:6px;flex-wrap:wrap;font-size:11px;font-weight:700;color:var(--text-lt);margin-top:6px}
+.card-detail-mastery{display:flex;align-items:center;gap:6px;margin-top:10px}
+.card-detail-next{font-size:12px;font-weight:700;color:var(--orange);margin-top:8px}
+.card-detail-section{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-detail-section-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:8px}
+.card-detail-section-body{font-size:13px;color:var(--text);line-height:1.5}
+.card-structured{white-space:pre-line;font-family:monospace;font-size:12px}
+.card-detail-example{font-size:13px;color:var(--text);padding:4px 0 4px 12px;border-left:3px solid var(--blue);margin-bottom:4px}
+.card-detail-pitfall{font-size:12px;color:var(--red);padding:4px 0 4px 12px;border-left:3px solid var(--red);margin-bottom:4px;line-height:1.4}
+.card-detail-backlink{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-gray);border-radius:10px;margin-bottom:6px;font-size:13px;transition:transform .2s;cursor:pointer}
+.card-detail-backlink:active{transform:scale(.97)}
+.bl-arrow{font-size:14px;font-weight:800}
+.bl-name{font-weight:800;color:var(--text)}
+.bl-type{font-size:10px;font-weight:700;color:var(--text-lt);background:#fff;padding:1px 6px;border-radius:6px}
+.bl-branch{font-size:11px;color:var(--text-lt);margin-left:auto}
+.card-detail-source{font-size:13px;font-weight:600;color:var(--text);padding:8px 10px;background:var(--bg-gray);border-radius:10px;margin-bottom:6px;transition:transform .2s;cursor:pointer}
+.card-detail-source:active{transform:scale(.97)}
+.source-date{font-size:11px;color:var(--text-lt);float:right}
+.card-detail-wrong{background:var(--bg-gray);border-radius:10px;padding:10px;margin-bottom:8px}
+.wrong-question{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.wrong-answer{font-size:12px;color:var(--text-lt);margin-top:2px}
+.wrong-answer .wrong{color:var(--red);font-weight:700}
+.wrong-answer .correct{color:var(--primary);font-weight:700}
+.wrong-explanation{font-size:11px;color:var(--text-lt);margin-top:4px;line-height:1.4}
+.card-detail-migration{background:var(--bg-gray);border-radius:10px;padding:10px;margin-bottom:8px}
+.migration-scenario{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.migration-score-row{display:flex;gap:10px;font-size:11px;color:var(--text-lt);align-items:center}
+.migration-date{margin-left:auto}
+.card-review-section{background:#fff}
+.card-review-hint{font-size:13px;color:var(--text-lt);margin-bottom:10px}
+.card-review-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card-review-btn{padding:10px;font-size:12px;font-weight:700;border-radius:10px}
+.card-detail-actionbar{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 20px;background:#fff;border-top:1px solid var(--border);align-items:center}

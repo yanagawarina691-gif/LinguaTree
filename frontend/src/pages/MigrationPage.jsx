@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMigration, evaluateMigration } from '../api/videos.js';
+import { getMigration, evaluateMigration, skipMigration, completeVideo } from '../api/videos.js';
 
 export default function MigrationPage() {
   const { videoId } = useParams();
@@ -159,7 +159,11 @@ export default function MigrationPage() {
 
           {/* 操作按钮 */}
           <div className="migration-btn-row">
-            <button className="btn3d btn-primary migration-btn" onClick={() => navigate('/tree')}>🌳 查看知识树</button>
+            <button className="btn3d btn-primary migration-btn" onClick={() => {
+              completeVideo(videoId).catch(() => {});
+              navigate('/archive');
+            }}>📇 查看归档卡片</button>
+            <button className="btn3d btn-gray migration-btn" onClick={() => navigate('/tree')}>🌳 知识树</button>
             <button className="btn3d btn-gray migration-btn" onClick={() => navigate('/')}>继续学习</button>
           </div>
         </div>
@@ -175,7 +179,11 @@ export default function MigrationPage() {
       <div className="topbar">
         <div className="topbar-btn" onClick={() => navigate('/')} style={{ fontSize: '20px' }}>‹</div>
         <div style={{ fontSize: 16, fontWeight: 800 }}>场景迁移</div>
-        <div onClick={() => navigate('/')} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>
+        <div onClick={async () => {
+          try { await skipMigration(videoId); } catch {}
+          try { await completeVideo(videoId); } catch {}
+          navigate('/archive');
+        }} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>
       </div>
 
       <div className="migration-content">

@@ -5,6 +5,8 @@ import FeedPage from './pages/FeedPage.jsx'
 import DeepenPage from './pages/DeepenPage.jsx'
 import TrainingPage from './pages/TrainingPage.jsx'
 import MigrationPage from './pages/MigrationPage.jsx'
+import ArchivePage from './pages/ArchivePage.jsx'
+import CardDetailPage from './pages/CardDetailPage.jsx'
 import TreePage from './pages/TreePage.jsx'
 import BranchDetailPage from './pages/BranchDetailPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
@@ -20,7 +22,7 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   const location = useLocation();
-  const showTabBar = ['/', '/tree', '/me'].includes(location.pathname);
+  const showTabBar = ['/', '/tree', '/me', '/archive'].includes(location.pathname);
   const isLoginPage = location.pathname === '/login';
 
   return (
@@ -33,6 +35,8 @@ export default function App() {
             <Route path="/deepen/:videoId" element={<ProtectedRoute><DeepenPage /></ProtectedRoute>} />
             <Route path="/training/:videoId" element={<ProtectedRoute><TrainingPage /></ProtectedRoute>} />
             <Route path="/migration/:videoId" element={<ProtectedRoute><MigrationPage /></ProtectedRoute>} />
+            <Route path="/archive" element={<ProtectedRoute><ArchivePage /></ProtectedRoute>} />
+            <Route path="/card/:nodeId" element={<ProtectedRoute><CardDetailPage /></ProtectedRoute>} />
             <Route path="/tree" element={<ProtectedRoute><TreePage /></ProtectedRoute>} />
             <Route path="/branch/:branchId" element={<ProtectedRoute><BranchDetailPage /></ProtectedRoute>} />
             <Route path="/me" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

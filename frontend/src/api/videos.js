@@ -55,6 +55,18 @@ export function skipMigration(videoId) {
   });
 }
 
+// 获取三阶段学习进度（M4）
+export function getVideoProgress(videoId) {
+  return api(`/api/videos/${videoId}/progress`);
+}
+
+// 三阶段完结并归档到卡片（M4）
+export function completeVideo(videoId) {
+  return api(`/api/videos/${videoId}/complete`, {
+    method: 'POST',
+  });
+}
+
 // ========== M1: 加深理解相关 API ==========
 
 // 获取加深理解内容（非流式，缓存优先）
