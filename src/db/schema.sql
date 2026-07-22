@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS videos (
     deepen_completed INTEGER DEFAULT 0,      -- M1: 加深理解是否完成（0/1）
     migration_completed INTEGER DEFAULT 0,   -- M2: 迁移环节是否完成（0/1，幂等防刷）
     freeform_completed INTEGER DEFAULT 0,    -- M5: 问答题是否完成（0/1）
+    flashcard_completed INTEGER DEFAULT 0,    -- M5: 闪卡回忆是否完成（0/1，幂等防刷）[BUG-04]
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)

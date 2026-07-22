@@ -5,14 +5,13 @@ import { generateMigrationScenario, evaluateMigration } from './llmService.js';
 import { addNodeXP } from './treeService.js';
 import { buildMigrationCoverBacklinks, ensureCardArchived } from './cardService.js';
 
-/** 迁移完成奖励 XP（PRD §6.1.7：完成迁移获得额外 XP） */
+/** 迁移完成奖励 XP（PRD §6.1.7：场景迁移完成 +50 XP；跨视频连接 +80 XP 见 P1-2） */
 export const MIGRATION_XP_BASE = 50;
-export const MIGRATION_XP_HIGH = 80;  // ≥80 分额外奖励
+/** 跨视频知识连接迁移完成 XP（P1-2，未实现，预留常量） */
+export const MIGRATION_XP_CROSS_VIDEO = 80;
 
 /**
  * 获取视频的主知识点节点（weight 最高）
- * @param {string} videoId
- * @returns {Object|null} - { node_id, node_name, weight }
  */
 export function getMainNodeForVideo(videoId) {
   const node = db.prepare(`
@@ -28,9 +27,6 @@ export function getMainNodeForVideo(videoId) {
 
 /**
  * 获取用户在该视频内化环节的正确率
- * @param {string} userId
- * @param {string} videoId
- * @returns {number|null} - 0-100，无数据返回 null
  */
 export function getExerciseAccuracy(userId, videoId) {
   const stats = db.prepare(`
@@ -46,32 +42,52 @@ export function getExerciseAccuracy(userId, videoId) {
 }
 
 /**
- * 校验用户是否已完成内化环节（PRD §6.1.5：迁移应在内化完成后触发）
- * 判定：该视频是否有 exercise_attempts 记录（含跳过的题目也算经过内化）
- * @returns {{ ok: boolean, reason?: string }}
+ * 校验用户是否已完成内化环节
+ * [BUG-09 修复] 原实现只检查 exercise_attempts 是否存在，未校验闪卡/问答题
+ * 现按 PRD P1-1 三模态（闪卡→选择题→问答题）全部完成才算内化完成
+ * @returns {{ ok: boolean, reason?: string, missing?: string[] }}
  */
 export function checkInternalizationDone(userId, videoId) {
-  const row = db.prepare(`
+  const video = db.prepare(`
+    SELECT flashcard_completed, freeform_completed FROM videos WHERE id = ?
+  `).get(videoId);
+
+  const missing = [];
+
+  // 闪卡完成
+  if (!video?.flashcard_completed) {
+    missing.push('闪卡回忆');
+  }
+
+  // 选择题检测完成（有 exercise_attempts 记录）
+  const attemptRow = db.prepare(`
     SELECT COUNT(*) as count FROM exercise_attempts
     WHERE user_id = ? AND video_id = ?
   `).get(userId, videoId);
+  if (!attemptRow || attemptRow.count === 0) {
+    missing.push('选择题检测');
+  }
 
-  if (!row || row.count === 0) {
-    return { ok: false, reason: '请先完成内化练习，再来尝试场景迁移' };
+  // 问答题表达完成
+  if (!video?.freeform_completed) {
+    missing.push('问答题表达');
+  }
+
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      reason: `请先完成内化三模态（${missing.join('、')}），再来尝试场景迁移`,
+      missing,
+    };
   }
   return { ok: true };
 }
 
 /**
  * 获取或创建视频的迁移场景
- * @param {string} videoId
- * @param {string} userId
- * @param {Object} [options]
- * @param {boolean} [options.skipInternalizationCheck] - 跳过内化校验（内部调用用）
- * @returns {Object} - 场景信息（含 scenarioId）
  */
 export async function getOrCreateMigrationScenario(videoId, userId, options = {}) {
-  // 内化前置校验（PRD §6.1.5）
+  // [BUG-09 修复] 内化前置校验（三模态全部完成）
   if (!options.skipInternalizationCheck) {
     const check = checkInternalizationDone(userId, videoId);
     if (!check.ok) {
@@ -81,7 +97,6 @@ export async function getOrCreateMigrationScenario(videoId, userId, options = {}
     }
   }
 
-  // 1. 检查是否已有场景
   const existing = db.prepare(`
     SELECT * FROM migration_scenarios WHERE video_id = ?
     ORDER BY created_at DESC LIMIT 1
@@ -102,25 +117,18 @@ export async function getOrCreateMigrationScenario(videoId, userId, options = {}
     };
   }
 
-  // 2. 获取主知识点
   const mainNode = getMainNodeForVideo(videoId);
   if (!mainNode) {
     throw new Error('视频未关联任何知识节点，无法生成迁移场景');
   }
 
-  // 3. 获取视频摘要和内化正确率
   const video = db.prepare('SELECT summary FROM videos WHERE id = ?').get(videoId);
   const accuracy = getExerciseAccuracy(userId, videoId);
 
-  // 4. 调用 LLM 生成场景
   const scenarioData = await generateMigrationScenario(
-    mainNode.node_name,
-    mainNode.node_id,
-    accuracy,
-    video?.summary || ''
+    mainNode.node_name, mainNode.node_id, accuracy, video?.summary || ''
   );
 
-  // 5. 存入数据库
   const scenarioId = nanoid(12);
   db.prepare(`
     INSERT INTO migration_scenarios
@@ -128,47 +136,35 @@ export async function getOrCreateMigrationScenario(videoId, userId, options = {}
        user_task, evaluation_criteria, reference_answer, difficulty)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    scenarioId,
-    videoId,
-    mainNode.node_id,
-    mainNode.node_name,
-    scenarioData.scenario_title,
-    scenarioData.scenario_description,
-    scenarioData.user_task,
-    JSON.stringify(scenarioData.evaluation_criteria),
-    scenarioData.reference_answer,
-    scenarioData.difficulty
+    scenarioId, videoId, mainNode.node_id, mainNode.node_name,
+    scenarioData.scenario_title, scenarioData.scenario_description,
+    scenarioData.user_task, JSON.stringify(scenarioData.evaluation_criteria),
+    scenarioData.reference_answer, scenarioData.difficulty
   );
 
   logger.info(`[Migration] 视频 ${videoId} 生成新迁移场景: ${scenarioData.scenario_title}`);
 
-  return {
-    scenarioId,
-    node_id: mainNode.node_id,
-    node_name: mainNode.node_name,
-    ...scenarioData,
-  };
+  return { scenarioId, node_id: mainNode.node_id, node_name: mainNode.node_name, ...scenarioData };
 }
 
 /**
  * 评估用户迁移回答并更新知识树 XP（幂等：每个视频只发一次 XP）
  *
- * 修复 Bug M2-1：原实现每次调用都 addNodeXP，可无限刷分。
- * 现改为：检查 videos.migration_completed，已完成则不再发 XP（但仍评估并存尝试记录）。
+ * [BUG-05 修复] 原实现用 MIGRATION_XP_HIGH=80 做分数梯度奖励（+30/+15），
+ * 误把 PRD 中跨视频连接的 +80 XP 当成场景迁移的分数阈值。
+ * 现按 PRD §6.1.7：场景迁移完成即固定 +50 XP，无分数梯度。
  *
  * @param {string} videoId
  * @param {string} userId
- * @param {string} userInput - 用户提交的英文回答
+ * @param {string} userInput
  * @returns {Object} - { evaluation, xpGained, alreadyCompleted, treeUpdate }
  */
 export async function evaluateMigrationAttempt(videoId, userId, userInput) {
-  // 获取视频（含 migration_completed 状态）
   const video = db.prepare(`SELECT migration_completed FROM videos WHERE id = ?`).get(videoId);
   if (!video) {
     throw new Error('视频不存在');
   }
 
-  // 获取场景
   const scenarioRow = db.prepare(`
     SELECT * FROM migration_scenarios WHERE video_id = ?
     ORDER BY created_at DESC LIMIT 1
@@ -186,21 +182,14 @@ export async function evaluateMigrationAttempt(videoId, userId, userInput) {
     reference_answer: scenarioRow.reference_answer,
   };
 
-  // 调用 LLM 评估
   const evaluation = await evaluateMigration(scenarioRow.node_name, scenario, userInput);
 
-  // 幂等：已完成的视频不再发 XP（但仍记录尝试 + 返回评估）
   const alreadyCompleted = !!video.migration_completed;
 
-  // XP 计算：基础 50，≥80分额外 +30，≥60分额外 +15
-  let xpEarned = MIGRATION_XP_BASE;
-  if (evaluation.overall_score >= 80) xpEarned += 30;
-  else if (evaluation.overall_score >= 60) xpEarned += 15;
-
-  // 实际发放的 XP：已完成则为 0（幂等防刷）
+  // [BUG-05 修复] 场景迁移完成固定 +50 XP（PRD §6.1.7），无分数梯度
+  const xpEarned = MIGRATION_XP_BASE;
   const xpGained = alreadyCompleted ? 0 : xpEarned;
 
-  // 保存尝试记录（无论是否已完成，都记录这次尝试）
   const attemptId = nanoid(12);
   db.prepare(`
     INSERT INTO migration_attempts
@@ -208,19 +197,11 @@ export async function evaluateMigrationAttempt(videoId, userId, userInput) {
        ai_evaluation, accuracy_score, overall_score, xp_gained)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    attemptId,
-    scenarioRow.id,
-    userId,
-    videoId,
-    scenarioRow.node_id,
-    userInput,
-    JSON.stringify(evaluation),
-    evaluation.accuracy_score,
-    evaluation.overall_score,
-    xpGained
+    attemptId, scenarioRow.id, userId, videoId, scenarioRow.node_id,
+    userInput, JSON.stringify(evaluation),
+    evaluation.accuracy_score, evaluation.overall_score, xpGained
   );
 
-  // 仅首次完成时发放 XP 并标记完成
   let treeUpdate = null;
   if (!alreadyCompleted) {
     const treeResult = addNodeXP(userId, scenarioRow.node_id, xpGained);
@@ -234,12 +215,10 @@ export async function evaluateMigrationAttempt(videoId, userId, userInput) {
       totalXp: treeResult.xp,
     };
 
-    // 标记迁移完成（幂等关键：后续调用不再发 XP）
     db.prepare(`
       UPDATE videos SET migration_completed = 1, updated_at = datetime('now') WHERE id = ?
     `).run(videoId);
 
-    // M3: 建立 migration_cover backlinks + 确保归档
     try {
       buildMigrationCoverBacklinks(videoId, scenarioRow.node_id);
       ensureCardArchived(userId, scenarioRow.node_id);
@@ -252,20 +231,11 @@ export async function evaluateMigrationAttempt(videoId, userId, userInput) {
     logger.info(`[Migration] 用户 ${userId} 重复提交视频 ${videoId} 迁移评估（不发 XP）: score=${evaluation.overall_score}`);
   }
 
-  return {
-    evaluation,
-    xpGained,
-    alreadyCompleted,
-    xpEarned,    // 本次评估"应得"的 XP（供前端展示，实际发放受幂等限制）
-    treeUpdate,
-  };
+  return { evaluation, xpGained, alreadyCompleted, xpEarned, treeUpdate };
 }
 
 /**
  * 记录用户跳过迁移行为（用于留存漏斗分析，PRD §5.2）
- * @param {string} videoId
- * @param {string} userId
- * @returns {{ skipped: boolean }}
  */
 export function skipMigration(videoId, userId) {
   const video = db.prepare(`SELECT id FROM videos WHERE id = ? AND user_id = ?`).get(videoId, userId);
@@ -275,7 +245,6 @@ export function skipMigration(videoId, userId) {
     throw err;
   }
 
-  // 用 parse_logs 记录跳过行为（复用现有表，stage='migration', status='skipped'）
   db.prepare(`
     INSERT INTO parse_logs (video_id, stage, status, message)
     VALUES (?, 'migration', 'skipped', ?)

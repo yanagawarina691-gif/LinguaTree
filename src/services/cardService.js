@@ -5,41 +5,33 @@ import { calculateMastery } from './treeService.js';
 /**
  * Card Service — 知识卡片归档复习层（M3）
  *
- * 职责：
- * 1. 组装知识卡片数据（汇聚 knowledge_nodes / user_nodes / deepen_understanding /
- *    exercise_attempts / migration_attempts / video_nodes / card_backlinks / srs_reviews）
- * 2. backlinks 自动建立（co_occurrence / ai_supplement / migration_cover）
- * 3. SRS 间隔复习算法（SuperMemo-2 简化版）
+ * 修复记录：
+ * [BUG-02] getCardList/getCardDetail 的 deepen_understanding 查询加 user_id 过滤，防止跨用户数据泄露
+ * [BUG-06] buildAiSupplementBacklinks 改用 related_node_id（配合 llmService prompt），不再依赖名称匹配
+ * [BUG-10] getBacklinks 增加 userId 参数，过滤 source_videos 归属
+ * [BUG-12] getOrCreateSrs 新建时设 next_review_date = date('now')，新归档卡片可进复习推荐
  */
 
-/** SRS: 答题质量 → quality 分值映射（SM-2 标准 0-5） */
 function qualityToSM2(quality) {
-  if (quality >= 90) return 5;  // 完美记忆
-  if (quality >= 75) return 4;  // 正确但费力
-  if (quality >= 60) return 3;  // 正确但很费力
-  if (quality >= 40) return 2;  // 错误，但似曾相识
-  if (quality >= 20) return 1;  // 错误，但有印象
-  return 0;                      // 完全忘记
+  if (quality >= 90) return 5;
+  if (quality >= 75) return 4;
+  if (quality >= 60) return 3;
+  if (quality >= 40) return 2;
+  if (quality >= 20) return 1;
+  return 0;
 }
 
 /**
  * SuperMemo-2 简化版算法（PRD §6.2 P1-3）
- * @param {number} quality - 0-100 的评分（内部转为 0-5）
- * @param {number} reviewCount - 已复习次数
- * @param {number} easeFactor - 当前难度系数
- * @param {number} interval - 当前间隔（天）
- * @returns {{ nextInterval, nextEaseFactor, nextReviewDate }}
  */
 export function calculateNextReview(quality100, reviewCount, easeFactor, interval) {
   const quality = qualityToSM2(quality100);
   let newEaseFactor, newInterval;
 
   if (quality < 3) {
-    // 答错或忘记：重置间隔为 1 天
     newInterval = 1;
     newEaseFactor = Math.max(1.3, easeFactor - 0.2);
   } else {
-    // 答对：根据复习次数增加间隔
     if (reviewCount === 0) {
       newInterval = 1;
     } else if (reviewCount === 1) {
@@ -57,16 +49,16 @@ export function calculateNextReview(quality100, reviewCount, easeFactor, interva
 
 /**
  * 获取或初始化用户的 SRS 记录
+ * [BUG-12 修复] 新建时设 next_review_date = date('now')，使新归档卡片可进入"今日推荐复习"
  */
 function getOrCreateSrs(userId, nodeId) {
-  let row = db.prepare(`
-    SELECT * FROM srs_reviews WHERE user_id = ? AND node_id = ?
-  `).get(userId, nodeId);
+  let row = db.prepare(`SELECT * FROM srs_reviews WHERE user_id = ? AND node_id = ?`).get(userId, nodeId);
 
   if (!row) {
     db.prepare(`
-      INSERT OR IGNORE INTO srs_reviews (user_id, node_id, review_count, ease_factor, review_interval)
-      VALUES (?, ?, 0, 2.5, 1)
+      INSERT OR IGNORE INTO srs_reviews
+        (user_id, node_id, review_count, ease_factor, review_interval, next_review_date)
+      VALUES (?, ?, 0, 2.5, 1, date('now'))
     `).run(userId, nodeId);
     row = db.prepare(`SELECT * FROM srs_reviews WHERE user_id = ? AND node_id = ?`).get(userId, nodeId);
   }
@@ -74,19 +66,12 @@ function getOrCreateSrs(userId, nodeId) {
 }
 
 /**
- * 记录一次复习并更新 SRS（POST /api/cards/:nodeId/review 调用）
- * @param {string} userId
- * @param {string} nodeId
- * @param {number} quality - 0-100 评分（来自用户自评或答题正确率）
- * @returns {{ nextReviewDate, nextInterval, reviewCount }}
+ * 记录一次复习并更新 SRS
  */
 export function recordReview(userId, nodeId, quality) {
   const srs = getOrCreateSrs(userId, nodeId);
   const { nextInterval, nextEaseFactor, nextReviewDate } = calculateNextReview(
-    quality,
-    srs.review_count || 0,
-    srs.ease_factor || 2.5,
-    srs.review_interval || 1
+    quality, srs.review_count || 0, srs.ease_factor || 2.5, srs.review_interval || 1
   );
 
   const newCount = (srs.review_count || 0) + 1;
@@ -107,10 +92,6 @@ export function recordReview(userId, nodeId, quality) {
 
 // ========== Backlinks 自动建立 ==========
 
-/**
- * 建立双向 backlinks（source↔target）
- * 约定：插入 source→target 的同时插入 target→source，保证双向性
- */
 function upsertBacklink(sourceNodeId, targetNodeId, linkType, sourceVideos = [], strength = 0.5) {
   if (!sourceNodeId || !targetNodeId || sourceNodeId === targetNodeId) return;
   if (sourceNodeId === 'unclassified' || targetNodeId === 'unclassified') return;
@@ -124,19 +105,16 @@ function upsertBacklink(sourceNodeId, targetNodeId, linkType, sourceVideos = [],
       strength = MAX(card_backlinks.strength, excluded.strength)
   `);
 
-  // 双向插入
   insertSql.run(sourceNodeId, targetNodeId, linkType, videosJson, strength);
   insertSql.run(targetNodeId, sourceNodeId, linkType, videosJson, strength);
 }
 
 /**
  * 跨视频知识映射 backlinks（同一视频出现的知识点之间建立链接）
- * 在视频解析完成后调用
  */
 export function buildCoOccurrenceBacklinks(videoId) {
   const nodes = db.prepare(`
-    SELECT node_id FROM video_nodes
-    WHERE video_id = ? AND is_unclassified = 0
+    SELECT node_id FROM video_nodes WHERE video_id = ? AND is_unclassified = 0
   `).all(videoId).map(n => n.node_id);
 
   if (nodes.length < 2) return;
@@ -153,7 +131,7 @@ export function buildCoOccurrenceBacklinks(videoId) {
 
 /**
  * AI 补充内容 backlinks（加深理解的 supplements 里关联的知识节点）
- * 在加深理解生成完成后调用
+ * [BUG-06 修复] 改用 related_node_id（LLM prompt 已改回返回 id），不再依赖名称匹配
  */
 export function buildAiSupplementBacklinks(videoId, sourceNodeId) {
   if (!sourceNodeId || sourceNodeId === 'unclassified') return;
@@ -165,13 +143,16 @@ export function buildAiSupplementBacklinks(videoId, sourceNodeId) {
   let count = 0;
 
   for (const sup of supplements) {
-    // 通过 related_node_name 查找节点 ID
-    if (!sup.related_node_name) continue;
-    const target = db.prepare(`
-      SELECT node_id FROM knowledge_nodes WHERE name = ? AND node_id != 'unclassified'
-    `).get(sup.related_node_name);
-    if (target) {
-      upsertBacklink(sourceNodeId, target.node_id, 'ai_supplement', [videoId], 0.6);
+    // [BUG-06 修复] 优先用 related_node_id，兼容旧数据回退 related_node_name
+    let targetNodeId = sup.related_node_id;
+    if (!targetNodeId && sup.related_node_name) {
+      // 兼容：若有 name 无 id，尝试按名称查
+      const target = db.prepare(`SELECT node_id FROM knowledge_nodes WHERE name = ?`).get(sup.related_node_name);
+      targetNodeId = target?.node_id;
+    }
+
+    if (targetNodeId && targetNodeId !== 'unclassified') {
+      upsertBacklink(sourceNodeId, targetNodeId, 'ai_supplement', [videoId], 0.6);
       count++;
     }
   }
@@ -182,23 +163,20 @@ export function buildAiSupplementBacklinks(videoId, sourceNodeId) {
 }
 
 /**
- * 迁移场景覆盖 backlinks（迁移场景涉及的知识节点之间）
- * 在迁移评估完成后调用
+ * 迁移场景覆盖 backlinks
  */
 export function buildMigrationCoverBacklinks(videoId, nodeId) {
   if (!nodeId || nodeId === 'unclassified') return;
-  // 迁移场景目前只关联主知识点，暂无跨节点。
-  // 预留：未来迁移场景涉及多节点时在此建立链接。
+  // 预留：未来迁移场景涉及多节点时在此建立链接
 }
 
 // ========== 知识卡片数据组装 ==========
 
 /**
  * 获取用户的知识卡片列表（只含"学过的"节点）
- * "学过"定义：level > 0 或有 deepen_understanding 或有 exercise_attempts 或有 migration_attempts
+ * [BUG-02 修复] deepen_understanding EXISTS 子查询加 JOIN videos 过滤 user_id
  */
 export function getCardList(userId) {
-  // 筛选有学习记录的节点
   const learnedNodes = db.prepare(`
     SELECT DISTINCT kn.node_id, kn.name, kn.definition, kn.sub_branch, kn.top_branch, kn.top_branch_name, kn.color,
            COALESCE(un.xp, 0) as xp, COALESCE(un.level, 0) as level, COALESCE(un.mastery, 0) as mastery,
@@ -210,12 +188,16 @@ export function getCardList(userId) {
     WHERE kn.node_id != 'unclassified'
       AND (
         un.level > 0
-        OR EXISTS (SELECT 1 FROM deepen_understanding du WHERE du.node_id = kn.node_id)
+        OR EXISTS (
+          SELECT 1 FROM deepen_understanding du
+          JOIN videos dv ON dv.id = du.video_id
+          WHERE du.node_id = kn.node_id AND dv.user_id = ?
+        )
         OR EXISTS (SELECT 1 FROM exercise_attempts ea WHERE ea.node_id = kn.node_id AND ea.user_id = ?)
         OR EXISTS (SELECT 1 FROM migration_attempts ma WHERE ma.node_id = kn.node_id AND ma.user_id = ?)
       )
     ORDER BY un.level DESC, un.mastery DESC, kn.sort_order
-  `).all(userId, userId, userId, userId);
+  `).all(userId, userId, userId, userId, userId);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -243,6 +225,7 @@ export function getCardList(userId) {
 
 /**
  * 获取今日推荐复习卡片（SRS 到期 + 低掌握度）
+ * [BUG-12 关联] next_review_date IS NULL 的新卡片也算到期（兼容历史数据）
  */
 export function getTodayReviewCards(userId, count = 5) {
   const today = new Date().toISOString().slice(0, 10);
@@ -255,33 +238,30 @@ export function getTodayReviewCards(userId, count = 5) {
     LEFT JOIN srs_reviews srs ON srs.node_id = kn.node_id AND srs.user_id = ?
     WHERE kn.node_id != 'unclassified' AND un.level > 0
       AND (
-        (srs.next_review_date IS NOT NULL AND srs.next_review_date <= ?)
+        (srs.next_review_date IS NULL)
+        OR (srs.next_review_date <= ?)
         OR (un.mastery < 0.4 AND (srs.next_review_date IS NULL OR srs.next_review_date <= ?))
       )
     ORDER BY
-      CASE WHEN srs.next_review_date IS NOT NULL AND srs.next_review_date <= ? THEN 0 ELSE 1 END,
+      CASE WHEN srs.next_review_date IS NULL THEN 0
+           WHEN srs.next_review_date <= ? THEN 0 ELSE 1 END,
       un.mastery ASC
     LIMIT ?
   `).all(userId, userId, today, today, today, count);
 
   return cards.map(n => ({
-    node_id: n.node_id,
-    name: n.name,
-    definition: n.definition,
-    color: n.color,
-    top_branch_name: n.top_branch_name,
-    mastery: Math.round((n.mastery || 0) * 100),
-    level: n.level,
-    next_review_date: n.next_review_date,
-    review_count: n.review_count || 0,
+    node_id: n.node_id, name: n.name, definition: n.definition,
+    color: n.color, top_branch_name: n.top_branch_name,
+    mastery: Math.round((n.mastery || 0) * 100), level: n.level,
+    next_review_date: n.next_review_date, review_count: n.review_count || 0,
   }));
 }
 
 /**
  * 获取单张知识卡片详情（汇聚全链路数据）
+ * [BUG-02 修复] deepen 查询加 JOIN videos 过滤 user_id，防止跨用户展示他人加深理解内容
  */
 export function getCardDetail(userId, nodeId) {
-  // 1. 基础节点信息 + 用户状态
   const node = db.prepare(`
     SELECT kn.*, COALESCE(un.xp, 0) as xp, COALESCE(un.level, 0) as level,
            COALESCE(un.mastery, 0) as mastery, un.last_review_at,
@@ -294,12 +274,14 @@ export function getCardDetail(userId, nodeId) {
 
   if (!node) return null;
 
-  // 2. 加深理解内容（取最近一次，用于核心概念/结构/例句/易错点）
+  // [BUG-02 修复] JOIN videos 过滤 user_id
   const deepen = db.prepare(`
-    SELECT structured_content, corrections FROM deepen_understanding
-    WHERE node_id = ?
-    ORDER BY created_at DESC LIMIT 1
-  `).get(nodeId);
+    SELECT du.structured_content, du.corrections
+    FROM deepen_understanding du
+    JOIN videos dv ON dv.id = du.video_id
+    WHERE du.node_id = ? AND dv.user_id = ?
+    ORDER BY du.created_at DESC LIMIT 1
+  `).get(nodeId, userId);
 
   let coreConcept = node.definition || '';
   let structure = '';
@@ -320,7 +302,6 @@ export function getCardDetail(userId, nodeId) {
     }
   }
 
-  // 3. 来源视频
   const sourceVideos = db.prepare(`
     SELECT v.id, v.title, v.created_at
     FROM video_nodes vn
@@ -329,7 +310,6 @@ export function getCardDetail(userId, nodeId) {
     ORDER BY v.created_at DESC
   `).all(nodeId, userId);
 
-  // 4. 我的错题（最近 5 道）
   const wrongExercises = db.prepare(`
     SELECT ea.user_answer, e.question, e.answer, e.type, e.options, e.explanation, ea.created_at
     FROM exercise_attempts ea
@@ -339,10 +319,8 @@ export function getCardDetail(userId, nodeId) {
     LIMIT 5
   `).all(userId, nodeId);
 
-  // 5. 迁移记录
   const migrationRecords = db.prepare(`
-    SELECT ma.overall_score, ma.accuracy_score, ma.xp_gained, ma.created_at,
-           ms.scenario_title
+    SELECT ma.overall_score, ma.accuracy_score, ma.xp_gained, ma.created_at, ms.scenario_title
     FROM migration_attempts ma
     LEFT JOIN migration_scenarios ms ON ms.id = ma.scenario_id
     WHERE ma.user_id = ? AND ma.node_id = ?
@@ -350,49 +328,30 @@ export function getCardDetail(userId, nodeId) {
     LIMIT 5
   `).all(userId, nodeId);
 
-  // 6. backlinks
-  const backlinks = getBacklinks(nodeId);
+  // [BUG-10 修复] backlinks 加 userId 过滤 source_videos 归属
+  const backlinks = getBacklinks(nodeId, userId);
 
   const masteryPct = Math.round((node.mastery || 0) * 100);
 
   return {
-    node_id: node.node_id,
-    name: node.name,
-    definition: node.definition,
-    sub_branch: node.sub_branch,
-    top_branch: node.top_branch,
-    top_branch_name: node.top_branch_name,
-    color: node.color,
-    xp: node.xp,
-    level: node.level,
-    mastery: masteryPct,
+    node_id: node.node_id, name: node.name, definition: node.definition,
+    sub_branch: node.sub_branch, top_branch: node.top_branch,
+    top_branch_name: node.top_branch_name, color: node.color,
+    xp: node.xp, level: node.level, mastery: masteryPct,
     mastery_color: masteryPct < 40 ? 'red' : masteryPct < 70 ? 'orange' : 'green',
     last_review_at: node.last_review_at,
     next_review_date: node.next_review_date,
     review_count: node.review_count || 0,
-    core_concept: coreConcept,
-    structure,
-    examples,
-    pitfalls,
-    source_videos: sourceVideos.map(v => ({
-      id: v.id,
-      title: v.title || '未命名视频',
-      date: v.created_at,
-    })),
+    core_concept: coreConcept, structure, examples, pitfalls,
+    source_videos: sourceVideos.map(v => ({ id: v.id, title: v.title || '未命名视频', date: v.created_at })),
     wrong_exercises: wrongExercises.map(e => ({
-      question: e.question,
-      user_answer: e.user_answer,
+      question: e.question, user_answer: e.user_answer,
       correct_answer: e.type === 'choice' ? parseInt(e.answer) : e.answer,
-      options: e.options ? JSON.parse(e.options) : null,
-      type: e.type,
-      explanation: e.explanation,
+      options: e.options ? JSON.parse(e.options) : null, type: e.type, explanation: e.explanation,
     })),
     migration_records: migrationRecords.map(m => ({
-      scenario_title: m.scenario_title,
-      overall_score: m.overall_score,
-      accuracy_score: m.accuracy_score,
-      xp_gained: m.xp_gained,
-      date: m.created_at,
+      scenario_title: m.scenario_title, overall_score: m.overall_score,
+      accuracy_score: m.accuracy_score, xp_gained: m.xp_gained, date: m.created_at,
     })),
     backlinks,
   };
@@ -400,9 +359,10 @@ export function getCardDetail(userId, nodeId) {
 
 /**
  * 获取卡片的双向链接
+ * [BUG-10 修复] 增加 userId 参数，过滤 source_videos 只保留当前用户相关的视频
  * 返回当前节点指向的所有链接（双向性已在写入时保证）
  */
-export function getBacklinks(nodeId) {
+export function getBacklinks(nodeId, userId = null) {
   const rows = db.prepare(`
     SELECT cb.target_node_id, cb.link_type, cb.source_videos, cb.strength,
            kn.name as target_name, kn.top_branch_name as target_branch
@@ -412,20 +372,31 @@ export function getBacklinks(nodeId) {
     ORDER BY cb.strength DESC
   `).all(nodeId);
 
-  return rows.map(r => ({
-    node_id: r.target_node_id,
-    node_name: r.target_name,
-    branch: r.target_branch,
-    link_type: r.link_type,
-    source_videos: JSON.parse(r.source_videos || '[]'),
-    strength: r.strength,
-  }));
+  return rows.map(r => {
+    const sourceVideos = JSON.parse(r.source_videos || '[]');
+    // [BUG-10 修复] 若提供 userId，过滤 source_videos 只保留该用户的视频
+    let filteredVideos = sourceVideos;
+    if (userId) {
+      const userVideos = new Set(
+        db.prepare(`SELECT id FROM videos WHERE user_id = ?`).all(userId).map(v => v.id)
+      );
+      filteredVideos = sourceVideos.filter(vid => userVideos.has(vid));
+      // 如果该链接没有任何来源视频属于当前用户，跳过该 backlink
+      if (filteredVideos.length === 0 && sourceVideos.length > 0) return null;
+    }
+    return {
+      node_id: r.target_node_id,
+      node_name: r.target_name,
+      branch: r.target_branch,
+      link_type: r.link_type,
+      source_videos: filteredVideos,
+      strength: r.strength,
+    };
+  }).filter(Boolean);
 }
 
 /**
- * M4: 自动归档 — 当用户完成某个视频的学习链路后，
- * 确保该视频涉及的知识节点都被纳入归档（通过 user_nodes 的 level ≥ 1 体现）
- * 实际上 user_nodes 在 addNodeXP 时已创建，这里只做 SRS 初始化
+ * M4: 自动归档 — 确保知识节点被纳入归档（初始化 SRS）
  */
 export function ensureCardArchived(userId, nodeId) {
   if (!nodeId || nodeId === 'unclassified') return;
