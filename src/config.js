@@ -37,6 +37,9 @@ export const config = {
   MAX_VIDEO_DURATION: parseInt(process.env.MAX_VIDEO_DURATION || '300', 10), // 秒
   KEYFRAME_COUNT: parseInt(process.env.KEYFRAME_COUNT || '5', 10), // 提取关键帧数量
 
+  // Python 解释器路径（用于调用 ASR/OCR 等 Python 脚本，默认使用系统 python3）
+  PYTHON_PATH: process.env.PYTHON_PATH || 'python3',
+
   // 抖音视频解析 API（第三方接口，用于将抖音链接解析为直链）
   // 支持两种格式：
   //   GET:  https://api.example.com/parse?url={url}  （{url} 会被替换为编码后的抖音链接）

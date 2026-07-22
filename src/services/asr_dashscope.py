@@ -7,6 +7,8 @@ DashScope Paraformer ASR - 本地音频文件转文字
 import sys
 import os
 import json
+import requests
+
 
 def main():
     if len(sys.argv) < 2:
@@ -23,32 +25,46 @@ def main():
         print(json.dumps({"error": "DASHSCOPE_API_KEY 环境变量未设置"}))
         sys.exit(1)
 
+    model = os.environ.get("ASR_MODEL", "paraformer-v1")
+
     import dashscope
+    from dashscope import Files
     from dashscope.audio.asr import Transcription
-    from dashscope.utils.oss_utils import OssUtils
 
     dashscope.api_key = api_key
 
-    # 步骤1: 通过 OssUtils 上传音频文件到阿里云 OSS（获取公网可访问 URL）
+    # 步骤1: 上传音频到 DashScope 文件管理，获取 file_id
     try:
         sys.stderr.write(f"[ASR] 上传音频文件: {audio_path}\n")
-        file_url, _ = OssUtils.upload(
-            model='paraformer-v2',
-            file_path=audio_path,
-            api_key=api_key,
-        )
-        sys.stderr.write(f"[ASR] 文件上传成功: {file_url[:60]}...\n")
+        upload_resp = Files.upload(file_path=audio_path, purpose='transcription')
+        if upload_resp.status_code != 200 or not upload_resp.output.get('uploaded_files'):
+            raise Exception(f"上传失败: {upload_resp.code} - {upload_resp.message}")
+        file_id = upload_resp.output['uploaded_files'][0]['file_id']
+        sys.stderr.write(f"[ASR] 文件上传成功，file_id: {file_id}\n")
     except Exception as e:
-        sys.stderr.write(f"[ASR] OssUtils 上传失败: {e}\n")
+        sys.stderr.write(f"[ASR] 文件上传失败: {e}\n")
         print(json.dumps({"error": f"文件上传失败: {str(e)}"}))
         sys.exit(1)
 
-    # 步骤2: 提交异步转写任务
+    # 步骤2: 获取带签名的可访问 URL
     try:
-        sys.stderr.write("[ASR] 提交转写任务...\n")
+        sys.stderr.write("[ASR] 获取文件访问链接...\n")
+        file_info = Files.get(file_id)
+        if file_info.status_code != 200 or 'url' not in file_info.output:
+            raise Exception(f"获取文件链接失败: {file_info.code} - {file_info.message}")
+        signed_url = file_info.output['url']
+        sys.stderr.write(f"[ASR] 文件链接已获取: {signed_url[:60]}...\n")
+    except Exception as e:
+        sys.stderr.write(f"[ASR] 获取文件链接失败: {e}\n")
+        print(json.dumps({"error": f"获取文件链接失败: {str(e)}"}))
+        sys.exit(1)
+
+    # 步骤3: 提交异步转写任务
+    try:
+        sys.stderr.write(f"[ASR] 提交转写任务 (model={model})...\n")
         task_result = Transcription.async_call(
-            model='paraformer-v2',
-            file_urls=[file_url],
+            model=model,
+            file_urls=[signed_url],
             language_hints=['en', 'zh'],
         )
         if task_result.status_code != 200:
@@ -64,7 +80,7 @@ def main():
         print(json.dumps({"error": f"提交转写任务失败: {str(e)}"}))
         sys.exit(1)
 
-    # 步骤3: 等待任务完成
+    # 步骤4: 等待任务完成
     sys.stderr.write("[ASR] 等待转写完成...\n")
     result = Transcription.wait(task=task_id)
 
@@ -72,7 +88,7 @@ def main():
         print(json.dumps({"error": f"转写失败: {result.code} - {result.message}"}))
         sys.exit(1)
 
-    # 步骤4: 提取转写结果
+    # 步骤5: 提取转写结果
     output = result.output or {}
     status = output.get('task_status', '')
 
@@ -81,20 +97,32 @@ def main():
         if results:
             transcription_url = results[0].get('transcription_url', '')
             if transcription_url:
-                import requests
-                resp = requests.get(transcription_url, timeout=30)
-                data = resp.json()
-                transcripts = data.get('transcripts', [])
-                if transcripts:
-                    text = transcripts[0].get('content', '')
-                    print(text)
-                    return
-                text = data.get('text', '')
-                print(text)
-                return
+                try:
+                    resp = requests.get(transcription_url, timeout=30)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    # DashScope 新版返回格式：transcripts[0].text
+                    transcripts = data.get('transcripts', [])
+                    if transcripts:
+                        text = transcripts[0].get('text', '') or transcripts[0].get('content', '')
+                        if text:
+                            print(text)
+                            return
+                    # 兼容旧格式 / 纯文本字段
+                    text = data.get('text', '') or data.get('content', '')
+                    if text:
+                        print(text)
+                        return
+                    sys.stderr.write(f"[ASR] 转写结果为空: {data}\n")
+                except Exception as e:
+                    sys.stderr.write(f"[ASR] 读取转写结果失败: {e}\n")
+                    print(json.dumps({"error": f"读取转写结果失败: {str(e)}"}))
+                    sys.exit(1)
 
-    print(json.dumps({"error": f"转写未成功: status={status}"}))
+    error_detail = output.get('message', '') or output.get('error', '') or str(output)
+    print(json.dumps({"error": f"转写未成功: status={status}, detail={error_detail}"}))
     sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

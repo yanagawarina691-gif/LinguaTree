@@ -45,7 +45,7 @@ async function transcribeWithLocalWhisper(audioPath) {
   const model = config.ASR_MODEL || 'tiny';
 
   return new Promise((resolve, reject) => {
-    const proc = execFile('python3', [scriptPath, audioPath, model], {
+    const proc = execFile(config.PYTHON_PATH, [scriptPath, audioPath, model], {
       timeout: config.ASR_TIMEOUT,
       maxBuffer: 10 * 1024 * 1024, // 10MB stdout buffer
       env: { ...process.env, WHISPER_MODEL: model },
@@ -127,7 +127,7 @@ async function transcribeWithDashScope(audioPath) {
   }
 
   return new Promise((resolve, reject) => {
-    const proc = execFile('python3', [scriptPath, audioPath], {
+    const proc = execFile(config.PYTHON_PATH, [scriptPath, audioPath], {
       timeout: config.ASR_TIMEOUT,
       maxBuffer: 10 * 1024 * 1024,
       env: { ...process.env, DASHSCOPE_API_KEY: apiKey },
