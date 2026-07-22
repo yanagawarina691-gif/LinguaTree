@@ -6,7 +6,9 @@ export default function TrainingPage() {
   const { videoId } = useParams();
   const navigate = useNavigate();
   const [video, setVideo] = useState(null);
-  const [exercises, setExercises] = useState([]);
+  const [exercises, setExercises] = useState([]);          // 主题目列表（不变）
+  const [replayExercises, setReplayExercises] = useState([]); // [BUG-08] 错题重生独立列表，不再覆盖 exercises
+  const [isReplayRound, setIsReplayRound] = useState(false); // 是否在重答错题轮
   const [currentQ, setCurrentQ] = useState(0);
   const [attempts, setAttempts] = useState([]);
   const [showResult, setShowResult] = useState(false);
@@ -21,10 +23,12 @@ export default function TrainingPage() {
   const [showStreak, setShowStreak] = useState(false);
   const [xpPopup, setXpPopup] = useState(null);
   const [timeLeft, setTimeLeft] = useState(15);
-  const [wrongQueue, setWrongQueue] = useState([]); // 错题重生队列
-  const [isReplayRound, setIsReplayRound] = useState(false); // 是否在重答错题
+  const [wrongQueue, setWrongQueue] = useState([]);
   const timerRef = useRef(null);
   const answeredRef = useRef(false);
+
+  // [BUG-08 修复] 统一当前题目列表：重答轮用 replayExercises，否则用 exercises
+  const currentExercises = isReplayRound ? replayExercises : exercises;
 
   const showToast = (msg) => {
     const toast = document.getElementById('toast');
@@ -47,9 +51,9 @@ export default function TrainingPage() {
 
   useEffect(() => { loadVideo(); }, [loadVideo]);
 
-  // 倒计时
+  // [BUG-16 修复] 倒计时依赖增加 currentExercises.length 和 isReplayRound
   useEffect(() => {
-    if (showResult || loading || exercises.length === 0) return;
+    if (showResult || loading || currentExercises.length === 0) return;
     setTimeLeft(15);
     answeredRef.current = false;
     timerRef.current = setInterval(() => {
@@ -64,7 +68,7 @@ export default function TrainingPage() {
     }, 1000);
     return () => clearInterval(timerRef.current);
     // eslint-disable-next-line
-  }, [currentQ, showResult]);
+  }, [currentQ, showResult, currentExercises.length, isReplayRound]);
 
   const handleTimeout = () => {
     answeredRef.current = true;
@@ -84,12 +88,13 @@ export default function TrainingPage() {
     setTimeout(() => setXpPopup(null), 1500);
   };
 
+  // [BUG-08 修复] handleAnswer 依赖数组修正（去掉重复的 isReplayRound），使用 currentExercises
   const handleAnswer = useCallback((isCorrect, isSkipped, userAnswer, isTimeout = false) => {
     if (answeredRef.current) return;
     answeredRef.current = true;
     clearInterval(timerRef.current);
 
-    const q = exercises[currentQ];
+    const q = currentExercises[currentQ];
     const newAttempt = { exerciseId: q.id, nodeId: q.node_id, isCorrect, isSkipped, userAnswer: String(userAnswer) };
     const newAttempts = [...attempts, newAttempt];
     setAttempts(newAttempts);
@@ -104,28 +109,28 @@ export default function TrainingPage() {
       showXpPopup(5 + bonus);
     } else {
       setCombo(0);
-      // 错题进入重生队列（非重答轮才入队，避免无限循环）
+      // 错题进入重生队列（仅主轮入队，重答轮不再入队避免无限循环）
       if (!isReplayRound && !isSkipped) {
-        setWrongQueue(q => [...q, exercises[currentQ]]);
+        setWrongQueue(prev => [...prev, q]);
       }
     }
 
     setTimeout(() => {
-      if (currentQ < exercises.length - 1) {
+      if (currentQ < currentExercises.length - 1) {
         setCurrentQ(c => c + 1);
       } else if (wrongQueue.length > 0 && !isReplayRound) {
-        // 进入错题重生轮
+        // [BUG-08 修复] 进入错题重生轮：用独立 replayExercises，不覆盖 exercises
         setIsReplayRound(true);
-        setExercises(wrongQueue);
+        setReplayExercises(wrongQueue);
         setWrongQueue([]);
         setCurrentQ(0);
         showToast(`🔄 ${wrongQueue.length} 道错题重生！`);
       } else {
-        // 全部完成
+        // 全部完成，提交（后端 pipeline 已做 exerciseId 去重）
         submitAll(newAttempts);
       }
     }, 2200);
-  }, [currentQ, exercises, attempts, combo, wrongQueue, isReplayRound, isReplayRound, showToast]);
+  }, [currentQ, currentExercises, attempts, combo, wrongQueue, isReplayRound, showToast]);
 
   const submitAll = async (allAttempts) => {
     try {
@@ -139,22 +144,20 @@ export default function TrainingPage() {
 
   if (loading) return <div className="page active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>加载题目...</div>;
   if (error) return <div className="page active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-lt)' }}>{error}</div>;
-  if (!video || exercises.length === 0) return <div className="page active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>暂无题目</div>;
+  if (!video || currentExercises.length === 0) return <div className="page active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>暂无题目</div>;
 
   // 结果页
   if (showResult) {
-    const allCorrect = correctCount >= exercises.length;
+    const allCorrect = correctCount >= currentExercises.length;
     return (
       <div className="page active training-page">
-        {/* Streak Fire 残留特效 */}
         {showStreak && <div className="streak-fire-overlay"><span className="streak-text">STREAK! 🔥</span></div>}
 
         <div className="training-result">
           <div className="big-check">{allCorrect ? '🎉' : '✅'}</div>
-          <div className="training-result-score">{correctCount}/{exercises.length}</div>
+          <div className="training-result-score">{correctCount}/{currentExercises.length}</div>
           <div className="training-result-label">获得 {xpGained} XP</div>
 
-          {/* Combo 统计 */}
           <div className="training-combo-stats">
             <div className="combo-stat-item">
               <span className="combo-stat-icon">🔥</span>
@@ -163,7 +166,8 @@ export default function TrainingPage() {
             </div>
           </div>
 
-          {/* 问答题邀请 */}
+          {/* [BUG-13 修复] 移除"跳到迁移"按钮，保留"去表达（问答题）"，
+              符合 PRD 三模态递进：闪卡→选择题→问答题→迁移邀请 */}
           <div className="migration-invite-card">
             <div className="migration-invite-icon">✏️</div>
             <div className="migration-invite-title">用这个知识点表达一下吧？</div>
@@ -175,10 +179,6 @@ export default function TrainingPage() {
                 onClick={() => navigate(`/freeform/${videoId}`)}>
                 去表达 →
               </button>
-              <button className="btn3d btn-gray migration-invite-btn" style={{ padding: '14px 28px', fontSize: 15 }}
-                onClick={() => navigate(`/migration/${videoId}`)}>
-                跳到迁移
-              </button>
             </div>
           </div>
         </div>
@@ -186,15 +186,13 @@ export default function TrainingPage() {
     );
   }
 
-  const q = exercises[currentQ];
+  const q = currentExercises[currentQ];
   const timePct = (timeLeft / 15) * 100;
   const timeColor = timeLeft <= 3 ? 'var(--red)' : timeLeft <= 7 ? 'var(--orange)' : 'var(--primary)';
 
   return (
     <div className="page active training-page">
-      {/* Streak Fire 特效 */}
       {showStreak && <div className="streak-fire-overlay"><span className="streak-text">STREAK! 🔥</span></div>}
-      {/* XP 弹出 */}
       {xpPopup && <div className="xp-popup">+{xpPopup} XP</div>}
 
       <div className="topbar">
@@ -205,18 +203,16 @@ export default function TrainingPage() {
         <div onClick={() => handleAnswer(false, true, '')} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>
       </div>
 
-      {/* Combo + 倒计时 + 进度 */}
       <div className="training-header">
         <div className="training-progress">
-          {exercises.map((_, i) => (
+          {currentExercises.map((_, i) => (
             <div key={i} className={`progress-dot ${i === currentQ ? 'active' : ''} ${i < currentQ ? 'done' : ''}`}></div>
           ))}
         </div>
         <div className="training-q-type">
-          {q.typeName}题 · {currentQ + 1}/{exercises.length}
+          {q.typeName}题 · {currentQ + 1}/{currentExercises.length}
           {combo >= 2 && <span className="combo-badge" style={{ marginLeft: 8, color: 'var(--orange)' }}>🔥 x{combo}</span>}
         </div>
-        {/* 倒计时条 */}
         <div className="timer-bar-wrap">
           <div className="timer-bar" style={{ width: `${timePct}%`, background: timeColor }}></div>
           <span className="timer-num" style={{ color: timeColor }}>{timeLeft}s</span>

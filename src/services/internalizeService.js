@@ -20,12 +20,31 @@ function getMainNode(videoId) {
 }
 
 /**
+ * 从加深理解内容中提取可读摘要（供闪卡生成 LLM 使用）
+ * [BUG-03 修复] 原实现直接对 JSON 字符串 .slice(0,500)，传入截断 JSON
+ * 现改为解析 JSON 后拼接各章节文本
+ */
+function buildDeepenSummary(deepenRow) {
+  if (!deepenRow) return '';
+  const parts = [];
+  if (deepenRow.brief_comment) parts.push(deepenRow.brief_comment);
+  try {
+    const sections = JSON.parse(deepenRow.structured_content || '[]');
+    if (Array.isArray(sections)) {
+      for (const s of sections) {
+        if (s.section && s.content) parts.push(`${s.section}: ${s.content}`);
+      }
+    }
+  } catch { /* JSON 解析失败则忽略结构化内容 */ }
+  return parts.join('\n').slice(0, 500);
+}
+
+/**
  * 获取或创建视频的闪卡（缓存优先）
  * @param {string} videoId
  * @returns {Object} - { cards, node_id, node_name }
  */
 export async function getOrCreateFlashcards(videoId) {
-  // 1. 查缓存
   const cached = db.prepare(`SELECT * FROM flashcards WHERE video_id = ?`).get(videoId);
   if (cached) {
     logger.info(`[Flashcard] 视频 ${videoId} 已有闪卡缓存，直接返回`);
@@ -36,20 +55,17 @@ export async function getOrCreateFlashcards(videoId) {
     };
   }
 
-  // 2. 获取主知识点
   const primary = getMainNode(videoId);
   if (!primary || primary.node_id === 'unclassified') {
     throw new Error('视频未关联知识节点，无法生成闪卡');
   }
 
-  // 3. 获取加深理解内容作为上下文
-  const deepen = db.prepare(`SELECT structured_content, supplements FROM deepen_understanding WHERE video_id = ?`).get(videoId);
-  const deepenSummary = deepen ? (deepen.structured_content || '').slice(0, 500) : '';
+  // [BUG-03 修复] 提取可读摘要而非截断 JSON
+  const deepen = db.prepare(`SELECT brief_comment, structured_content FROM deepen_understanding WHERE video_id = ?`).get(videoId);
+  const deepenSummary = buildDeepenSummary(deepen);
 
-  // 4. 调用 LLM 生成
   const cards = await generateFlashcards(primary.name, deepenSummary);
 
-  // 5. 缓存
   db.prepare(`
     INSERT OR REPLACE INTO flashcards (video_id, node_id, cards)
     VALUES (?, ?, ?)
@@ -60,17 +76,17 @@ export async function getOrCreateFlashcards(videoId) {
 }
 
 /**
- * 标记闪卡回忆完成并发放 XP（幂等：用 freeform_completed 之外的方式追踪）
- * 由于闪卡是"回忆"环节，PRD 未要求严格幂等，但为防刷分，用 parse_logs 记录
+ * 标记闪卡回忆完成并发放 XP（幂等：基于 videos.flashcard_completed 字段）
+ * [BUG-04 修复] 原实现用 parse_logs + LIKE 做幂等（反模式+脆弱）
+ * 现改用 videos.flashcard_completed 字段，与 freeform_completed/migration_completed 对齐
  * @returns {{ xpGained, treeUpdate, alreadyCompleted }}
  */
 export function completeFlashcards(videoId, userId) {
-  // 检查是否已发放过闪卡 XP（通过 parse_logs 查 flashcard_complete 记录）
-  const already = db.prepare(`
-    SELECT 1 FROM parse_logs WHERE video_id = ? AND stage = 'flashcard' AND status = 'completed' AND message LIKE ?
-  `).get(videoId, `%user:${userId}%`);
+  const video = db.prepare(`SELECT flashcard_completed FROM videos WHERE id = ?`).get(videoId);
+  if (!video) throw new Error('视频不存在');
 
-  if (already) {
+  // 幂等：已发放过则不再发
+  if (video.flashcard_completed) {
     return { alreadyCompleted: true, xpGained: 0 };
   }
 
@@ -81,13 +97,10 @@ export function completeFlashcards(videoId, userId) {
 
   const r = addNodeXP(userId, primary.node_id, FLASHCARD_XP);
 
-  // 记录完成（幂等标记）
-  db.prepare(`
-    INSERT INTO parse_logs (video_id, stage, status, message)
-    VALUES (?, 'flashcard', 'completed', ?)
-  `).run(videoId, `闪卡回忆完成 user:${userId} +${FLASHCARD_XP}XP`);
+  // 标记完成（幂等关键字段）
+  db.prepare(`UPDATE videos SET flashcard_completed = 1, updated_at = datetime('now') WHERE id = ?`).run(videoId);
 
-  logger.info(`[Flashcard] 用户 ${userId} 完成视频 ${videoId} 闪卡回忆, +${FLASHCARD_XP} XP`);
+  logger.info(`[Flashcard] 用户 ${userId} 完成视频 ${videoId} 闪卡回忆, +${FLASHCARD_XP} XP → ${primary.node_id}`);
   return {
     alreadyCompleted: false,
     xpGained: FLASHCARD_XP,
@@ -104,12 +117,8 @@ export function completeFlashcards(videoId, userId) {
 
 /**
  * 获取或创建视频的问答题（缓存优先）
- * @param {string} videoId
- * @param {string} userId
- * @returns {Object} - { question, target_knowledge, evaluation_criteria, reference_answers, difficulty, node_id }
  */
 export async function getOrCreateFreeformQuestion(videoId, userId) {
-  // 1. 查缓存
   const cached = db.prepare(`SELECT * FROM freeform_questions WHERE video_id = ?`).get(videoId);
   if (cached) {
     logger.info(`[Freeform] 视频 ${videoId} 已有问答题缓存，直接返回`);
@@ -123,19 +132,14 @@ export async function getOrCreateFreeformQuestion(videoId, userId) {
     };
   }
 
-  // 2. 获取主知识点
   const primary = getMainNode(videoId);
   if (!primary || primary.node_id === 'unclassified') {
     throw new Error('视频未关联知识节点，无法生成问答题');
   }
 
-  // 3. 获取内化正确率
   const accuracy = getExerciseAccuracy(userId, videoId);
-
-  // 4. 调用 LLM 生成
   const q = await generateFreeformQuestion(primary.name, primary.node_id, accuracy);
 
-  // 5. 缓存
   db.prepare(`
     INSERT OR REPLACE INTO freeform_questions
       (video_id, node_id, question, target_knowledge, evaluation_criteria, reference_answers, difficulty)
@@ -154,7 +158,6 @@ export async function getOrCreateFreeformQuestion(videoId, userId) {
 
 /**
  * 评估问答题回答并发放 XP（幂等：每个视频只发一次 XP）
- * @returns {{ evaluation, xpGained, alreadyCompleted, treeUpdate }}
  */
 export async function evaluateFreeformAttempt(videoId, userId, userInput) {
   const video = db.prepare(`SELECT freeform_completed FROM videos WHERE id = ?`).get(videoId);
@@ -170,17 +173,14 @@ export async function evaluateFreeformAttempt(videoId, userId, userInput) {
     reference_answers: JSON.parse(qRow.reference_answers || '[]'),
   };
 
-  // 调用 LLM 评估
   const evaluation = await evaluateFreeform(qRow.target_knowledge, question, userInput);
 
-  // 幂等：已完成的视频不再发 XP
   const alreadyCompleted = !!video.freeform_completed;
 
   let xpEarned = FREEFORM_XP_BASE;
   if (evaluation.overall_score >= 80) xpEarned += FREEFORM_XP_BONUS;
   const xpGained = alreadyCompleted ? 0 : xpEarned;
 
-  // 保存尝试记录
   db.prepare(`
     INSERT INTO freeform_attempts
       (id, video_id, user_id, node_id, user_input, ai_evaluation, accuracy_score, overall_score, xp_gained)
@@ -204,25 +204,17 @@ export async function evaluateFreeformAttempt(videoId, userId, userInput) {
       totalXp: r.xp,
     };
 
-    // 标记完成（幂等）
     db.prepare(`UPDATE videos SET freeform_completed = 1, updated_at = datetime('now') WHERE id = ?`).run(videoId);
-
     logger.info(`[Freeform] 用户 ${userId} 首次完成视频 ${videoId} 问答题: score=${evaluation.overall_score}, xp=+${xpGained}`);
   } else {
     logger.info(`[Freeform] 用户 ${userId} 重复提交视频 ${videoId} 问答题（不发XP）: score=${evaluation.overall_score}`);
   }
 
-  return {
-    evaluation,
-    xpGained,
-    alreadyCompleted,
-    xpEarned,
-    treeUpdate,
-  };
+  return { evaluation, xpGained, alreadyCompleted, xpEarned, treeUpdate };
 }
 
 /**
- * 获取用户在该视频内化环节的正确率（复用 migrationService 的逻辑）
+ * 获取用户在该视频内化环节的正确率
  */
 function getExerciseAccuracy(userId, videoId) {
   const stats = db.prepare(`

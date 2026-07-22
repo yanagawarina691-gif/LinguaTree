@@ -260,7 +260,7 @@ function buildDeepenPrompt(video, knowledge) {
     {"original": "原句", "error_type": "语法错误|用词不当|发音错误|事实性错误", "explanation": "为什么错", "corrected": "正确形式", "confidence": 0.9}
   ],
   "supplements": [
-    {"title": "补充标题", "content": "2-3句说明", "relation": "与视频知识点的关系", "related_node_name": "关联的知识树节点名"}
+    {"title": "补充标题", "content": "2-3句说明", "relation": "与视频知识点的关系", "related_node_id": "关联的知识树节点ID（从上方节点列表选取）"}
   ],
   "structured_content": [
     {"section": "定义", "content": "..."},
