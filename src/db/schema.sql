@@ -225,6 +225,51 @@ CREATE TABLE IF NOT EXISTS srs_reviews (
     FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
 );
 
+-- ========== M5: 内化三模态相关表 ==========
+
+-- 闪卡表（每个视频缓存一组闪卡，video_id UNIQUE）
+CREATE TABLE IF NOT EXISTS flashcards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id TEXT NOT NULL UNIQUE,          -- 视频ID（唯一，一组闪卡以 JSON 数组存 cards 字段）
+    node_id TEXT DEFAULT '',                -- 主知识点节点ID
+    cards TEXT DEFAULT '[]',                -- JSON 数组: [{front, back, trigger_type, difficulty}]
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 问答题表（每个视频缓存一道问答题，video_id UNIQUE）
+CREATE TABLE IF NOT EXISTS freeform_questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id TEXT NOT NULL UNIQUE,          -- 视频ID（唯一）
+    node_id TEXT DEFAULT '',                -- 主知识点节点ID
+    question TEXT DEFAULT '',               -- 问答题题目
+    target_knowledge TEXT DEFAULT '',       -- 目标知识点
+    evaluation_criteria TEXT DEFAULT '[]',  -- JSON 数组: 评估维度
+    reference_answers TEXT DEFAULT '[]',    -- JSON 数组: 参考答案
+    difficulty TEXT DEFAULT 'A2',           -- CEFR 难度
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 问答题尝试表（用户每次提交的问答题回答 + AI 评估）
+CREATE TABLE IF NOT EXISTS freeform_attempts (
+    id TEXT PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    user_input TEXT DEFAULT '',             -- 用户提交的回答
+    ai_evaluation TEXT DEFAULT '{}',        -- JSON: AI 评估结果
+    accuracy_score INTEGER DEFAULT 0,       -- 知识点使用准确率 0-100
+    overall_score INTEGER DEFAULT 0,        -- 总分 0-100
+    xp_gained INTEGER DEFAULT 0,            -- 获得的 XP
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_user_nodes_user ON user_nodes(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_nodes_node ON user_nodes(node_id);
@@ -249,3 +294,7 @@ CREATE INDEX IF NOT EXISTS idx_card_backlinks_target ON card_backlinks(target_no
 CREATE INDEX IF NOT EXISTS idx_srs_reviews_user ON srs_reviews(user_id);
 CREATE INDEX IF NOT EXISTS idx_srs_reviews_node ON srs_reviews(node_id);
 CREATE INDEX IF NOT EXISTS idx_srs_reviews_next ON srs_reviews(next_review_date);
+CREATE INDEX IF NOT EXISTS idx_flashcards_video ON flashcards(video_id);
+CREATE INDEX IF NOT EXISTS idx_freeform_questions_video ON freeform_questions(video_id);
+CREATE INDEX IF NOT EXISTS idx_freeform_attempts_user ON freeform_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_freeform_attempts_video ON freeform_attempts(video_id);

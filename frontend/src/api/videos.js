@@ -35,6 +35,31 @@ export function completeExercises(videoId, attempts) {
   });
 }
 
+// ========== M5: 内化三模态 API ==========
+
+// 获取闪卡（无则自动生成）
+export function getFlashcards(videoId) {
+  return api(`/api/videos/${videoId}/internalize/flashcards`);
+}
+
+// 标记闪卡回忆完成（+10 XP，幂等）
+export function completeFlashcards(videoId) {
+  return api(`/api/videos/${videoId}/internalize/flashcards/complete`, { method: 'POST' });
+}
+
+// 获取问答题（无则自动生成）
+export function getFreeformQuestion(videoId) {
+  return api(`/api/videos/${videoId}/internalize/freeform`);
+}
+
+// 提交问答题答案，获取 AI 评估
+export function evaluateFreeform(videoId, userInput) {
+  return api(`/api/videos/${videoId}/internalize/freeform/evaluate`, {
+    method: 'POST',
+    body: JSON.stringify({ userInput }),
+  });
+}
+
 // 获取迁移场景（无则自动生成）
 export function getMigration(videoId) {
   return api(`/api/videos/${videoId}/migration`);

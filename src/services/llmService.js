@@ -674,4 +674,271 @@ function buildMockEvaluation(userInput, topic) {
   };
 }
 
+// ========== M5: 内化三模态 — 闪卡 + 问答题 ==========
+
+/**
+ * 构建闪卡生成 Prompt（PRD §6.2 P1-1 模态一）
+ */
+function buildFlashcardsPrompt(topic, deepenContent) {
+  const systemPrompt = `你是英语教学闪卡设计专家。用户刚完成"${topic}"的加深理解环节。
+请生成4张闪卡，帮助用户快速回忆核心内容。
+
+要求：
+1. 每张闪卡正面是触发词/概念，背面是简要定义+1个例句
+2. 正面应覆盖：核心概念(1张)、结构(1张)、易错对比(1-2张)
+3. 背面内容简洁，每张≤50字
+4. trigger_type: concept | structure | example
+
+输出 JSON 格式（严格遵循）:
+{
+  "cards": [
+    {"front": "触发词", "back": "定义+例句", "trigger_type": "concept", "difficulty": "A2"}
+  ]
+}`;
+
+  const userPrompt = `知识点: ${topic}
+加深理解内容（摘要）: ${deepenContent || '（无）'}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+/**
+ * 生成闪卡（LLM 调用，含降级 mock）
+ * @param {string} topic - 知识点名称
+ * @param {string} deepenContent - 加深理解内容摘要
+ * @returns {Array} - [{front, back, trigger_type, difficulty}]
+ */
+export async function generateFlashcards(topic, deepenContent = '') {
+  if (!config.OPENAI_API_KEY) {
+    logger.warn('[Flashcard] OPENAI_API_KEY 未配置，返回 mock 闪卡');
+    return buildMockFlashcards(topic);
+  }
+
+  try {
+    const openai = getClient();
+    const { systemPrompt, userPrompt } = buildFlashcardsPrompt(topic, deepenContent);
+
+    logger.stage('FLASHCARD', `生成闪卡: topic=${topic}`);
+
+    const response = await openai.chat.completions.create({
+      model: config.LLM_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.6,
+      max_tokens: 1000,
+    }, { timeout: config.LLM_TIMEOUT });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('LLM 返回空内容');
+
+    const result = JSON.parse(content);
+    const cards = Array.isArray(result.cards) ? result.cards : [];
+
+    if (cards.length === 0) throw new Error('LLM 未生成闪卡');
+
+    logger.stage('FLASHCARD', `生成完成: ${cards.length} 张闪卡`);
+    return cards.map(c => ({
+      front: String(c.front || ''),
+      back: String(c.back || ''),
+      trigger_type: c.trigger_type || 'concept',
+      difficulty: c.difficulty || 'A2',
+    }));
+  } catch (err) {
+    logger.error('[Flashcard]', `闪卡生成失败，降级 mock: ${err.message}`);
+    return buildMockFlashcards(topic);
+  }
+}
+
+function buildMockFlashcards(topic) {
+  return [
+    { front: topic, back: `关于${topic}的核心概念。例：This is an example of ${topic}.`, trigger_type: 'concept', difficulty: 'A2' },
+    { front: `${topic} 结构`, back: `${topic}的基本结构形式。`, trigger_type: 'structure', difficulty: 'B1' },
+    { front: `${topic} 易错`, back: `使用${topic}时常见的错误。`, trigger_type: 'example', difficulty: 'B1' },
+    { front: `${topic} 例句`, back: `I use ${topic} every day.`, trigger_type: 'example', difficulty: 'A2' },
+  ];
+}
+
+/**
+ * 构建问答题生成 Prompt（PRD §6.2 P1-1 模态三）
+ */
+function buildFreeformQuestionPrompt(topic, nodeDetail, accuracy) {
+  const systemPrompt = `你是英语教学问答题设计专家。用户刚完成"${topic}"的选择题检测，正确率${accuracy !== null ? accuracy + '%' : '未知'}。
+请生成一道问答题，让用户用"${topic}"主动表达。
+
+要求：
+1. 题目明确：告诉用户用什么知识点做什么（如"用XX造一个关于YY的句子"）
+2. 用户回答只需1-2句话，≤50字
+3. 提供评估标准(2-3个维度)和参考答案(2个)
+4. 难度与用户选择题正确率匹配
+
+输出 JSON 格式（严格遵循）:
+{
+  "question": "问答题题目",
+  "target_knowledge": "${topic}",
+  "evaluation_criteria": ["维度1", "维度2"],
+  "reference_answers": ["参考答案1", "参考答案2"],
+  "difficulty": "A2|B1|B2"
+}`;
+
+  const userPrompt = `知识点: ${topic}
+知识点详情: ${nodeDetail ? nodeDetail.definition || '（无）' : '（无）'}
+用户选择题正确率: ${accuracy !== null ? accuracy + '%' : '未知'}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+/**
+ * 生成问答题（LLM 调用，含降级 mock）
+ */
+export async function generateFreeformQuestion(topic, nodeId, accuracy = null) {
+  const nodeDetail = loadNodeDetail(nodeId);
+
+  if (!config.OPENAI_API_KEY) {
+    logger.warn('[Freeform] OPENAI_API_KEY 未配置，返回 mock 问答题');
+    return buildMockFreeformQuestion(topic, nodeDetail, accuracy);
+  }
+
+  try {
+    const openai = getClient();
+    const { systemPrompt, userPrompt } = buildFreeformQuestionPrompt(topic, nodeDetail, accuracy);
+
+    logger.stage('FREEFORM', `生成问答题: topic=${topic}`);
+
+    const response = await openai.chat.completions.create({
+      model: config.LLM_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 1000,
+    }, { timeout: config.LLM_TIMEOUT });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('LLM 返回空内容');
+
+    const result = JSON.parse(content);
+    logger.stage('FREEFORM', `生成完成: question="${result.question?.slice(0, 30)}..."`);
+    return {
+      question: String(result.question || ''),
+      target_knowledge: String(result.target_knowledge || topic),
+      evaluation_criteria: Array.isArray(result.evaluation_criteria) ? result.evaluation_criteria : ['知识点使用准确性', '表达完整性'],
+      reference_answers: Array.isArray(result.reference_answers) ? result.reference_answers : [],
+      difficulty: result.difficulty || 'B1',
+    };
+  } catch (err) {
+    logger.error('[Freeform]', `问答题生成失败，降级 mock: ${err.message}`);
+    return buildMockFreeformQuestion(topic, nodeDetail, accuracy);
+  }
+}
+
+function buildMockFreeformQuestion(topic, nodeDetail, accuracy) {
+  const def = nodeDetail?.definition || `关于${topic}的英语知识点`;
+  return {
+    question: `请用 "${topic}" 造一个关于你过去经历的英文句子（1-2句，≤50字）。\n\n知识点定义: ${def}`,
+    target_knowledge: topic,
+    evaluation_criteria: ['知识点使用准确性', '语境适切度', '表达完整性'],
+    reference_answers: [`I use ${topic} every day.`, `This is an example using ${topic}.`],
+    difficulty: accuracy !== null && accuracy >= 80 ? 'B2' : 'B1',
+  };
+}
+
+/**
+ * 构建问答题评估 Prompt（PRD §6.2 P1-1 模态三评估）
+ */
+function buildFreeformEvalPrompt(topic, question, userInput) {
+  const systemPrompt = `你是英语教学评估专家。用户在"${topic}"问答题中提交了以下回答。
+请评估其回答质量，重点看知识点使用是否准确。
+
+输出 JSON 格式（严格遵循）:
+{
+  "accuracy": 0到100的整数,
+  "criteria_scores": [{"criterion": "维度名", "score": 0到100的整数, "comment": "评语"}],
+  "improvement": "1-2句改进建议，具体可操作",
+  "better_expression": "更地道表达（如有，没有则留空字符串）",
+  "overall_score": 0到100的整数
+}`;
+
+  const userPrompt = `知识点: ${topic}
+题目: ${question.question || ''}
+评估标准: ${JSON.stringify(question.evaluation_criteria || [])}
+参考答案: ${JSON.stringify(question.reference_answers || [])}
+用户回答: ${userInput}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+/**
+ * 评估问答题回答（LLM 调用，含降级 mock）
+ */
+export async function evaluateFreeform(topic, question, userInput) {
+  if (!config.OPENAI_API_KEY) {
+    logger.warn('[Freeform] OPENAI_API_KEY 未配置，返回 mock 评估');
+    return buildMockFreeformEval(userInput, topic);
+  }
+
+  if (!userInput || userInput.trim().length < 3) {
+    return {
+      accuracy: 0,
+      criteria_scores: (question.evaluation_criteria || ['知识点使用']).map(c => ({ criterion: c, score: 0, comment: '回答过短，无法评估' })),
+      improvement: '请尝试写出完整的句子。',
+      better_expression: question.reference_answers?.[0] || '',
+      overall_score: 0,
+    };
+  }
+
+  try {
+    const openai = getClient();
+    const { systemPrompt, userPrompt } = buildFreeformEvalPrompt(topic, question, userInput);
+
+    logger.stage('FREEFORM', `评估问答题: inputLen=${userInput.length}`);
+
+    const response = await openai.chat.completions.create({
+      model: config.LLM_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 1000,
+    }, { timeout: config.LLM_TIMEOUT });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('LLM 返回空内容');
+
+    const result = JSON.parse(content);
+    return {
+      accuracy: Math.max(0, Math.min(100, Math.round(result.accuracy || 0))),
+      criteria_scores: Array.isArray(result.criteria_scores) ? result.criteria_scores : [],
+      improvement: result.improvement || '',
+      better_expression: result.better_expression || '',
+      overall_score: Math.max(0, Math.min(100, Math.round(result.overall_score || 0))),
+    };
+  } catch (err) {
+    logger.error('[Freeform]', `问答题评估失败，降级 mock: ${err.message}`);
+    return buildMockFreeformEval(userInput, topic);
+  }
+}
+
+function buildMockFreeformEval(userInput, topic) {
+  const hasContent = userInput && userInput.trim().length >= 10;
+  const score = hasContent ? 72 : 30;
+  return {
+    accuracy: score,
+    criteria_scores: [
+      { criterion: '知识点使用准确性', score, comment: hasContent ? '基本使用了目标知识点。' : '回答内容不足。' },
+      { criterion: '语境适切度', score: hasContent ? 75 : 20, comment: hasContent ? '回答有一定关联。' : '关联不足。' },
+      { criterion: '表达完整性', score: hasContent ? 70 : 10, comment: hasContent ? '表达基本完整。' : '表达不完整。' },
+    ],
+    improvement: hasContent ? '尝试使用更多样的句式。' : '请写出完整的英文句子。',
+    better_expression: `（LLM不可用）多练习${topic}的用法。`,
+    overall_score: score,
+  };
+}
+
 export { getClient, getClient as getOpenAIClient };

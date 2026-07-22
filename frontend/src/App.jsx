@@ -3,7 +3,9 @@ import { useAuth } from './context/AuthContext.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import FeedPage from './pages/FeedPage.jsx'
 import DeepenPage from './pages/DeepenPage.jsx'
+import FlashcardPage from './pages/FlashcardPage.jsx'
 import TrainingPage from './pages/TrainingPage.jsx'
+import FreeformPage from './pages/FreeformPage.jsx'
 import MigrationPage from './pages/MigrationPage.jsx'
 import ArchivePage from './pages/ArchivePage.jsx'
 import CardDetailPage from './pages/CardDetailPage.jsx'
@@ -33,7 +35,9 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="/deepen/:videoId" element={<ProtectedRoute><DeepenPage /></ProtectedRoute>} />
+            <Route path="/flashcards/:videoId" element={<ProtectedRoute><FlashcardPage /></ProtectedRoute>} />
             <Route path="/training/:videoId" element={<ProtectedRoute><TrainingPage /></ProtectedRoute>} />
+            <Route path="/freeform/:videoId" element={<ProtectedRoute><FreeformPage /></ProtectedRoute>} />
             <Route path="/migration/:videoId" element={<ProtectedRoute><MigrationPage /></ProtectedRoute>} />
             <Route path="/archive" element={<ProtectedRoute><ArchivePage /></ProtectedRoute>} />
             <Route path="/card/:nodeId" element={<ProtectedRoute><CardDetailPage /></ProtectedRoute>} />

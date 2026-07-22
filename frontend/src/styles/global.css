@@ -416,3 +416,86 @@ position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3),0 0 0 12px #2a2a4a,0 0 0
 .card-review-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .card-review-btn{padding:10px;font-size:12px;font-weight:700;border-radius:10px}
 .card-detail-actionbar{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 20px;background:#fff;border-top:1px solid var(--border);align-items:center}
+
+/* ====== M5: 闪卡页面 ====== */
+.flashcard-page{padding-bottom:40px}
+.flashcard-progress{display:flex;flex-direction:column;align-items:center;padding:16px 20px 8px;gap:6px}
+.flashcard-dots{display:flex;gap:6px}
+.flashcard-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
+.flashcard-dot.active{background:var(--primary);transform:scale(1.4)}
+.flashcard-dot.done{background:var(--primary-dk)}
+.flashcard-counter{font-size:12px;font-weight:700;color:var(--text-lt)}
+.flashcard-area{display:flex;justify-content:center;padding:20px;perspective:1000px}
+.flashcard{width:100%;max-width:320px;height:200px;position:relative;cursor:pointer;transition:transform .5s;transform-style:preserve-3d}
+.flashcard.flipped{transform:rotateY(180deg)}
+.flashcard-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;box-shadow:var(--shadow)}
+.flashcard-front{background:linear-gradient(135deg,#fff,#f0f8ff);border:2px solid var(--blue)}
+.flashcard-back{background:linear-gradient(135deg,#fff,#f0fff0);border:2px solid var(--primary);transform:rotateY(180deg)}
+.flashcard-trigger-icon{font-size:32px;margin-bottom:8px}
+.flashcard-front-text{font-size:22px;font-weight:900;color:var(--text);text-align:center}
+.flashcard-hint{font-size:11px;color:var(--text-lt);margin-top:12px}
+.flashcard-back-text{font-size:15px;font-weight:600;color:var(--text);text-align:center;line-height:1.5}
+.flashcard-difficulty{font-size:10px;font-weight:700;color:var(--text-lt);background:var(--bg-gray);padding:2px 8px;border-radius:8px;margin-top:8px}
+.flashcard-actions{display:flex;gap:12px;padding:0 20px;animation:fadeUp .3s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.flashcard-action-btn{flex:1;padding:14px;font-size:14px;font-weight:800;border-radius:14px}
+.flashcard-complete{display:flex;flex-direction:column;align-items:center;padding:60px 20px}
+.flashcard-complete-icon{font-size:60px;margin-bottom:16px}
+.flashcard-complete-title{font-size:22px;font-weight:900;color:var(--text);margin-bottom:20px}
+.flashcard-accuracy{text-align:center;margin-bottom:30px}
+.flashcard-accuracy-num{font-size:48px;font-weight:900;color:var(--primary)}
+.flashcard-accuracy-label{font-size:13px;font-weight:700;color:var(--text-lt)}
+.flashcard-next-btn{margin-top:10px}
+
+/* ====== M5: TrainingPage 游戏化增强 ====== */
+.combo-badge{display:inline-block;font-weight:900;animation:comboPulse .5s}
+@keyframes comboPulse{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+.timer-bar-wrap{width:100%;height:6px;background:var(--bg-gray);border-radius:3px;margin-top:8px;position:relative;overflow:visible}
+.timer-bar{height:100%;border-radius:3px;transition:width 1s linear}
+.timer-num{position:absolute;right:0;top:-18px;font-size:11px;font-weight:800}
+.streak-fire-overlay{position:fixed;inset:0;pointer-events:none;z-index:200;display:flex;align-items:center;justify-content:center;animation:streakFlash 1.2s ease-out}
+@keyframes streakFlash{0%{opacity:0;transform:scale(.5)}30%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:scale(1.5)}}
+.streak-text{font-size:48px;font-weight:900;color:var(--orange);text-shadow:0 0 20px rgba(255,150,0,.6),0 0 40px rgba(255,75,75,.4)}
+.xp-popup{position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:28px;font-weight:900;color:var(--primary);z-index:200;pointer-events:none;animation:xpFloat 1.5s ease-out}
+@keyframes xpFloat{0%{opacity:0;transform:translate(-50%,0)}20%{opacity:1;transform:translate(-50%,-10px)}100%{opacity:0;transform:translate(-50%,-60px)}}
+.training-combo-stats{display:flex;justify-content:center;gap:20px;margin:12px 0 20px}
+.combo-stat-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.combo-stat-icon{font-size:24px}
+.combo-stat-num{font-size:28px;font-weight:900;color:var(--orange)}
+.combo-stat-label{font-size:10px;font-weight:700;color:var(--text-lt)}
+
+/* ====== M5: 问答题页面 ====== */
+.freeform-page{padding-bottom:40px}
+.freeform-content{padding:0 20px}
+.freeform-xp-hint{text-align:center;background:linear-gradient(135deg,var(--primary),var(--blue));color:#fff;padding:10px 16px;border-radius:14px;font-size:13px;font-weight:700;margin-bottom:16px}
+.freeform-question-card{background:#fff;border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px;border-left:4px solid var(--purple)}
+.freeform-question-tag{font-size:12px;font-weight:800;color:var(--purple);margin-bottom:8px}
+.freeform-question-text{font-size:16px;font-weight:700;color:var(--text);line-height:1.5}
+.freeform-criteria-hint{font-size:11px;color:var(--text-lt);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.freeform-input-section{margin-bottom:16px}
+.freeform-input-label{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px}
+.freeform-textarea{width:100%;border:2px solid var(--border);border-radius:14px;padding:14px;font-size:14px;font-family:inherit;resize:none;transition:border-color .2s}
+.freeform-textarea:focus{border-color:var(--primary)}
+.freeform-char-count{text-align:right;font-size:11px;color:var(--text-lt);margin-top:4px}
+.freeform-error{color:var(--red);font-size:12px;font-weight:600;margin-bottom:10px}
+.freeform-submit-row{margin-top:8px}
+.freeform-submit-btn{width:100%;padding:16px;font-size:16px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.freeform-result-wrap{padding:0 20px}
+.freeform-score-ring{width:120px;height:120px;border-radius:50%;border:6px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:20px auto}
+.freeform-score-num{font-size:36px;font-weight:900}
+.freeform-score-label{font-size:11px;font-weight:700;color:var(--text-lt)}
+.freeform-xp-banner{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--bg-gray);border-radius:12px;margin:12px 0}
+.freeform-levelup{background:linear-gradient(135deg,var(--primary),var(--yellow));color:#fff;padding:10px 16px;border-radius:12px;text-align:center;font-weight:800;margin-bottom:12px}
+.freeform-eval-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.freeform-eval-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:8px}
+.freeform-eval-score{font-size:24px;font-weight:900;text-align:center}
+.freeform-criteria-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.freeform-criteria-name{font-size:12px;font-weight:600;color:var(--text);min-width:80px}
+.freeform-criteria-bar-wrap{flex:1;height:6px;background:var(--bg-gray);border-radius:3px;overflow:hidden}
+.freeform-criteria-bar{height:100%;border-radius:3px;transition:width .5s}
+.freeform-criteria-score{font-size:12px;font-weight:800;min-width:28px;text-align:right}
+.freeform-suggestion-text{font-size:13px;color:var(--text);line-height:1.5}
+.freeform-better-card{background:linear-gradient(135deg,#fff,#f0fff0)}
+.freeform-better-text{font-size:13px;color:var(--text);font-style:italic;line-height:1.5}
+.freeform-btn-row{display:flex;gap:8px;margin-top:16px}
+.freeform-btn{flex:1;padding:14px;font-size:14px;border-radius:12px}

@@ -119,7 +119,7 @@ export default function DeepenPage() {
     }
   }, [done, videoId, showToast]);
 
-  // 手动点击「开始练习」→ 完成后进入内化答题
+  // 手动点击「开始练习」→ 完成后进入闪卡回忆（M5 三模态入口）
   const goPractice = useCallback(async () => {
     if (!completedRef.current) {
       completedRef.current = true;
@@ -127,18 +127,18 @@ export default function DeepenPage() {
         const res = await completeDeepen(videoId);
         if (res.xpGained > 0) {
           showToast(`⚡ +${res.xpGained} XP`);
-          setTimeout(() => navigate(`/training/${videoId}`), 900);
+          setTimeout(() => navigate(`/flashcards/${videoId}`), 900);
           return;
         }
       } catch {}
     }
-    navigate(`/training/${videoId}`);
+    navigate(`/flashcards/${videoId}`);
   }, [videoId, navigate, showToast]);
 
-  // 跳过（无 XP）
+  // 跳过（无 XP）→ 直接进入闪卡回忆
   const skipDeepen = useCallback(() => {
     if (abortRef.current) abortRef.current.abort();
-    navigate(`/training/${videoId}`);
+    navigate(`/flashcards/${videoId}`);
   }, [videoId, navigate]);
 
   // 标记有用

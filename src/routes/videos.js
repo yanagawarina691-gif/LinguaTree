@@ -14,6 +14,12 @@ import {
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 import { ensureCardArchived } from '../services/cardService.js';
+import {
+  getOrCreateFlashcards,
+  completeFlashcards,
+  getOrCreateFreeformQuestion,
+  evaluateFreeformAttempt,
+} from '../services/internalizeService.js';
 
 const router = Router();
 router.use(authRequired);
@@ -322,6 +328,71 @@ router.post('/:id/deepen/regenerate', async (req, res) => {
 router.post('/:id/deepen/complete', (req, res) => {
   try {
     const result = completeDeepen(req.params.id, req.userId);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/videos/:id/internalize/flashcards  (M5 模态一)
+ * 获取闪卡（无则自动生成并缓存）
+ */
+router.get('/:id/internalize/flashcards', async (req, res) => {
+  try {
+    getVideoForDeepen(req.params.id, req.userId); // 校验视频归属与状态
+    const result = await getOrCreateFlashcards(req.params.id);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/internalize/flashcards/complete  (M5 模态一)
+ * 标记闪卡回忆完成并发放 +10 XP（幂等）
+ */
+router.post('/:id/internalize/flashcards/complete', (req, res) => {
+  try {
+    getVideoForDeepen(req.params.id, req.userId);
+    const result = completeFlashcards(req.params.id, req.userId);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/videos/:id/internalize/freeform  (M5 模态三)
+ * 获取问答题（无则自动生成并缓存）
+ */
+router.get('/:id/internalize/freeform', async (req, res) => {
+  try {
+    getVideoForDeepen(req.params.id, req.userId);
+    const result = await getOrCreateFreeformQuestion(req.params.id, req.userId);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/internalize/freeform/evaluate  (M5 模态三)
+ * 提交问答题答案，获取 AI 评估并发放 XP（幂等防刷）
+ * body: { userInput: string }
+ */
+router.post('/:id/internalize/freeform/evaluate', async (req, res) => {
+  try {
+    const { userInput } = req.body;
+    if (!userInput || typeof userInput !== 'string') {
+      return res.status(400).json({ error: '请提供回答内容' });
+    }
+    getVideoForDeepen(req.params.id, req.userId);
+    const result = await evaluateFreeformAttempt(req.params.id, req.userId, userInput.trim());
     res.json(result);
   } catch (err) {
     const status = err.status || 500;
