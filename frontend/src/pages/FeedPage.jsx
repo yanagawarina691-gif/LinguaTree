@@ -59,7 +59,7 @@ export default function FeedPage() {
           setParseSteps(prev => prev.map(s => ({ ...s, status: 'done' })));
           await sleep(800);
           setParsing(false);
-          navigate(`/training/${videoId}`);
+          navigate(`/deepen/${videoId}`);
           return;
         }
         if (status.status === 'error') {
@@ -139,7 +139,7 @@ export default function FeedPage() {
           <p style={{ textAlign: 'center', color: 'var(--text-lt)', padding: 32, fontSize: 14 }}>还没有解析过视频，粘贴链接开始吧</p>
         ) : (
           videos.map(v => (
-            <div key={v.id} className="video-card" onClick={() => navigate(`/training/${v.id}`)}>
+            <div key={v.id} className="video-card" onClick={() => navigate(`/deepen/${v.id}`)}>
               <div className="video-thumb"><span className="play-icon">▶</span></div>
               <div className="video-info">
                 <div className="video-title">{v.title || '未命名视频'}</div>

@@ -159,7 +159,7 @@ export default function MigrationPage() {
 
           {/* 操作按钮 */}
           <div className="migration-btn-row">
-            <button className="btn3d btn-primary migration-btn" onClick={() => navigate('/tree')}>🌳 查看知识树</button>
+            <button className="btn3d btn-primary migration-btn" onClick={() => navigate('/tree')}>🔗 查看知识连接</button>
             <button className="btn3d btn-gray migration-btn" onClick={() => navigate('/')}>继续学习</button>
           </div>
         </div>

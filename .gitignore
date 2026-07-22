@@ -13,6 +13,11 @@ src/db/linguatree.db-shm
 
 # 临时文件
 temp/
+frontend/vite.config.js.timestamp-*.mjs
+
+# 前端构建产物（由 vite build 生成）
+public/assets/index-*.js
+public/assets/index-*.css
 
 # 系统文件
 .DS_Store

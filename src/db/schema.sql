@@ -27,10 +27,15 @@ CREATE TABLE IF NOT EXISTS user_nodes (
     user_id TEXT NOT NULL,
     node_id TEXT NOT NULL,
     xp INTEGER DEFAULT 0,
-    level INTEGER DEFAULT 0,            -- 0=休眠 1=发芽 2=茂叶 3=开花
+    level INTEGER DEFAULT 0,            -- 0=未发现 1=矿苗 2=晶芽 3=辉石 4=璀璨
+    stage TEXT DEFAULT 'undiscovered',  -- undiscovered/seedling/crystal/prism/radiant
     mastery REAL DEFAULT 0.0,           -- 0.0 ~ 1.0
     last_review_at TEXT,               -- 最后复习时间
     next_review_at TEXT,               -- 下次复习时间（v2 间隔复习）
+    last_migration_score INTEGER DEFAULT 0,
+    migration_count INTEGER DEFAULT 0,
+    last_freeform_score INTEGER DEFAULT 0,
+    xp_breakdown TEXT DEFAULT '{}',    -- 各来源 XP 明细与每日上限计数
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     UNIQUE(user_id, node_id),
@@ -55,6 +60,9 @@ CREATE TABLE IF NOT EXISTS videos (
     completion_rate REAL DEFAULT 0.0,   -- 完播率 0-1
     manual_transcript TEXT DEFAULT '',  -- 用户手动粘贴的文字稿（降级路径）
     error_message TEXT DEFAULT '',
+    deepen_completed INTEGER DEFAULT 0, -- 加深理解是否完成
+    migration_completed INTEGER DEFAULT 0, -- 迁移是否完成
+    freeform_completed INTEGER DEFAULT 0,  -- 问答题/内化是否完成
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -132,6 +140,7 @@ CREATE TABLE IF NOT EXISTS migration_scenarios (
     evaluation_criteria TEXT DEFAULT '[]', -- JSON 数组：评估维度
     reference_answer TEXT DEFAULT '',   -- 参考答案（AI 评估时对比）
     difficulty TEXT DEFAULT 'B1',      -- CEFR 难度
+    related_node_ids TEXT DEFAULT '[]', -- JSON 数组：场景关联的其他矿石 ID
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (video_id) REFERENCES videos(id),
     FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
@@ -149,10 +158,112 @@ CREATE TABLE IF NOT EXISTS migration_attempts (
     accuracy_score INTEGER DEFAULT 0,   -- 知识点使用准确率 0-100
     overall_score INTEGER DEFAULT 0,    -- 总分 0-100
     xp_gained INTEGER DEFAULT 0,        -- 获得的 XP
+    confirmed_link INTEGER DEFAULT 0,   -- 是否已确认晶链
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (scenario_id) REFERENCES migration_scenarios(id),
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (video_id) REFERENCES videos(id)
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- ========== P0: 加深理解 / 内化三模态 / 归档复习层 ==========
+
+-- 加深理解内容表
+CREATE TABLE IF NOT EXISTS deepen_understanding (
+    id TEXT PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    brief_comment TEXT DEFAULT '',      -- AI 简短回应（约 20 字）
+    comment_type TEXT DEFAULT '',       -- 点评/提醒/鼓励
+    corrections TEXT DEFAULT '[]',      -- JSON: 纠错内容数组
+    supplements TEXT DEFAULT '[]',      -- JSON: 补充内容数组
+    structured_content TEXT DEFAULT '[]', -- JSON: 逻辑理顺章节数组
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 加深理解反馈表（有用 / 有疑问）
+CREATE TABLE IF NOT EXISTS deepen_feedback (
+    id TEXT PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    feedback_type TEXT NOT NULL,        -- 'useful' | 'confused'
+    item_index INTEGER DEFAULT -1,      -- 对应纠错/补充项索引，-1 表示整体反馈
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 闪卡内容表
+CREATE TABLE IF NOT EXISTS flashcards (
+    id TEXT PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    front TEXT DEFAULT '',              -- 正面触发词/概念
+    back TEXT DEFAULT '',               -- 背面定义+例句
+    trigger_type TEXT DEFAULT 'concept', -- concept | structure | example
+    difficulty TEXT DEFAULT 'B1',
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 问答题表
+CREATE TABLE IF NOT EXISTS freeform_questions (
+    id TEXT PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    question TEXT DEFAULT '',
+    target_knowledge TEXT DEFAULT '',
+    evaluation_criteria TEXT DEFAULT '[]',  -- JSON array
+    reference_answers TEXT DEFAULT '[]',    -- JSON array
+    difficulty TEXT DEFAULT 'B1',
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 问答题尝试记录表
+CREATE TABLE IF NOT EXISTS freeform_attempts (
+    id TEXT PRIMARY KEY,
+    question_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    user_input TEXT DEFAULT '',
+    ai_evaluation TEXT DEFAULT '{}',     -- JSON
+    score INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (question_id) REFERENCES freeform_questions(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 知识卡片 backlinks 表
+CREATE TABLE IF NOT EXISTS card_backlinks (
+    id TEXT PRIMARY KEY,
+    source_node_id TEXT NOT NULL,
+    target_node_id TEXT NOT NULL,
+    link_type TEXT DEFAULT 'co_occurrence', -- co_occurrence | ai_supplement | migration_cover | user_manual
+    source_videos TEXT DEFAULT '[]',        -- JSON array of video IDs
+    strength REAL DEFAULT 0,
+    confirm_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (source_node_id) REFERENCES knowledge_nodes(node_id),
+    FOREIGN KEY (target_node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- SRS 复习记录表
+CREATE TABLE IF NOT EXISTS srs_reviews (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    last_review_date TEXT,
+    next_review_date TEXT,
+    review_interval INTEGER DEFAULT 1,  -- 天数
+    ease_factor REAL DEFAULT 2.5,       -- SM-2 算法参数
+    review_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
 );
 
 -- 索引
@@ -171,3 +282,13 @@ CREATE INDEX IF NOT EXISTS idx_migration_scenario_node ON migration_scenarios(no
 CREATE INDEX IF NOT EXISTS idx_migration_attempts_user ON migration_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_migration_attempts_video ON migration_attempts(video_id);
 CREATE INDEX IF NOT EXISTS idx_migration_attempts_scenario ON migration_attempts(scenario_id);
+CREATE INDEX IF NOT EXISTS idx_deepen_understanding_video ON deepen_understanding(video_id);
+CREATE INDEX IF NOT EXISTS idx_deepen_understanding_node ON deepen_understanding(node_id);
+CREATE INDEX IF NOT EXISTS idx_deepen_feedback_video ON deepen_feedback(video_id);
+CREATE INDEX IF NOT EXISTS idx_flashcards_video ON flashcards(video_id);
+CREATE INDEX IF NOT EXISTS idx_freeform_questions_video ON freeform_questions(video_id);
+CREATE INDEX IF NOT EXISTS idx_card_backlinks_source ON card_backlinks(source_node_id);
+CREATE INDEX IF NOT EXISTS idx_card_backlinks_target ON card_backlinks(target_node_id);
+CREATE INDEX IF NOT EXISTS idx_srs_reviews_user ON srs_reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_srs_reviews_node ON srs_reviews(node_id);
+CREATE INDEX IF NOT EXISTS idx_srs_reviews_next ON srs_reviews(next_review_date);

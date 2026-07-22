@@ -3,6 +3,7 @@ import db from '../db/index.js';
 import { authRequired } from '../middleware/auth.js';
 import { runPipeline, processExerciseCompletion } from '../services/pipeline.js';
 import { getOrCreateMigrationScenario, evaluateMigrationAttempt } from '../services/migrationService.js';
+import { getOrCreateDeepenUnderstanding, markDeepenCompleted, recordDeepenFeedback } from '../services/deepenService.js';
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 
@@ -168,12 +169,93 @@ router.post('/:id/exercises/complete', (req, res) => {
 
   const result = processExerciseCompletion(req.userId, req.params.id, attempts);
 
+  // P0: 旧版 choice/fill/judge 作为内化过渡，标记 freeform_completed
+  db.prepare(`
+    UPDATE videos SET freeform_completed = 1, updated_at = datetime('now') WHERE id = ?
+  `).run(req.params.id);
+
   res.json({
     totalQuestions: attempts.length,
     correctCount: attempts.filter(a => a.isCorrect).length,
     skippedCount: attempts.filter(a => a.isSkipped).length,
     treeUpdate: result.treeUpdate,
   });
+});
+
+/**
+ * GET /api/videos/:id/deepen
+ * 获取加深理解内容（无则调用 LLM 生成并缓存）
+ */
+router.get('/:id/deepen', async (req, res) => {
+  const video = db.prepare(`
+    SELECT id, title FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const content = await getOrCreateDeepenUnderstanding(req.params.id, req.userId);
+    res.json({ ...content, video_title: video.title });
+  } catch (err) {
+    logger.error('[API]', `获取加深理解内容失败: ${err.message}`);
+    res.status(500).json({ error: '生成加深理解内容失败', message: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/deepen/feedback
+ * 提交加深理解反馈（useful / confused）
+ * body: { feedbackType: string, itemIndex?: number }
+ */
+router.post('/:id/deepen/feedback', (req, res) => {
+  const { feedbackType, itemIndex } = req.body;
+
+  if (!feedbackType || !['useful', 'confused'].includes(feedbackType)) {
+    return res.status(400).json({ error: 'feedbackType 必须是 useful 或 confused' });
+  }
+
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const result = recordDeepenFeedback(req.params.id, req.userId, feedbackType, itemIndex ?? -1);
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `记录加深理解反馈失败: ${err.message}`);
+    res.status(500).json({ error: '记录反馈失败', message: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/deepen
+ * 标记加深理解完成或跳过
+ * body: { skipped?: boolean }
+ */
+router.post('/:id/deepen', (req, res) => {
+  const { skipped = false } = req.body;
+
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const result = markDeepenCompleted(req.params.id, req.userId, !!skipped);
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `完成加深理解失败: ${err.message}`);
+    res.status(500).json({ error: '更新加深理解状态失败', message: err.message });
+  }
 });
 
 /**

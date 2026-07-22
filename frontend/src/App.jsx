@@ -3,6 +3,8 @@ import { useAuth } from './context/AuthContext.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import FeedPage from './pages/FeedPage.jsx'
 import TrainingPage from './pages/TrainingPage.jsx'
+import InternalizePage from './pages/InternalizePage.jsx'
+import DeepenPage from './pages/DeepenPage.jsx'
 import MigrationPage from './pages/MigrationPage.jsx'
 import TreePage from './pages/TreePage.jsx'
 import BranchDetailPage from './pages/BranchDetailPage.jsx'
@@ -29,6 +31,8 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+            <Route path="/deepen/:videoId" element={<ProtectedRoute><DeepenPage /></ProtectedRoute>} />
+            <Route path="/internalize/:videoId" element={<ProtectedRoute><InternalizePage /></ProtectedRoute>} />
             <Route path="/training/:videoId" element={<ProtectedRoute><TrainingPage /></ProtectedRoute>} />
             <Route path="/migration/:videoId" element={<ProtectedRoute><MigrationPage /></ProtectedRoute>} />
             <Route path="/tree" element={<ProtectedRoute><TreePage /></ProtectedRoute>} />

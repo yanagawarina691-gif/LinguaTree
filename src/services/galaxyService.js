@@ -49,8 +49,11 @@ const SUBBRANCH_FAMILY = {
   'culture.trends': 'gem',
 };
 
-// ====== 阶段名称（与 HTML 一致） ======
-export const STAGE_NAMES = ['休眠', '晶核', '初晶', '晶簇', '盛晶'];
+// ====== 阶段名称（PRD 五阶段矿石生长模型） ======
+export const STAGE_NAMES = ['未发现', '矿苗', '晶芽', '辉石', '璀璨'];
+
+// ====== XP 阶段阈值 ======
+const STAGE_THRESHOLDS = [0, 50, 150, 350, 700];
 
 /**
  * 从 node_id 提取子分支 id（前两段）
@@ -63,18 +66,16 @@ function extractSubBranchId(nodeId) {
 }
 
 /**
- * 根据 level + mastery 计算显示阶段（0-4）
- * level 0 → stage 0（暗灰不可交互）
- * level 1 → stage 1（晶核）
- * level 2 → mastery>=0.7 ? 3 : 2
- * level 3 → mastery>=0.7 ? 4 : 3
+ * 根据累计 XP 直接计算矿石阶段（PRD 五阶段阈值）
+ * @param {number} xp
+ * @returns {number} 0-4
  */
-export function calcStage(level, mastery) {
-  if (level === 0) return 0;
-  if (level === 1) return 1;
-  if (level === 2) return mastery >= 0.7 ? 3 : 2;
-  // level === 3
-  return mastery >= 0.7 ? 4 : 3;
+export function calcStage(xp) {
+  let stage = 0;
+  for (let i = 0; i < STAGE_THRESHOLDS.length; i++) {
+    if (xp >= STAGE_THRESHOLDS[i]) stage = i;
+  }
+  return stage;
 }
 
 /**
@@ -97,10 +98,11 @@ export function getGalaxyNodes(userId) {
   return rows.map(row => {
     const level = row.level || 0;
     const mastery = row.mastery || 0;
+    const xp = row.xp || 0;
     const subBranchId = extractSubBranchId(row.node_id);
     const palette = BRANCH_PALETTE[row.top_branch] || 'blue';
     const family = SUBBRANCH_FAMILY[subBranchId] || 'prism';
-    const stage = calcStage(level, mastery);
+    const stage = calcStage(xp);
 
     return {
       node_id: row.node_id,
@@ -114,10 +116,10 @@ export function getGalaxyNodes(userId) {
       palette,
       family,
       sort_order: row.sort_order,
-      xp: row.xp || 0,
+      xp,
       level,
-      mastery,
       stage,
+      mastery,
       active: level > 0,
       last_review_at: row.last_review_at,
     };

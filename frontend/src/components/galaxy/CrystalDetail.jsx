@@ -35,7 +35,7 @@ export default function CrystalDetail({ node, neighbors, nodesById, onToast }) {
             <strong>{name}</strong>
           </div>
           <div className="cl-stage-label">
-            {stage > 0 ? `第 ${stage} 阶段 · ${STAGE_NAMES[stage]}` : '未激活 · 暗灰状态'}
+            {stage > 0 ? `${STAGE_NAMES[stage]} · ${stage}/4` : '未发现 · 暗灰状态'}
           </div>
         </div>
         <button

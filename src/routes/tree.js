@@ -36,7 +36,7 @@ router.get('/branch/:branchId', (req, res) => {
     SELECT
       kn.node_id, kn.name, kn.definition, kn.sub_branch,
       kn.top_branch, kn.top_branch_name, kn.color, kn.sort_order,
-      un.xp, un.level, un.mastery, un.last_review_at
+      un.xp, un.level, un.stage, un.mastery, un.last_review_at
     FROM knowledge_nodes kn
     LEFT JOIN user_nodes un ON un.node_id = kn.node_id AND un.user_id = ?
     WHERE kn.top_branch = ?
@@ -63,6 +63,7 @@ router.get('/branch/:branchId', (req, res) => {
       definition: row.definition,
       xp: row.xp || 0,
       level: row.level || 0,
+      stage: row.stage || 'undiscovered',
       mastery: row.mastery || 0,
     });
   }

@@ -4,7 +4,7 @@ import TopBar from '../components/TopBar.jsx';
 import { getBranch } from '../api/tree.js';
 
 const BRANCH_ICONS = { listening:'👂', grammar:'✏️', culture:'🌍', vocabulary:'📖', pronunciation:'🗣️' };
-const LVL_NAMES = ['休眠','发芽','茂叶','开花'];
+const LVL_NAMES = ['未发现','矿苗','晶芽','辉石','璀璨'];
 
 export default function BranchDetailPage() {
   const { branchId } = useParams();
@@ -41,7 +41,11 @@ export default function BranchDetailPage() {
             <div className="section-title" style={{ padding: '0 0 4px' }}>{subName}</div>
             {nodes.map(leaf => {
               const mastery = Math.round((leaf.mastery || 0) * 100);
-              const masteryColor = leaf.level === 0 ? '#E0E0E0' : leaf.level === 1 ? '#A8E6A1' : leaf.level === 2 ? '#58CC02' : '#FFD700';
+              const masteryColor =
+                leaf.level === 0 ? '#E0E0E0' :
+                leaf.level === 1 ? '#C9B99A' :
+                leaf.level === 2 ? '#A0D8EF' :
+                leaf.level === 3 ? '#B19CD9' : '#FFD700';
               return (
                 <div key={leaf.node_id} className="node-card">
                   <div className="node-card-top">

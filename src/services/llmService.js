@@ -131,56 +131,150 @@ ${videoData.manual_transcript ? `- 用户手动提供的文字稿:\n${videoData.
 }
 
 /**
+ * 构建降级 mock 知识点抽取结果
+ * 基于关键词在知识树节点中做简单匹配，确保 LLM 不可用时解析流程仍能走通
+ */
+function buildMockExtraction(videoData) {
+  const text = [
+    videoData.title,
+    videoData.asr_text,
+    videoData.ocr_text,
+    videoData.vlm_description,
+    videoData.manual_transcript,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  const nodes = loadNodeListForPrompt();
+  const matched = [];
+
+  for (const node of nodes) {
+    if (node.node_id === 'unclassified') continue;
+    // 关键词：中文名、英文定义、node_id 最后一级
+    const keywords = [
+      node.name,
+      node.definition,
+      node.node_id.split('.').pop().replace(/_/g, ' '),
+    ].filter(Boolean).map(k => k.toLowerCase());
+
+    const hit = keywords.some(k => k.length >= 2 && text.includes(k));
+    if (hit) {
+      matched.push({
+        node_id: node.node_id,
+        weight: 3,
+        confidence: 0.7,
+        reason: 'LLM 降级：关键词匹配',
+      });
+    }
+  }
+
+  // 最多取 3 个匹配节点
+  const topNodes = matched.slice(0, 3);
+  const mainNode = topNodes[0];
+
+  const exercises = {};
+  if (mainNode) {
+    exercises.choice = {
+      node_id: mainNode.node_id,
+      type: 'choice',
+      question: `关于该视频讲解的知识点，以下哪项表述是正确的？`,
+      options: [
+        '这是一个错误的示例选项。',
+        '这是另一个占位选项。',
+        '这是正确的知识点描述。',
+        '这是干扰项。',
+      ],
+      answer: 2,
+      explanation: '（LLM 降级生成）请结合视频内容复习该知识点。',
+    };
+    exercises.fill = {
+      node_id: mainNode.node_id,
+      type: 'fill',
+      question: '根据视频内容，完成这个句子：I _____ my homework already.',
+      answer: 'have finished',
+      explanation: '（LLM 降级生成）',
+    };
+    exercises.judge = {
+      node_id: mainNode.node_id,
+      type: 'judge',
+      question: '视频中讲解的英语知识点是核心语法点。',
+      answer: true,
+      explanation: '（LLM 降级生成）',
+    };
+  }
+
+  logger.warn('LLM', `知识点抽取降级：关键词匹配 ${topNodes.length} 个节点`);
+
+  return {
+    nodes: topNodes,
+    unclassified: [],
+    cefr_level: 'B1',
+    topic: mainNode?.name || '未分类知识点',
+    summary: '（LLM 降级生成）视频内容已按关键词匹配到知识点，建议复习原视频加深理解。',
+    exercises,
+  };
+}
+
+/**
  * LLM 知识点抽取与映射（阶段二核心）
  * @param {Object} videoData - { title, author, asr_text, ocr_text, vlm_description, manual_transcript }
  * @returns {Object} - { nodes, unclassified, cefr_level, summary, exercises }
  */
 export async function extractKnowledge(videoData) {
+  // 降级：LLM 未配置时直接返回 mock 结果
+  if (!config.OPENAI_API_KEY) {
+    logger.warn('LLM', 'OPENAI_API_KEY 未配置，返回 mock 知识点抽取结果');
+    return buildMockExtraction(videoData);
+  }
+
   const openai = getClient();
   const { systemPrompt, userPrompt } = buildExtractionPrompt(videoData);
 
   logger.stage('LLM', '开始知识点抽取与映射...');
 
-  const response = await openai.chat.completions.create({
-    model: config.LLM_MODEL,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.3,
-    max_tokens: 3000,
-  }, {
-    timeout: config.LLM_TIMEOUT,
-  });
-
-  const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error('LLM 返回空内容');
-  }
-
-  let result;
   try {
-    result = JSON.parse(content);
-  } catch (e) {
-    logger.error('LLM 返回的 JSON 解析失败:', content.slice(0, 200));
-    throw new Error('LLM 返回格式错误: ' + e.message);
+    const response = await openai.chat.completions.create({
+      model: config.LLM_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 3000,
+    }, {
+      timeout: config.LLM_TIMEOUT,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('LLM 返回空内容');
+    }
+
+    let result;
+    try {
+      result = JSON.parse(content);
+    } catch (e) {
+      logger.error('LLM 返回的 JSON 解析失败:', content.slice(0, 200));
+      throw new Error('LLM 返回格式错误: ' + e.message);
+    }
+
+    // 验证输出
+    if (!result.nodes || !Array.isArray(result.nodes)) {
+      result.nodes = [];
+    }
+    if (!result.exercises || typeof result.exercises !== 'object') {
+      result.exercises = {};
+    }
+
+    // 过滤低 confidence 节点
+    result.nodes = result.nodes.filter(n => n.confidence >= 0.7 && n.weight >= 1 && n.weight <= 5);
+
+    logger.stage('LLM', `抽取完成: ${result.nodes.length} 个有效节点, CEFR=${result.cefr_level}, 题目=${Object.keys(result.exercises).length}种`);
+
+    return result;
+  } catch (err) {
+    logger.error('LLM', `知识点抽取失败，降级为 mock: ${err.message}`);
+    return buildMockExtraction(videoData);
   }
-
-  // 验证输出
-  if (!result.nodes || !Array.isArray(result.nodes)) {
-    result.nodes = [];
-  }
-  if (!result.exercises || typeof result.exercises !== 'object') {
-    result.exercises = {};
-  }
-
-  // 过滤低 confidence 节点
-  result.nodes = result.nodes.filter(n => n.confidence >= 0.7 && n.weight >= 1 && n.weight <= 5);
-
-  logger.stage('LLM', `抽取完成: ${result.nodes.length} 个有效节点, CEFR=${result.cefr_level}, 题目=${Object.keys(result.exercises).length}种`);
-
-  return result;
 }
 
 /**
@@ -452,6 +546,142 @@ function buildMockEvaluation(userInput) {
     overall_score: score,
     strengths: hasContent ? ['尝试主动使用英语表达', '回答与场景相关'] : [],
     weaknesses: hasContent ? ['句式可以更丰富'] : ['回答内容不足'],
+  };
+}
+
+// ========== P0: 加深理解合并 Prompt ==========
+
+/**
+ * 构建加深理解合并 Prompt
+ */
+function buildDeepenPrompt(videoData, nodeMappings) {
+  const nodes = loadNodeListForPrompt();
+  const nodeListStr = nodes.map(n =>
+    `{ node_id: "${n.node_id}", name: "${n.name}", definition: "${n.definition}" }`
+  ).join('\n');
+
+  const mainNode = nodeMappings?.[0] || {};
+  const mappedNodesStr = (nodeMappings || []).map(n =>
+    `{ node_id: "${n.node_id}", name: "${n.name}", weight: ${n.weight || 1} }`
+  ).join('\n');
+
+  const systemPrompt = `你是英语学习陪读伙伴兼内容优化专家。用户刚看完一个抖音英语教学视频，请基于视频数据生成一页"加深理解"内容。
+
+任务零 - 简短回应：用约 20 字对视频做个自然口语化的回应（点评/提醒/鼓励，要具体有个性，避免泛泛而谈）。
+任务一 - 纠错：识别 ASR 文本中的语法/用词/发音提示错误。无错误则返回空数组；置信度 < 0.7 的不展示。
+任务二 - 补充：补充 2-3 个视频未覆盖但与该知识点密切相关的知识。
+任务三 - 理顺：将口语化内容重组为"定义→结构→例句→易错点"框架，每个章节简洁，总长度 ≤ 300 字。
+
+输出严格 JSON（不要 markdown，不要额外文字）：
+{
+  "brief_comment": "约20字的回应文本",
+  "comment_type": "点评|提醒|鼓励",
+  "corrections": [
+    {"original": "原句", "error_type": "语法错误", "explanation": "说明", "corrected": "正确形式", "confidence": 0.9}
+  ],
+  "supplements": [
+    {"title": "标题", "content": "内容说明", "relation": "与视频知识点的关系", "related_node_id": "节点ID或空字符串"}
+  ],
+  "structured_content": [
+    {"section": "定义", "content": "..."}
+  ]
+}`;
+
+  const userPrompt = `视频标题: ${videoData.title || '（无标题）'}
+博主: ${videoData.author || '（未知）'}
+视频摘要: ${videoData.summary || '（无）'}
+视频 ASR 文本: ${videoData.asr_text || '（无）'}
+视频 OCR 文本: ${videoData.ocr_text || '（无）'}
+
+视频映射知识点（主知识点: ${mainNode.name || '未分类'}）：
+${mappedNodesStr || '（无）'}
+
+矿石列表（用于补充关联）：
+${nodeListStr}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+/**
+ * 生成加深理解内容（LLM 调用，含降级 mock）
+ * @param {Object} videoData - { title, author, asr_text, ocr_text, summary }
+ * @param {Array} nodeMappings - [{ node_id, name, weight }]
+ * @returns {Object} - { brief_comment, comment_type, corrections, supplements, structured_content }
+ */
+export async function generateDeepenUnderstanding(videoData, nodeMappings = []) {
+  // 降级：LLM 未配置时返回 mock 内容
+  if (!config.OPENAI_API_KEY) {
+    logger.warn('LLM', 'OPENAI_API_KEY 未配置，返回 mock 加深理解内容');
+    return buildMockDeepen(videoData, nodeMappings);
+  }
+
+  try {
+    const openai = getClient();
+    const { systemPrompt, userPrompt } = buildDeepenPrompt(videoData, nodeMappings);
+
+    logger.stage('DEEPEN', `生成加深理解内容: ${videoData.title || ''}`);
+
+    const response = await openai.chat.completions.create({
+      model: config.LLM_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.5,
+      max_tokens: 2000,
+    }, {
+      timeout: config.LLM_TIMEOUT,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('LLM 返回空内容');
+
+    const result = JSON.parse(content);
+
+    return {
+      brief_comment: result.brief_comment || '',
+      comment_type: result.comment_type || '提醒',
+      corrections: Array.isArray(result.corrections) ? result.corrections.filter(c => (c.confidence || 0) >= 0.7) : [],
+      supplements: Array.isArray(result.supplements) ? result.supplements.slice(0, 3) : [],
+      structured_content: Array.isArray(result.structured_content) ? result.structured_content : [],
+    };
+  } catch (err) {
+    logger.error('DEEPEN', `加深理解生成失败，降级为 mock: ${err.message}`);
+    return buildMockDeepen(videoData, nodeMappings);
+  }
+}
+
+/**
+ * 构建降级 mock 加深理解内容
+ */
+function buildMockDeepen(videoData, nodeMappings = []) {
+  const mainNode = nodeMappings?.[0] || {};
+  const topic = mainNode.name || videoData.title || '这个知识点';
+  return {
+    brief_comment: `讲得挺接地气，${topic}的坑要注意~`,
+    comment_type: '提醒',
+    corrections: [],
+    supplements: [
+      {
+        title: `${topic} 的常见搭配`,
+        content: `除了视频里提到的用法，${topic} 在口语中常与具体时间状语连用，注意时态一致。`,
+        relation: '扩展常见搭配',
+        related_node_id: mainNode.node_id || '',
+      },
+      {
+        title: '易混淆点提醒',
+        content: `不要和相近语法点混用，建议对比记忆。`,
+        relation: '防混淆',
+        related_node_id: '',
+      },
+    ],
+    structured_content: [
+      { section: '定义', content: `${topic} 表示视频讲解的核心语义。` },
+      { section: '结构', content: '主语 + 谓语 + 宾语（根据具体知识点调整）。' },
+      { section: '例句', content: '1. This is an example sentence.\n2. Practice makes perfect.' },
+      { section: '易错点', content: '注意时态、主谓一致和固定搭配。' },
+    ],
   };
 }
 

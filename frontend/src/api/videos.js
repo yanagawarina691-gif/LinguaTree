@@ -34,6 +34,27 @@ export function completeExercises(videoId, attempts) {
   });
 }
 
+// 获取加深理解内容（无则自动生成）
+export function getDeepen(videoId) {
+  return api(`/api/videos/${videoId}/deepen`);
+}
+
+// 标记加深理解完成或跳过
+export function completeDeepen(videoId, skipped = false) {
+  return api(`/api/videos/${videoId}/deepen`, {
+    method: 'POST',
+    body: JSON.stringify({ skipped }),
+  });
+}
+
+// 提交加深理解反馈
+export function feedbackDeepen(videoId, feedbackType, itemIndex = -1) {
+  return api(`/api/videos/${videoId}/deepen/feedback`, {
+    method: 'POST',
+    body: JSON.stringify({ feedbackType, itemIndex }),
+  });
+}
+
 // 获取迁移场景（无则自动生成）
 export function getMigration(videoId) {
   return api(`/api/videos/${videoId}/migration`);
