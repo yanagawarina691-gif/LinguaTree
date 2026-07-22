@@ -1,0 +1,26 @@
+# 依赖
+node_modules/
+frontend/node_modules/
+
+# 环境变量
+.env
+
+# 数据库
+src/db/linguatree.db
+src/db/linguatree.db-journal
+src/db/linguatree.db-wal
+src/db/linguatree.db-shm
+
+# 临时文件
+temp/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# 日志
+*.log
