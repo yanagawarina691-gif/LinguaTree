@@ -57,6 +57,12 @@ export default function InternalizePage() {
   const [finalStats, setFinalStats] = useState(null);
 
   const timerRef = useRef(null);
+  const attemptsRef = useRef([]);
+  const wrongQueueRef = useRef([]);
+
+  // Keep refs in sync with state
+  useEffect(() => { attemptsRef.current = attempts; }, [attempts]);
+  useEffect(() => { wrongQueueRef.current = wrongQueue; }, [wrongQueue]);
 
   // ========== Load video + flashcards ==========
   const loadData = useCallback(async () => {
@@ -123,11 +129,19 @@ export default function InternalizePage() {
   };
 
   // ========== Choice exercise logic ==========
+  const loadFreeform = useCallback(async (accuracy = null) => {
+    const ffData = await getFreeformQuestion(videoId, accuracy);
+    setFreeform(ffData);
+    return ffData;
+  }, [videoId]);
+
   useEffect(() => {
     if (phase !== PHASE.CHOICE || showingResult) return;
     if (exercises.length === 0) {
-      // No choice exercises, skip to freeform
-      setPhase(PHASE.FREEFORM);
+      // No choice exercises, load freeform and skip
+      loadFreeform(0)
+        .then(() => setPhase(PHASE.FREEFORM))
+        .catch(e => setError('加载问答题失败: ' + e.message));
       return;
     }
 
@@ -144,7 +158,7 @@ export default function InternalizePage() {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [phase, currentQ, showingResult, exercises.length]);
+  }, [phase, currentQ, showingResult, exercises.length, loadFreeform]);
 
   const handleTimeout = () => {
     if (showingResult) return;
@@ -161,12 +175,14 @@ export default function InternalizePage() {
     return null;
   };
 
-  const recordAnswer = async (isCorrect, isSkipped, userAnswer) => {
+  const recordAnswer = (isCorrect, isSkipped, userAnswer) => {
     if (showingResult) return;
     setShowingResult(true);
     clearInterval(timerRef.current);
 
     const q = getCurrentQuestion();
+    if (!q) return;
+
     const newAttempt = {
       exerciseId: q.id,
       nodeId: q.node_id,
@@ -175,7 +191,8 @@ export default function InternalizePage() {
       userAnswer: String(userAnswer),
     };
 
-    const newAttempts = [...attempts, newAttempt];
+    const newAttempts = [...attemptsRef.current, newAttempt];
+    attemptsRef.current = newAttempts;
     setAttempts(newAttempts);
 
     setChoiceStats(s => ({
@@ -194,25 +211,28 @@ export default function InternalizePage() {
     } else {
       setCombo(0);
       if (!isSkipped && q) {
-        setWrongQueue(wq => [...wq, q]);
+        const newWrongQueue = [...wrongQueueRef.current, q];
+        wrongQueueRef.current = newWrongQueue;
+        setWrongQueue(newWrongQueue);
       }
     }
 
-    setTimeout(async () => {
+    setTimeout(() => {
       setShowingResult(false);
 
       const isWrongQueue = currentQ >= exercises.length;
       if (isWrongQueue) {
-        setWrongQueue(wq => wq.slice(1));
-        if (wrongQueue.length <= 1) {
-          // All done including wrong queue
+        const newWrongQueue = wrongQueueRef.current.slice(1);
+        wrongQueueRef.current = newWrongQueue;
+        setWrongQueue(newWrongQueue);
+        if (newWrongQueue.length === 0) {
           finishChoice(newAttempts);
         }
       } else if (currentQ < exercises.length - 1) {
         setCurrentQ(i => i + 1);
       } else {
         // Primary exercises done, check wrong queue
-        if (wrongQueue.length > 0) {
+        if (wrongQueueRef.current.length > 0) {
           setCurrentQ(exercises.length);
         } else {
           finishChoice(newAttempts);
@@ -232,15 +252,12 @@ export default function InternalizePage() {
       ? Math.round((finalAttempts.filter(a => a.isCorrect).length / finalAttempts.length) * 100)
       : 0;
 
-    // Load freeform question
     try {
-      const ffData = await getFreeformQuestion(videoId, accuracy);
-      setFreeform(ffData);
+      await loadFreeform(accuracy);
+      setPhase(PHASE.FREEFORM);
     } catch (e) {
       setError('加载问答题失败: ' + e.message);
     }
-
-    setPhase(PHASE.FREEFORM);
   };
 
   const handleChoiceAnswer = (isCorrect, optionKey, userAnswer) => {

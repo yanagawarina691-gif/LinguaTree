@@ -32,13 +32,20 @@ export default function FeedPage() {
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+  const isUrl = (str) => {
+    return /^https?:\/\//i.test(str) || /^www\./i.test(str);
+  };
+
   const startParse = async () => {
-    if (!link.trim()) { showToast('请先粘贴视频链接'); return; }
+    if (!link.trim()) { showToast('请先粘贴视频链接或文字稿'); return; }
     setParsing(true);
     setParseSteps(PARSE_STEPS.map((s, i) => ({ ...s, idx: i, status: 'pending' })));
 
     try {
-      const result = await parseVideo(link.trim());
+      const input = link.trim();
+      const result = isUrl(input)
+        ? await parseVideo(input)
+        : await parseVideo('', input);
       const videoId = result.videoId;
 
       // Poll for status
@@ -104,7 +111,7 @@ export default function FeedPage() {
       <div className="link-input-wrap">
         <div className="link-input-card">
           <div className="link-input-row">
-            <input type="text" value={link} onChange={e => setLink(e.target.value)} placeholder="粘贴抖音视频链接..." />
+            <input type="text" value={link} onChange={e => setLink(e.target.value)} placeholder="粘贴抖音视频链接，或输入文字稿..." />
             <div className="paste-btn" onClick={async () => { try { const t = await navigator.clipboard.readText(); setLink(t); } catch(e) { showToast('请手动粘贴'); } }}>📋</div>
           </div>
           <button className="btn3d btn-primary" style={{ width: '100%', marginTop: 12, padding: 14, fontSize: 16 }} onClick={startParse} disabled={parsing}>
