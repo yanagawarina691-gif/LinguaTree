@@ -1,4 +1,4 @@
-import { api, getToken } from './client.js';
+import { api } from './client.js';
 
 // 提交视频解析
 export function parseVideo(url, manualTranscript) {
@@ -34,87 +34,15 @@ export function completeExercises(videoId, attempts) {
   });
 }
 
-// ===== v2 阶段一：加深理解 =====
-
-// 获取加深理解内容（缓存优先，非流式）
-export function getDeepen(videoId) {
-  return api(`/api/videos/${videoId}/deepen`);
+// 获取迁移场景（无则自动生成）
+export function getMigration(videoId) {
+  return api(`/api/videos/${videoId}/migration`);
 }
 
-// 提交加深理解反馈（有用/疑问）
-export function postDeepenFeedback(videoId, payload) {
-  return api(`/api/videos/${videoId}/deepen/feedback`, {
+// 提交迁移回答，获取 AI 评估
+export function evaluateMigration(videoId, userInput) {
+  return api(`/api/videos/${videoId}/migration/evaluate`, {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ userInput }),
   });
-}
-
-// 重新生成加深理解内容（清除缓存）
-export function regenerateDeepen(videoId) {
-  return api(`/api/videos/${videoId}/deepen/regenerate`, { method: 'POST' });
-}
-
-// 标记加深理解完成（+10 XP，幂等）
-export function completeDeepen(videoId) {
-  return api(`/api/videos/${videoId}/deepen/complete`, { method: 'POST' });
-}
-
-/**
- * SSE 流式读取加深理解内容
- * 用 fetch + ReadableStream（EventSource 无法携带 Authorization 头）
- * @param {string} videoId
- * @param {Object} handlers - { onComment, onCorrections, onSupplements, onStructured, onDone, onError }
- * @param {AbortSignal} [signal] - 可选中止信号
- */
-export async function streamDeepen(videoId, handlers, signal) {
-  const token = getToken();
-  const res = await fetch(`/api/videos/${videoId}/deepen/stream`, {
-    method: 'GET',
-    headers: { 'Authorization': token ? `Bearer ${token}` : '' },
-    signal,
-  });
-
-  if (!res.ok) {
-    let msg = `请求失败: ${res.status}`;
-    try { const d = await res.json(); msg = d.error || msg; } catch {}
-    if (handlers.onError) handlers.onError(msg);
-    return;
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    // SSE 事件以空行分隔
-    let sep;
-    while ((sep = buffer.indexOf('\n\n')) !== -1) {
-      const raw = buffer.slice(0, sep);
-      buffer = buffer.slice(sep + 2);
-
-      let event = 'message';
-      let data = '';
-      for (const line of raw.split('\n')) {
-        if (line.startsWith('event:')) event = line.slice(6).trim();
-        else if (line.startsWith('data:')) data += line.slice(5).trim();
-      }
-      if (!data) continue;
-
-      let payload;
-      try { payload = JSON.parse(data); } catch { continue; }
-
-      switch (event) {
-        case 'comment': handlers.onComment?.(payload); break;
-        case 'corrections': handlers.onCorrections?.(payload.items || []); break;
-        case 'supplements': handlers.onSupplements?.(payload.items || []); break;
-        case 'structured': handlers.onStructured?.(payload.sections || [], payload.keywords || []); break;
-        case 'done': handlers.onDone?.(payload); break;
-        case 'error': handlers.onError?.(payload.error || '生成失败'); break;
-      }
-    }
-  }
 }
