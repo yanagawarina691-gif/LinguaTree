@@ -54,7 +54,6 @@ CREATE TABLE IF NOT EXISTS videos (
     summary TEXT DEFAULT '',            -- LLM 生成的摘要
     completion_rate REAL DEFAULT 0.0,   -- 完播率 0-1
     manual_transcript TEXT DEFAULT '',  -- 用户手动粘贴的文字稿（降级路径）
-    deepen_completed INTEGER DEFAULT 0, -- v2: 加深理解阶段是否完成（0/1）
     error_message TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
@@ -107,36 +106,6 @@ CREATE TABLE IF NOT EXISTS exercise_attempts (
     FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
 );
 
--- 加深理解内容表（v2 三阶段学习管道：阶段一）
-CREATE TABLE IF NOT EXISTS deepen_understanding (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    video_id TEXT NOT NULL UNIQUE,      -- 一个视频一份加深理解内容
-    node_id TEXT NOT NULL,              -- 视频主知识点（weight 最高的节点）
-    brief_comment TEXT DEFAULT '',      -- AI 简短回应（约20字，人味）
-    comment_type TEXT DEFAULT '点评',    -- 点评 | 提醒 | 鼓励
-    corrections TEXT DEFAULT '[]',      -- JSON 数组: [{original, error_type, explanation, corrected, confidence}]
-    supplements TEXT DEFAULT '[]',      -- JSON 数组: [{title, content, relation, related_node_id}]
-    structured_content TEXT DEFAULT '[]', -- JSON 数组: [{section, content}]
-    keywords TEXT DEFAULT '[]',         -- JSON 数组: 核心术语（前端高亮用）
-    useful_count INTEGER DEFAULT 0,     -- "有用"标记次数
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (video_id) REFERENCES videos(id),
-    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
-);
-
--- 加深理解反馈表（"有用" / "我有疑问" / 单条纠错反馈）
-CREATE TABLE IF NOT EXISTS deepen_feedback (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    video_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    feedback_type TEXT NOT NULL,        -- 'useful' | 'question' | 'correction_useful' | 'correction_question'
-    target TEXT DEFAULT '',             -- 反馈对象（如纠错原句），整页反馈为空
-    message TEXT DEFAULT '',            -- 用户疑问的具体内容
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (video_id) REFERENCES videos(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
 -- 解析日志表（用于调试和异常排查）
 CREATE TABLE IF NOT EXISTS parse_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -146,6 +115,43 @@ CREATE TABLE IF NOT EXISTS parse_logs (
     message TEXT DEFAULT '',
     duration_ms INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id)
+);
+
+-- ========== M2: 迁移场景相关表 ==========
+
+-- 迁移场景表（AI 生成的场景，每个视频-节点可缓存一个）
+CREATE TABLE IF NOT EXISTS migration_scenarios (
+    id TEXT PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,              -- 主知识点节点 ID
+    node_name TEXT DEFAULT '',          -- 知识点名称（冗余，方便展示）
+    scenario_title TEXT DEFAULT '',     -- 场景标题
+    scenario_description TEXT DEFAULT '',-- 场景描述（含情境和任务说明）
+    user_task TEXT DEFAULT '',          -- 用户需要完成的具体任务
+    evaluation_criteria TEXT DEFAULT '[]', -- JSON 数组：评估维度
+    reference_answer TEXT DEFAULT '',   -- 参考答案（AI 评估时对比）
+    difficulty TEXT DEFAULT 'B1',      -- CEFR 难度
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 迁移尝试表（用户每次提交的迁移回答 + AI 评估结果）
+CREATE TABLE IF NOT EXISTS migration_attempts (
+    id TEXT PRIMARY KEY,
+    scenario_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    video_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    user_input TEXT DEFAULT '',         -- 用户提交的回答
+    ai_evaluation TEXT DEFAULT '{}',     -- JSON: AI 评估结果
+    accuracy_score INTEGER DEFAULT 0,   -- 知识点使用准确率 0-100
+    overall_score INTEGER DEFAULT 0,    -- 总分 0-100
+    xp_gained INTEGER DEFAULT 0,        -- 获得的 XP
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (scenario_id) REFERENCES migration_scenarios(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (video_id) REFERENCES videos(id)
 );
 
@@ -160,5 +166,8 @@ CREATE INDEX IF NOT EXISTS idx_exercises_video ON exercises(video_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_user ON exercise_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_node ON exercise_attempts(node_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_video ON exercise_attempts(video_id);
-CREATE INDEX IF NOT EXISTS idx_deepen_video ON deepen_understanding(video_id);
-CREATE INDEX IF NOT EXISTS idx_deepen_feedback_video ON deepen_feedback(video_id);
+CREATE INDEX IF NOT EXISTS idx_migration_scenario_video ON migration_scenarios(video_id);
+CREATE INDEX IF NOT EXISTS idx_migration_scenario_node ON migration_scenarios(node_id);
+CREATE INDEX IF NOT EXISTS idx_migration_attempts_user ON migration_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_migration_attempts_video ON migration_attempts(video_id);
+CREATE INDEX IF NOT EXISTS idx_migration_attempts_scenario ON migration_attempts(scenario_id);
