@@ -2,7 +2,15 @@ import { Router } from 'express';
 import db from '../db/index.js';
 import { authRequired } from '../middleware/auth.js';
 import { runPipeline, processExerciseCompletion } from '../services/pipeline.js';
-import { getOrCreateMigrationScenario, evaluateMigrationAttempt } from '../services/migrationService.js';
+import { getOrCreateMigrationScenario, evaluateMigrationAttempt, skipMigration } from '../services/migrationService.js';
+import {
+  getVideoForDeepen,
+  getDeepen,
+  generateAndStoreDeepen,
+  deleteDeepen,
+  recordFeedback,
+  completeDeepen,
+} from '../services/deepenService.js';
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 
@@ -177,6 +185,150 @@ router.post('/:id/exercises/complete', (req, res) => {
 });
 
 /**
+ * GET /api/videos/:id/deepen
+ * 获取加深理解内容（缓存优先，无则生成）
+ */
+router.get('/:id/deepen', async (req, res) => {
+  try {
+    const video = getVideoForDeepen(req.params.id, req.userId);
+
+    // 缓存优先
+    let content = getDeepen(req.params.id);
+    if (!content) {
+      content = await generateAndStoreDeepen(video, { stream: false });
+      // 重新读取以带上 useful_count 等
+      content = getDeepen(req.params.id) || content;
+    }
+
+    res.json({
+      ...content,
+      videoId: video.id,
+      title: video.title,
+      topic: content.brief_comment ? undefined : undefined, // topic 由前端从 video 详情取
+      deepenCompleted: !!video.deepen_completed,
+    });
+  } catch (err) {
+    const status = err.status || 500;
+    logger.error(`[API] 获取加深理解失败: ${err.message}`);
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/videos/:id/deepen/stream
+ * SSE 流式推送加深理解内容
+ * 事件序列: thinking → comment → corrections → supplements → structured → done
+ */
+router.get('/:id/deepen/stream', async (req, res) => {
+  // SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders?.();
+
+  const send = (event, data) => {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const video = getVideoForDeepen(req.params.id, req.userId);
+
+    // 推送 thinking 事件（前端显示加载状态）
+    send('thinking', { videoId: video.id, title: video.title });
+
+    let content = getDeepen(req.params.id);
+    if (!content) {
+      // 无缓存：流式生成（onChunk 推送 delta 供前端显示进度）
+      content = await generateAndStoreDeepen(video, {
+        stream: true,
+        onChunk: (delta) => {
+          // 推送原始 delta（前端可显示"AI 正在打字..."）
+          send('delta', { delta });
+        },
+      });
+      content = getDeepen(req.params.id) || content;
+    }
+
+    // 按段落推送结构化内容（前端逐段渲染）
+    send('comment', {
+      brief_comment: content.brief_comment,
+      comment_type: content.comment_type,
+    });
+    send('corrections', content.corrections || []);
+    send('supplements', content.supplements || []);
+    send('structured', {
+      sections: content.structured_content || [],
+      keywords: content.keywords || [],
+    });
+    send('done', {
+      videoId: video.id,
+      title: video.title,
+      deepenCompleted: !!video.deepen_completed,
+    });
+  } catch (err) {
+    const status = err.status || 500;
+    logger.error(`[API] 流式加深理解失败: ${err.message}`);
+    send('error', { message: err.message, status });
+  } finally {
+    res.end();
+  }
+});
+
+/**
+ * POST /api/videos/:id/deepen/feedback
+ * 提交加深理解反馈
+ * body: { type: "useful" | "question" | "correction_useful" | "correction_question", target?, message? }
+ */
+router.post('/:id/deepen/feedback', (req, res) => {
+  try {
+    getVideoForDeepen(req.params.id, req.userId); // 校验视频归属与状态
+    const { type, target, message } = req.body;
+    recordFeedback(req.params.id, req.userId, { type, target, message });
+    res.json({ ok: true });
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/deepen/regenerate
+ * 清除缓存并重新生成加深理解内容
+ */
+router.post('/:id/deepen/regenerate', async (req, res) => {
+  try {
+    const video = getVideoForDeepen(req.params.id, req.userId);
+    deleteDeepen(req.params.id);
+    const content = await generateAndStoreDeepen(video, { stream: false });
+    res.json({
+      ...content,
+      videoId: video.id,
+      title: video.title,
+      deepenCompleted: !!video.deepen_completed,
+    });
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/deepen/complete
+ * 标记加深理解完成并发放 XP（幂等：只发一次）
+ */
+router.post('/:id/deepen/complete', (req, res) => {
+  try {
+    const result = completeDeepen(req.params.id, req.userId);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/videos/:id/migration
  * 获取迁移场景（无则自动生成）
  */
@@ -224,6 +376,20 @@ router.post('/:id/migration/evaluate', async (req, res) => {
   } catch (err) {
     logger.error('[API]', `评估迁移回答失败: ${err.message}`);
     res.status(500).json({ error: '评估失败', message: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/migration/skip
+ * 记录用户跳过迁移行为（用于留存漏斗分析）
+ */
+router.post('/:id/migration/skip', (req, res) => {
+  try {
+    const result = skipMigration(req.params.id, req.userId);
+    res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
   }
 });
 

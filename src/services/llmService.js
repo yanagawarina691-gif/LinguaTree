@@ -217,6 +217,225 @@ export async function analyzeImage(imageBase64, mode = 'ocr') {
   return response.choices[0]?.message?.content?.trim() || '';
 }
 
+// ========== M1: 加深理解 — 合并生成（回应+纠错+补充+理顺）==========
+
+/**
+ * 构建加深理解合并 Prompt（对应 PRD §8.3）
+ * 一次 LLM 调用完成：简短回应 + 纠错 + 补充 + 逻辑理顺
+ * @param {Object} video - videos 表行
+ * @param {Object} knowledge - { topic, nodes: [{node_id, weight, name}] }
+ */
+function buildDeepenPrompt(video, knowledge) {
+  // 加载完整知识树节点供 supplement 关联
+  const allNodes = loadNodeListForPrompt();
+  const nodeListStr = allNodes.map(n =>
+    `{ node_id: "${n.node_id}", name: "${n.name}" }`
+  ).join(', ');
+
+  // 视频已抽取的知识点列表
+  const extractedStr = knowledge.nodes.map(n =>
+    `${n.name} (weight=${n.weight})`
+  ).join(', ');
+
+  // ASR 文本（优先 manual_transcript）
+  const asrText = video.asr_text || video.manual_transcript || '';
+
+  const systemPrompt = `你是英语学习陪读伙伴兼内容优化专家。以下是来自抖音英语教学视频的文字稿和 AI 已抽取的知识点。
+
+请完成四个任务，合并为一次输出：
+
+任务零 - 简短回应: 用约20字对视频做个自然口语化的回应。要具体有个性，像朋友聊天。可以是点评、提醒或鼓励。不要说"这个视频讲解清晰"这种泛泛的话。
+
+任务一 - 纠错: 识别文字稿中的语法错误、用词不当或发音提示错误。只标注置信度≥0.7的错误。如果无错误，返回空数组。
+
+任务二 - 补充: 补充2-3个视频未覆盖但与该知识点密切相关的知识。每个补充项关联一个知识树节点。
+
+任务三 - 理顺: 将口语化内容重组为"定义→结构→例句→易错点"框架，总长度≤300字。提取核心术语作为关键词用于高亮。
+
+输出 JSON 格式（严格遵循，不要输出其他内容）:
+{
+  "brief_comment": "约20字的回应文本",
+  "comment_type": "点评|提醒|鼓励",
+  "corrections": [
+    {"original": "原句", "error_type": "语法错误|用词不当|发音错误|事实性错误", "explanation": "为什么错", "corrected": "正确形式", "confidence": 0.9}
+  ],
+  "supplements": [
+    {"title": "补充标题", "content": "2-3句说明", "relation": "与视频知识点的关系", "related_node_name": "关联的知识树节点名"}
+  ],
+  "structured_content": [
+    {"section": "定义", "content": "..."},
+    {"section": "结构", "content": "..."},
+    {"section": "例句", "content": "..."},
+    {"section": "易错点", "content": "..."}
+  ],
+  "keywords": ["核心术语1", "核心术语2"]
+}`;
+
+  const userPrompt = `视频标题: ${video.title || '（无标题）'}
+视频摘要: ${video.summary || '（无）'}
+主知识点(topic): ${knowledge.topic}
+已抽取知识点: ${extractedStr || '（无）'}
+
+视频文字稿(ASR):
+${asrText || '（无文字稿）'}
+
+知识树节点列表（供补充关联）:
+${nodeListStr}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+/**
+ * 规范化加深理解 LLM 输出，确保字段完整、类型正确
+ */
+function normalizeDeepenResult(raw) {
+  const corrections = Array.isArray(raw.corrections)
+    ? raw.corrections.filter(c => c && typeof c.original === 'string' && (c.confidence ?? 1) >= 0.7)
+    : [];
+  const supplements = Array.isArray(raw.supplements) ? raw.supplements : [];
+  const structured = Array.isArray(raw.structured_content) ? raw.structured_content : [];
+  const keywords = Array.isArray(raw.keywords) ? raw.keywords.filter(k => typeof k === 'string' && k.trim()) : [];
+
+  return {
+    brief_comment: String(raw.brief_comment || '来看看这个知识点~').slice(0, 60),
+    comment_type: ['点评', '提醒', '鼓励'].includes(raw.comment_type) ? raw.comment_type : '点评',
+    corrections,
+    supplements,
+    structured_content: structured,
+    keywords,
+  };
+}
+
+/**
+ * 构建降级 mock 加深理解内容（LLM 不可用时）
+ */
+function buildMockDeepen(video, knowledge) {
+  const topic = knowledge.topic || '英语知识点';
+  return {
+    brief_comment: `讲得接地气，一起看看${topic}~`,
+    comment_type: '点评',
+    corrections: [],
+    supplements: [],
+    structured_content: [
+      { section: '定义', content: `本视频讲解了${topic}的相关用法。` },
+      { section: '结构', content: '请配置 OPENAI_API_KEY 以获取 AI 生成的详细结构。' },
+    ],
+    keywords: [topic],
+  };
+}
+
+/**
+ * 生成加深理解内容（非流式，一次 LLM 调用）
+ * @param {Object} video - videos 表行
+ * @param {Object} knowledge - { topic, nodes }
+ * @param {Function} [onChunk] - 未使用（非流式），保持签名一致
+ * @returns {Object} - { brief_comment, comment_type, corrections, supplements, structured_content, keywords }
+ */
+export async function generateDeepenContent(video, knowledge, onChunk) {
+  if (!config.OPENAI_API_KEY) {
+    logger.warn('[Deepen] OPENAI_API_KEY 未配置，返回 mock 加深理解内容');
+    return buildMockDeepen(video, knowledge);
+  }
+
+  const openai = getClient();
+  const { systemPrompt, userPrompt } = buildDeepenPrompt(video, knowledge);
+
+  logger.stage('DEEPEN', `生成加深理解: topic=${knowledge.topic}`);
+
+  const response = await openai.chat.completions.create({
+    model: config.LLM_MODEL,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.5,
+    max_tokens: 2500,
+  }, {
+    timeout: config.LLM_TIMEOUT,
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) throw new Error('LLM 返回空内容');
+
+  let raw;
+  try {
+    raw = JSON.parse(content);
+  } catch (e) {
+    logger.error('[Deepen] LLM JSON 解析失败:', content.slice(0, 200));
+    throw new Error('加深理解 LLM 返回格式错误: ' + e.message);
+  }
+
+  logger.stage('DEEPEN', `生成完成: corrections=${raw.corrections?.length || 0}, supplements=${raw.supplements?.length || 0}`);
+  return normalizeDeepenResult(raw);
+}
+
+/**
+ * 生成加深理解内容（流式，通过 onChunk 推送原始 delta 文本）
+ *
+ * 说明：LLM 返回的是完整 JSON，无法真正按段落流式。
+ * 此函数用 OpenAI stream 累积完整文本，期间通过 onChunk 推送 delta（供前端显示进度），
+ * 累积完成后 parse 并返回结构化对象。路由层 SSE 会再按段落推结构化事件。
+ *
+ * @param {Object} video - videos 表行
+ * @param {Object} knowledge - { topic, nodes }
+ * @param {(delta: string, accumulated: string) => void} [onChunk]
+ * @returns {Object} - 同 generateDeepenContent
+ */
+export async function generateDeepenContentStream(video, knowledge, onChunk) {
+  if (!config.OPENAI_API_KEY) {
+    logger.warn('[Deepen] OPENAI_API_KEY 未配置，返回 mock 加深理解内容（流式模式）');
+    const mock = buildMockDeepen(video, knowledge);
+    // 模拟流式推送 mock 内容
+    if (onChunk) {
+      const text = JSON.stringify(mock);
+      onChunk(text, text);
+    }
+    return mock;
+  }
+
+  const openai = getClient();
+  const { systemPrompt, userPrompt } = buildDeepenPrompt(video, knowledge);
+
+  logger.stage('DEEPEN', `流式生成加深理解: topic=${knowledge.topic}`);
+
+  const stream = await openai.chat.completions.create({
+    model: config.LLM_MODEL,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.5,
+    max_tokens: 2500,
+    stream: true,
+  }, {
+    timeout: config.LLM_TIMEOUT,
+  });
+
+  let accumulated = '';
+  for await (const chunk of stream) {
+    const delta = chunk.choices[0]?.delta?.content || '';
+    if (delta) {
+      accumulated += delta;
+      if (onChunk) onChunk(delta, accumulated);
+    }
+  }
+
+  if (!accumulated) throw new Error('LLM 流式返回空内容');
+
+  let raw;
+  try {
+    raw = JSON.parse(accumulated);
+  } catch (e) {
+    logger.error('[Deepen] 流式 LLM JSON 解析失败:', accumulated.slice(0, 200));
+    throw new Error('加深理解 LLM 返回格式错误: ' + e.message);
+  }
+
+  logger.stage('DEEPEN', `流式生成完成: corrections=${raw.corrections?.length || 0}, supplements=${raw.supplements?.length || 0}`);
+  return normalizeDeepenResult(raw);
+}
+
 // ========== M2: 迁移场景 — 场景生成 & 评估 ==========
 
 /**
@@ -311,7 +530,7 @@ export async function generateMigrationScenario(topic, nodeId, accuracy = null, 
 
   // 降级：LLM 未配置时返回 mock 场景
   if (!config.OPENAI_API_KEY) {
-    logger.warn('LLM', 'OPENAI_API_KEY 未配置，返回 mock 迁移场景');
+    logger.warn('[Migration] OPENAI_API_KEY 未配置，返回 mock 迁移场景');
     return buildMockScenario(topic, nodeDetail, accuracy);
   }
 
@@ -349,7 +568,7 @@ export async function generateMigrationScenario(topic, nodeId, accuracy = null, 
       difficulty: result.difficulty || 'B1',
     };
   } catch (err) {
-    logger.error('MIGRATION', `场景生成失败，降级为 mock: ${err.message}`);
+    logger.error('[Migration]', `场景生成失败，降级为 mock: ${err.message}`);
     return buildMockScenario(topic, nodeDetail, accuracy);
   }
 }
@@ -364,8 +583,8 @@ export async function generateMigrationScenario(topic, nodeId, accuracy = null, 
 export async function evaluateMigration(topic, scenario, userInput) {
   // 降级：LLM 未配置或用户输入为空
   if (!config.OPENAI_API_KEY) {
-    logger.warn('LLM', 'OPENAI_API_KEY 未配置，返回 mock 评估结果');
-    return buildMockEvaluation(userInput);
+    logger.warn('[Migration]', 'OPENAI_API_KEY 未配置，返回 mock 评估结果');
+    return buildMockEvaluation(userInput, topic);
   }
 
   if (!userInput || userInput.trim().length < 3) {
@@ -414,30 +633,30 @@ export async function evaluateMigration(topic, scenario, userInput) {
       weaknesses: Array.isArray(result.weaknesses) ? result.weaknesses : [],
     };
   } catch (err) {
-    logger.error('MIGRATION', `评估失败，降级为 mock: ${err.message}`);
-    return buildMockEvaluation(userInput);
+    logger.error('[Migration]', `评估失败，降级为 mock: ${err.message}`);
+    return buildMockEvaluation(userInput, topic);
   }
 }
 
 /**
- * 构建降级 mock 场景
+ * 构建降级 mock 场景（参考答案与知识点相关，不再硬编码 used to）
  */
 function buildMockScenario(topic, nodeDetail, accuracy) {
   const def = nodeDetail?.definition || `关于"${topic}"的英语知识点`;
   return {
     scenario_title: `${topic} 实战`,
-    scenario_description: `你刚认识了一位外国朋友，对方对你的过去经历很感兴趣，想了解更多你以前的生活习惯。请结合刚学到的"${topic}"知识点来表达。`,
-    user_task: `请用 "${topic}" 写出2-3个关于你过去生活习惯的英文句子。\n\n知识点定义: ${def}`,
+    scenario_description: `你刚认识了一位外国朋友，对方对你的英语学习很感兴趣，想听你用刚学到的"${topic}"表达一些想法。请结合这个知识点来完成下面的任务。`,
+    user_task: `请用 "${topic}" 写出2-3个英文句子，表达你的想法或经历。\n\n知识点定义: ${def}`,
     evaluation_criteria: ['知识点使用准确性', '语境适切度', '表达完整性'],
-    reference_answer: `I used to play basketball every weekend when I was in high school.`,
+    reference_answer: `This is a sample answer using ${topic}. (${def})`,
     difficulty: accuracy !== null && accuracy >= 80 ? 'B2' : 'B1',
   };
 }
 
 /**
- * 构建降级 mock 评估
+ * 构建降级 mock 评估（better_expression 与知识点相关）
  */
-function buildMockEvaluation(userInput) {
+function buildMockEvaluation(userInput, topic) {
   const hasContent = userInput && userInput.trim().length >= 10;
   const score = hasContent ? 72 : 30;
   return {
@@ -448,7 +667,7 @@ function buildMockEvaluation(userInput) {
       { criterion: '表达完整性', score: hasContent ? 70 : 10, comment: hasContent ? '表达基本完整，可以尝试更丰富的句型。' : '表达不完整。' },
     ],
     improvement_suggestion: hasContent ? '尝试使用更多样的句式结构，并注意知识点在不同语境下的用法差异。' : '请尝试写出完整的英文句子来回答场景任务。',
-    better_expression: 'I used to play basketball every weekend when I was in high school, but now I prefer swimming.',
+    better_expression: `（LLM 不可用）可参考"${topic}"的标准用法多加练习。`,
     overall_score: score,
     strengths: hasContent ? ['尝试主动使用英语表达', '回答与场景相关'] : [],
     weaknesses: hasContent ? ['句式可以更丰富'] : ['回答内容不足'],

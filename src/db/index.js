@@ -23,6 +23,8 @@ export function initSchema() {
   // 兼容已有数据库：为旧库补加 v2 新增列（SQLite 不支持 ADD COLUMN IF NOT EXISTS）
   const migrations = [
     `ALTER TABLE videos ADD COLUMN deepen_completed INTEGER DEFAULT 0`,
+    `ALTER TABLE videos ADD COLUMN migration_completed INTEGER DEFAULT 0`,
+    `ALTER TABLE videos ADD COLUMN freeform_completed INTEGER DEFAULT 0`,
   ];
   for (const sql of migrations) {
     try {

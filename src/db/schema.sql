@@ -55,6 +55,9 @@ CREATE TABLE IF NOT EXISTS videos (
     completion_rate REAL DEFAULT 0.0,   -- 完播率 0-1
     manual_transcript TEXT DEFAULT '',  -- 用户手动粘贴的文字稿（降级路径）
     error_message TEXT DEFAULT '',
+    deepen_completed INTEGER DEFAULT 0,      -- M1: 加深理解是否完成（0/1）
+    migration_completed INTEGER DEFAULT 0,   -- M2: 迁移环节是否完成（0/1，幂等防刷）
+    freeform_completed INTEGER DEFAULT 0,    -- M5: 问答题是否完成（0/1）
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -152,7 +155,40 @@ CREATE TABLE IF NOT EXISTS migration_attempts (
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (scenario_id) REFERENCES migration_scenarios(id),
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (video_id) REFERENCES videos(id)
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- ========== M1: 加深理解相关表 ==========
+
+-- 加深理解内容表（每个视频缓存一份，video_id UNIQUE）
+CREATE TABLE IF NOT EXISTS deepen_understanding (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id TEXT NOT NULL UNIQUE,          -- 视频ID（唯一，UPSERT）
+    node_id TEXT DEFAULT '',                -- 主知识点节点ID
+    brief_comment TEXT DEFAULT '',          -- AI简短回应（~20字）
+    comment_type TEXT DEFAULT '点评',        -- 回应类型: 点评/提醒/鼓励
+    corrections TEXT DEFAULT '[]',          -- JSON: 纠错内容数组
+    supplements TEXT DEFAULT '[]',          -- JSON: 补充内容数组
+    structured_content TEXT DEFAULT '[]',   -- JSON: 逻辑理顺章节数组
+    keywords TEXT DEFAULT '[]',             -- JSON: 高亮关键词数组
+    useful_count INTEGER DEFAULT 0,         -- "有用"标记计数
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 加深理解反馈表（用户对加深理解内容的反馈记录）
+CREATE TABLE IF NOT EXISTS deepen_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    feedback_type TEXT NOT NULL,            -- useful | question | correction_useful | correction_question
+    target TEXT DEFAULT '',                 -- 反馈对象（如某条纠错的原文）
+    message TEXT DEFAULT '',                -- 用户疑问文本
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- 索引
@@ -171,3 +207,6 @@ CREATE INDEX IF NOT EXISTS idx_migration_scenario_node ON migration_scenarios(no
 CREATE INDEX IF NOT EXISTS idx_migration_attempts_user ON migration_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_migration_attempts_video ON migration_attempts(video_id);
 CREATE INDEX IF NOT EXISTS idx_migration_attempts_scenario ON migration_attempts(scenario_id);
+CREATE INDEX IF NOT EXISTS idx_deepen_understanding_video ON deepen_understanding(video_id);
+CREATE INDEX IF NOT EXISTS idx_deepen_feedback_video ON deepen_feedback(video_id);
+CREATE INDEX IF NOT EXISTS idx_deepen_feedback_user ON deepen_feedback(user_id);
