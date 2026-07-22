@@ -80,7 +80,25 @@ export default function TrainingPage() {
           <div className="big-check">{correctCount === exercises.length ? '🎉' : '✅'}</div>
           <div className="training-result-score">{correctCount}/{exercises.length}</div>
           <div className="training-result-label">获得 {xpGained} XP</div>
-          <button className="btn3d btn-primary" style={{ padding: '16px 40px', fontSize: 16, marginTop: 8 }} onClick={() => navigate('/')}>完成</button>
+
+          {/* 迁移邀请弹窗 */}
+          <div className="migration-invite-card">
+            <div className="migration-invite-icon">🚀</div>
+            <div className="migration-invite-title">试试在新场景中用出来？</div>
+            <div className="migration-invite-desc">
+              你已掌握基础！完成场景迁移可获得额外 <strong style={{ color: 'var(--primary)' }}>50+ XP</strong>
+            </div>
+            <div className="migration-invite-btns">
+              <button className="btn3d btn-primary migration-invite-btn" style={{ padding: '14px 28px', fontSize: 15 }}
+                onClick={() => navigate(`/migration/${videoId}`)}>
+                开始迁移 →
+              </button>
+              <button className="btn3d btn-gray migration-invite-btn" style={{ padding: '14px 28px', fontSize: 15 }}
+                onClick={() => navigate('/')}>
+                下次再说
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

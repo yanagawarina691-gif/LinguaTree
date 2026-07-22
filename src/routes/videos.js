@@ -2,6 +2,7 @@ import { Router } from 'express';
 import db from '../db/index.js';
 import { authRequired } from '../middleware/auth.js';
 import { runPipeline, processExerciseCompletion } from '../services/pipeline.js';
+import { getOrCreateMigrationScenario, evaluateMigrationAttempt } from '../services/migrationService.js';
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 
@@ -173,6 +174,57 @@ router.post('/:id/exercises/complete', (req, res) => {
     skippedCount: attempts.filter(a => a.isSkipped).length,
     treeUpdate: result.treeUpdate,
   });
+});
+
+/**
+ * GET /api/videos/:id/migration
+ * 获取迁移场景（无则自动生成）
+ */
+router.get('/:id/migration', async (req, res) => {
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const scenario = await getOrCreateMigrationScenario(req.params.id, req.userId);
+    res.json(scenario);
+  } catch (err) {
+    logger.error('[API]', `获取迁移场景失败: ${err.message}`);
+    res.status(500).json({ error: '生成迁移场景失败', message: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/migration/evaluate
+ * 提交迁移回答，获取 AI 评估
+ * body: { userInput: string }
+ */
+router.post('/:id/migration/evaluate', async (req, res) => {
+  const { userInput } = req.body;
+
+  if (!userInput || typeof userInput !== 'string') {
+    return res.status(400).json({ error: '请提供迁移回答内容' });
+  }
+
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const result = await evaluateMigrationAttempt(req.params.id, req.userId, userInput.trim());
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `评估迁移回答失败: ${err.message}`);
+    res.status(500).json({ error: '评估失败', message: err.message });
+  }
 });
 
 export default router;

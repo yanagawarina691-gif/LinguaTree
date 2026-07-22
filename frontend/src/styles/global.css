@@ -149,6 +149,71 @@ position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3),0 0 0 12px #2a2a4a,0 0 0
 .training-result-score{font-size:32px;font-weight:900;color:var(--primary);font-family:'Fredoka',sans-serif;margin-bottom:4px}
 .training-result-label{font-size:14px;color:var(--text-lt);font-weight:600;margin-bottom:24px}
 
+/* ====== MIGRATION INVITE (in training result) ====== */
+.migration-invite-card{background:#fff;border-radius:20px;padding:24px 20px;box-shadow:var(--shadow);margin-top:8px;text-align:center;animation:fadeIn .4s}
+.migration-invite-icon{font-size:36px;margin-bottom:8px}
+.migration-invite-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px}
+.migration-invite-desc{font-size:13px;color:var(--text-lt);font-weight:600;line-height:1.5;margin-bottom:16px}
+.migration-invite-btns{display:flex;gap:10px;justify-content:center}
+.migration-invite-btn{flex:1;max-width:140px}
+
+/* ====== MIGRATION PAGE ====== */
+.migration-page{background:var(--bg-gray)}
+.migration-loading{text-align:center}
+.migration-content{padding:0 20px 100px}
+.migration-xp-hint{background:linear-gradient(135deg,rgba(255,200,0,.15),rgba(255,150,0,.1));border:1.5px solid rgba(255,200,0,.4);border-radius:14px;padding:10px 16px;font-size:13px;font-weight:700;color:var(--orange-dk);text-align:center;margin-bottom:16px}
+
+.migration-scenario-card{background:#fff;border-radius:20px;padding:20px;box-shadow:var(--shadow);margin-bottom:14px}
+.migration-scenario-tag{display:inline-block;background:rgba(206,130,255,.12);color:var(--purple);font-size:12px;font-weight:800;padding:5px 12px;border-radius:8px;margin-bottom:12px}
+.migration-scenario-title{font-size:20px;font-weight:800;color:var(--text);line-height:1.3;margin-bottom:10px}
+.migration-scenario-desc{font-size:14px;color:var(--text);line-height:1.6;font-weight:500}
+
+.migration-task-card{background:rgba(28,176,246,.08);border-radius:16px;padding:16px 18px;margin-bottom:14px;border-left:3px solid var(--blue)}
+.migration-task-label{font-size:13px;font-weight:800;color:var(--blue);margin-bottom:6px}
+.migration-task-text{font-size:14px;color:var(--text);line-height:1.6;font-weight:600}
+
+.migration-input-section{margin-bottom:20px}
+.migration-input-label{font-size:14px;font-weight:800;color:var(--text);margin-bottom:8px}
+.migration-textarea{width:100%;min-height:140px;border:2px solid var(--border);border-radius:16px;padding:14px 16px;font-size:15px;font-weight:600;color:var(--text);resize:none;transition:border-color .2s;background:#fff;line-height:1.6}
+.migration-textarea:focus{border-color:var(--primary)}
+.migration-textarea::placeholder{color:var(--text-lt);font-weight:400}
+.migration-char-count{text-align:right;font-size:12px;color:var(--text-lt);font-weight:600;margin-top:4px}
+
+.migration-error{color:var(--red);font-size:13px;font-weight:700;text-align:center;margin-bottom:12px}
+
+.migration-submit-row{padding-bottom:20px}
+.migration-submit-btn{width:100%;padding:16px;font-size:16px;gap:8px}
+.migration-submit-btn:disabled{opacity:.5;box-shadow:0 5px 0 var(--border)}
+
+/* ====== MIGRATION RESULT ====== */
+.migration-result-wrap{padding:8px 20px 100px}
+.migration-score-ring{width:120px;height:120px;border-radius:50%;background:#fff;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 16px}
+.migration-score-num{font-size:40px;font-weight:900;font-family:'Fredoka',sans-serif;line-height:1}
+.migration-score-label{font-size:11px;font-weight:700;color:var(--text-lt);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+
+.migration-xp-banner{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--primary),var(--primary-dk));border-radius:14px;padding:12px 20px;margin-bottom:16px;animation:fadeIn .4s}
+.migration-xp-banner span{color:#fff}
+
+.migration-levelup{background:rgba(255,215,0,.15);border:1.5px solid rgba(255,200,0,.5);border-radius:12px;padding:10px 16px;font-size:14px;font-weight:800;color:var(--yellow-dk);text-align:center;margin-bottom:16px;animation:bounceIn .5s}
+
+.migration-eval-card{background:#fff;border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:12px}
+.migration-eval-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px}
+.migration-eval-score{font-size:28px;font-weight:900;font-family:'Fredoka',sans-serif}
+
+.migration-criteria-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.migration-criteria-name{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--text);max-width:100px}
+.migration-criteria-bar-wrap{flex:1;height:8px;background:var(--bg-gray);border-radius:4px;overflow:hidden}
+.migration-criteria-bar{height:100%;border-radius:4px;transition:width .6s ease}
+.migration-criteria-score{font-size:13px;font-weight:800;color:var(--text);min-width:28px;text-align:right}
+
+.migration-bullet{font-size:13px;font-weight:600;line-height:1.5;margin-bottom:4px}
+.migration-suggestion-text{font-size:14px;color:var(--text);line-height:1.6;font-weight:600}
+.migration-better-card{background:rgba(88,204,2,.06);border-left:3px solid var(--primary)}
+.migration-better-text{font-size:14px;color:var(--text);line-height:1.6;font-weight:700;font-style:italic}
+
+.migration-btn-row{display:flex;gap:12px;margin-top:8px}
+.migration-btn{flex:1;padding:16px;font-size:15px}
+
 /* ====== HARVEST CARD OVERLAY ====== */
 #harvest-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;justify-content:center;align-items:flex-end;padding-bottom:0}
 #harvest-overlay.show{display:flex;animation:fadeIn .3s}

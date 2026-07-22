@@ -118,6 +118,43 @@ CREATE TABLE IF NOT EXISTS parse_logs (
     FOREIGN KEY (video_id) REFERENCES videos(id)
 );
 
+-- ========== M2: 迁移场景相关表 ==========
+
+-- 迁移场景表（AI 生成的场景，每个视频-节点可缓存一个）
+CREATE TABLE IF NOT EXISTS migration_scenarios (
+    id TEXT PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,              -- 主知识点节点 ID
+    node_name TEXT DEFAULT '',          -- 知识点名称（冗余，方便展示）
+    scenario_title TEXT DEFAULT '',     -- 场景标题
+    scenario_description TEXT DEFAULT '',-- 场景描述（含情境和任务说明）
+    user_task TEXT DEFAULT '',          -- 用户需要完成的具体任务
+    evaluation_criteria TEXT DEFAULT '[]', -- JSON 数组：评估维度
+    reference_answer TEXT DEFAULT '',   -- 参考答案（AI 评估时对比）
+    difficulty TEXT DEFAULT 'B1',      -- CEFR 难度
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id),
+    FOREIGN KEY (node_id) REFERENCES knowledge_nodes(node_id)
+);
+
+-- 迁移尝试表（用户每次提交的迁移回答 + AI 评估结果）
+CREATE TABLE IF NOT EXISTS migration_attempts (
+    id TEXT PRIMARY KEY,
+    scenario_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    video_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    user_input TEXT DEFAULT '',         -- 用户提交的回答
+    ai_evaluation TEXT DEFAULT '{}',     -- JSON: AI 评估结果
+    accuracy_score INTEGER DEFAULT 0,   -- 知识点使用准确率 0-100
+    overall_score INTEGER DEFAULT 0,    -- 总分 0-100
+    xp_gained INTEGER DEFAULT 0,        -- 获得的 XP
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (scenario_id) REFERENCES migration_scenarios(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (video_id) REFERENCES videos(id)
+);
+
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_user_nodes_user ON user_nodes(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_nodes_node ON user_nodes(node_id);
@@ -129,3 +166,8 @@ CREATE INDEX IF NOT EXISTS idx_exercises_video ON exercises(video_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_user ON exercise_attempts(user_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_node ON exercise_attempts(node_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_video ON exercise_attempts(video_id);
+CREATE INDEX IF NOT EXISTS idx_migration_scenario_video ON migration_scenarios(video_id);
+CREATE INDEX IF NOT EXISTS idx_migration_scenario_node ON migration_scenarios(node_id);
+CREATE INDEX IF NOT EXISTS idx_migration_attempts_user ON migration_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_migration_attempts_video ON migration_attempts(video_id);
+CREATE INDEX IF NOT EXISTS idx_migration_attempts_scenario ON migration_attempts(scenario_id);

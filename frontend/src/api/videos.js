@@ -33,3 +33,16 @@ export function completeExercises(videoId, attempts) {
     body: JSON.stringify({ attempts }),
   });
 }
+
+// 获取迁移场景（无则自动生成）
+export function getMigration(videoId) {
+  return api(`/api/videos/${videoId}/migration`);
+}
+
+// 提交迁移回答，获取 AI 评估
+export function evaluateMigration(videoId, userInput) {
+  return api(`/api/videos/${videoId}/migration/evaluate`, {
+    method: 'POST',
+    body: JSON.stringify({ userInput }),
+  });
+}
