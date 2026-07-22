@@ -53,11 +53,8 @@ app.get('/api/info', (req, res) => {
         'GET /api/videos/:id': '获取解析结果',
         'GET /api/videos': '视频列表',
         'POST /api/videos/:id/exercises/complete': '提交巩固训练结果',
-        'GET /api/videos/:id/deepen': 'v2·加深理解内容（缓存优先）',
-        'GET /api/videos/:id/deepen/stream': 'v2·加深理解 SSE 流式推送',
-        'POST /api/videos/:id/deepen/feedback': 'v2·提交加深理解反馈（有用/疑问）',
-        'POST /api/videos/:id/deepen/regenerate': 'v2·重新生成加深理解内容',
-        'POST /api/videos/:id/deepen/complete': 'v2·完成加深理解（+10 XP，幂等）',
+        'GET /api/videos/:id/migration': '获取迁移场景（M2，无则自动生成）',
+        'POST /api/videos/:id/migration/evaluate': '提交迁移回答并获取AI评估（M2）',
       },
       tree: {
         'GET /api/tree': '获取完整知识树',
