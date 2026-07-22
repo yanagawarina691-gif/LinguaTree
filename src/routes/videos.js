@@ -4,6 +4,13 @@ import { authRequired } from '../middleware/auth.js';
 import { runPipeline, processExerciseCompletion } from '../services/pipeline.js';
 import { getOrCreateMigrationScenario, evaluateMigrationAttempt } from '../services/migrationService.js';
 import { getOrCreateDeepenUnderstanding, markDeepenCompleted, recordDeepenFeedback } from '../services/deepenService.js';
+import {
+  getOrCreateFlashcards,
+  getOrCreateFreeformQuestion,
+  evaluateFreeformAttempt,
+  completeFlashcards,
+  completeChoiceExercises,
+} from '../services/internalizeService.js';
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 
@@ -167,12 +174,7 @@ router.post('/:id/exercises/complete', (req, res) => {
     return res.status(404).json({ error: '视频不存在' });
   }
 
-  const result = processExerciseCompletion(req.userId, req.params.id, attempts);
-
-  // P0: 旧版 choice/fill/judge 作为内化过渡，标记 freeform_completed
-  db.prepare(`
-    UPDATE videos SET freeform_completed = 1, updated_at = datetime('now') WHERE id = ?
-  `).run(req.params.id);
+  const result = completeChoiceExercises(req.userId, req.params.id, attempts);
 
   res.json({
     totalQuestions: attempts.length,
@@ -255,6 +257,103 @@ router.post('/:id/deepen', (req, res) => {
   } catch (err) {
     logger.error('[API]', `完成加深理解失败: ${err.message}`);
     res.status(500).json({ error: '更新加深理解状态失败', message: err.message });
+  }
+});
+
+/**
+ * GET /api/videos/:id/internalize/flashcards
+ * 获取闪卡内容（无则自动生成）
+ */
+router.get('/:id/internalize/flashcards', async (req, res) => {
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const result = await getOrCreateFlashcards(req.params.id, req.userId);
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `获取闪卡失败: ${err.message}`);
+    res.status(500).json({ error: '生成闪卡失败', message: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/internalize/flashcards/complete
+ * 完成闪卡阶段，发放 XP
+ */
+router.post('/:id/internalize/flashcards/complete', (req, res) => {
+  const { knownCount = 0 } = req.body;
+
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const result = completeFlashcards(req.params.id, req.userId, knownCount);
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `完成闪卡失败: ${err.message}`);
+    res.status(500).json({ error: '完成闪卡失败', message: err.message });
+  }
+});
+
+/**
+ * GET /api/videos/:id/internalize/freeform
+ * 获取问答题（无则自动生成）
+ */
+router.get('/:id/internalize/freeform', async (req, res) => {
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const accuracy = req.query.accuracy ? parseInt(req.query.accuracy, 10) : null;
+    const result = await getOrCreateFreeformQuestion(req.params.id, req.userId, accuracy);
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `获取问答题失败: ${err.message}`);
+    res.status(500).json({ error: '生成问答题失败', message: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/internalize/freeform/evaluate
+ * 提交问答题回答，获取 AI 评估
+ */
+router.post('/:id/internalize/freeform/evaluate', async (req, res) => {
+  const { userInput } = req.body;
+
+  if (!userInput || typeof userInput !== 'string') {
+    return res.status(400).json({ error: '请提供回答内容' });
+  }
+
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const result = await evaluateFreeformAttempt(req.params.id, req.userId, userInput.trim());
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `评估问答题失败: ${err.message}`);
+    res.status(500).json({ error: '评估失败', message: err.message });
   }
 });
 

@@ -67,3 +67,32 @@ export function evaluateMigration(videoId, userInput) {
     body: JSON.stringify({ userInput }),
   });
 }
+
+// ========== P1: 内化三模态 ==========
+
+// 获取闪卡内容
+export function getFlashcards(videoId) {
+  return api(`/api/videos/${videoId}/internalize/flashcards`);
+}
+
+// 完成闪卡阶段
+export function completeFlashcards(videoId, knownCount) {
+  return api(`/api/videos/${videoId}/internalize/flashcards/complete`, {
+    method: 'POST',
+    body: JSON.stringify({ knownCount }),
+  });
+}
+
+// 获取问答题
+export function getFreeformQuestion(videoId, accuracy = null) {
+  const qs = accuracy !== null ? `?accuracy=${accuracy}` : '';
+  return api(`/api/videos/${videoId}/internalize/freeform${qs}`);
+}
+
+// 提交问答题回答
+export function evaluateFreeform(videoId, userInput) {
+  return api(`/api/videos/${videoId}/internalize/freeform/evaluate`, {
+    method: 'POST',
+    body: JSON.stringify({ userInput }),
+  });
+}
