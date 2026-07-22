@@ -2,16 +2,7 @@ import { Router } from 'express';
 import db from '../db/index.js';
 import { authRequired } from '../middleware/auth.js';
 import { runPipeline, processExerciseCompletion } from '../services/pipeline.js';
-import {
-  getVideoForDeepen,
-  getPrimaryNode,
-  getDeepen,
-  generateAndStoreDeepen,
-  deleteDeepen,
-  recordFeedback,
-  completeDeepen,
-} from '../services/deepenService.js';
-import { extractBriefCommentFromPartial } from '../services/llmService.js';
+import { getOrCreateMigrationScenario, evaluateMigrationAttempt } from '../services/migrationService.js';
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 
@@ -142,150 +133,6 @@ router.get('/:id', (req, res) => {
   });
 });
 
-/* ============================================================
- * v2 阶段一：加深理解（Deepen Understanding）
- * ========================================================== */
-
-/**
- * GET /api/videos/:id/deepen
- * 获取加深理解内容（缓存优先；未生成则同步生成，适合非流式场景）
- */
-router.get('/:id/deepen', async (req, res) => {
-  try {
-    const video = getVideoForDeepen(req.params.id, req.userId);
-    const primary = getPrimaryNode(video.id);
-
-    let deepen = getDeepen(video.id);
-    let cached = true;
-    if (!deepen) {
-      deepen = await generateAndStoreDeepen(video);
-      cached = false;
-    }
-
-    res.json({
-      videoId: video.id,
-      title: video.title,
-      topic: primary.name,
-      deepenCompleted: !!video.deepen_completed,
-      cached,
-      deepen,
-    });
-  } catch (err) {
-    logger.error(`[API] deepen 获取失败: ${err.message}`);
-    res.status(err.status || 500).json({ error: err.message || '加深理解内容生成失败' });
-  }
-});
-
-/**
- * GET /api/videos/:id/deepen/stream
- * SSE 流式推送加深理解内容
- * 事件序列: comment → corrections → supplements → structured → done
- * （corrections 为空数组时前端省略整段展示）
- */
-router.get('/:id/deepen/stream', async (req, res) => {
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream; charset=utf-8',
-    'Cache-Control': 'no-cache, no-transform',
-    'Connection': 'keep-alive',
-    'X-Accel-Buffering': 'no',
-  });
-
-  let aborted = false;
-  req.on('close', () => { aborted = true; });
-
-  const send = (event, data) => {
-    if (aborted) return;
-    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-  };
-
-  try {
-    const video = getVideoForDeepen(req.params.id, req.userId);
-    const primary = getPrimaryNode(video.id);
-
-    let deepen = getDeepen(video.id);
-
-    if (deepen) {
-      // 缓存命中：按序快速重放各段事件
-      send('comment', { brief_comment: deepen.brief_comment, comment_type: deepen.comment_type });
-    } else {
-      // 未缓存：流式调用 LLM，brief_comment 就绪即早报
-      let commentSent = false;
-      deepen = await generateAndStoreDeepen(video, {
-        stream: true,
-        onChunk: (_delta, accumulated) => {
-          if (commentSent || aborted) return;
-          const partial = extractBriefCommentFromPartial(accumulated);
-          if (partial && partial.brief_comment) {
-            commentSent = true;
-            send('comment', partial);
-          }
-        },
-      });
-      if (!commentSent) {
-        send('comment', { brief_comment: deepen.brief_comment, comment_type: deepen.comment_type });
-      }
-    }
-
-    send('corrections', { items: deepen.corrections });
-    send('supplements', { items: deepen.supplements });
-    send('structured', { sections: deepen.structured_content, keywords: deepen.keywords });
-    send('done', {
-      videoId: video.id,
-      title: video.title,
-      topic: primary.name,
-      deepenCompleted: !!video.deepen_completed,
-      deepen,
-    });
-    res.end();
-  } catch (err) {
-    logger.error(`[API] deepen 流式生成失败: ${err.message}`);
-    send('error', { error: err.message || '加深理解内容生成失败' });
-    res.end();
-  }
-});
-
-/**
- * POST /api/videos/:id/deepen/feedback
- * 提交加深理解反馈
- * body: { type: 'useful'|'question'|'correction_useful'|'correction_question', target?, message? }
- */
-router.post('/:id/deepen/feedback', (req, res) => {
-  try {
-    getVideoForDeepen(req.params.id, req.userId);
-    recordFeedback(req.params.id, req.userId, req.body || {});
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || '反馈提交失败' });
-  }
-});
-
-/**
- * POST /api/videos/:id/deepen/regenerate
- * 清除缓存的加深理解内容（之后重新拉取/stream 即重新生成）
- */
-router.post('/:id/deepen/regenerate', (req, res) => {
-  try {
-    getVideoForDeepen(req.params.id, req.userId);
-    deleteDeepen(req.params.id);
-    res.json({ ok: true, message: '已清除缓存，重新拉取将重新生成' });
-  } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || '操作失败' });
-  }
-});
-
-/**
- * POST /api/videos/:id/deepen/complete
- * 标记加深理解完成（滚动到底/开始练习触发），发放 +10 XP（幂等）
- */
-router.post('/:id/deepen/complete', (req, res) => {
-  try {
-    const result = completeDeepen(req.params.id, req.userId);
-    res.json(result);
-  } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || '操作失败' });
-  }
-});
-
 /**
  * GET /api/videos
  * 获取用户的视频列表
@@ -327,6 +174,57 @@ router.post('/:id/exercises/complete', (req, res) => {
     skippedCount: attempts.filter(a => a.isSkipped).length,
     treeUpdate: result.treeUpdate,
   });
+});
+
+/**
+ * GET /api/videos/:id/migration
+ * 获取迁移场景（无则自动生成）
+ */
+router.get('/:id/migration', async (req, res) => {
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const scenario = await getOrCreateMigrationScenario(req.params.id, req.userId);
+    res.json(scenario);
+  } catch (err) {
+    logger.error('[API]', `获取迁移场景失败: ${err.message}`);
+    res.status(500).json({ error: '生成迁移场景失败', message: err.message });
+  }
+});
+
+/**
+ * POST /api/videos/:id/migration/evaluate
+ * 提交迁移回答，获取 AI 评估
+ * body: { userInput: string }
+ */
+router.post('/:id/migration/evaluate', async (req, res) => {
+  const { userInput } = req.body;
+
+  if (!userInput || typeof userInput !== 'string') {
+    return res.status(400).json({ error: '请提供迁移回答内容' });
+  }
+
+  const video = db.prepare(`
+    SELECT id FROM videos WHERE id = ? AND user_id = ?
+  `).get(req.params.id, req.userId);
+
+  if (!video) {
+    return res.status(404).json({ error: '视频不存在' });
+  }
+
+  try {
+    const result = await evaluateMigrationAttempt(req.params.id, req.userId, userInput.trim());
+    res.json(result);
+  } catch (err) {
+    logger.error('[API]', `评估迁移回答失败: ${err.message}`);
+    res.status(500).json({ error: '评估失败', message: err.message });
+  }
 });
 
 export default router;
