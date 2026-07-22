@@ -2,9 +2,19 @@ import { Router } from 'express';
 import db from '../db/index.js';
 import { authRequired } from '../middleware/auth.js';
 import { getUserTree, getWeakNodes, getUserStats, getUserTree as getTree } from '../services/treeService.js';
+import { getGalaxy } from '../services/galaxyService.js';
 
 const router = Router();
 router.use(authRequired);
+
+/**
+ * GET /api/tree/galaxy
+ * 获取矿石星图数据（42节点 + 共现关联 + 统计）
+ */
+router.get('/galaxy', (req, res) => {
+  const galaxy = getGalaxy(req.userId);
+  res.json(galaxy);
+});
 
 /**
  * GET /api/tree

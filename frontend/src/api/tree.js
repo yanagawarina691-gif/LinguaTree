@@ -1,5 +1,10 @@
 import { api } from './client.js';
 
+// 获取矿石星图数据（42节点 + 共现关联 + 统计）
+export function getGalaxy() {
+  return api('/api/tree/galaxy');
+}
+
 // 获取完整知识树
 export function getTree() {
   return api('/api/tree');
