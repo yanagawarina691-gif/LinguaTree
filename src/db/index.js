@@ -19,6 +19,19 @@ db.pragma('foreign_keys = ON');
 export function initSchema() {
   const schema = readFileSync(SCHEMA_PATH, 'utf-8');
   db.exec(schema);
+
+  // 兼容已有数据库：为旧库补加 v2 新增列（SQLite 不支持 ADD COLUMN IF NOT EXISTS）
+  const migrations = [
+    `ALTER TABLE videos ADD COLUMN deepen_completed INTEGER DEFAULT 0`,
+  ];
+  for (const sql of migrations) {
+    try {
+      db.exec(sql);
+    } catch (e) {
+      if (!e.message.includes('duplicate column name')) throw e;
+    }
+  }
+
   console.log('[DB] Schema initialized');
 }
 

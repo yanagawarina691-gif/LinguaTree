@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import FeedPage from './pages/FeedPage.jsx'
+import DeepenPage from './pages/DeepenPage.jsx'
 import TrainingPage from './pages/TrainingPage.jsx'
 import TreePage from './pages/TreePage.jsx'
 import BranchDetailPage from './pages/BranchDetailPage.jsx'
@@ -28,6 +29,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+            <Route path="/deepen/:videoId" element={<ProtectedRoute><DeepenPage /></ProtectedRoute>} />
             <Route path="/training/:videoId" element={<ProtectedRoute><TrainingPage /></ProtectedRoute>} />
             <Route path="/tree" element={<ProtectedRoute><TreePage /></ProtectedRoute>} />
             <Route path="/branch/:branchId" element={<ProtectedRoute><BranchDetailPage /></ProtectedRoute>} />
