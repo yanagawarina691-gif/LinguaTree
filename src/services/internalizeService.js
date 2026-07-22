@@ -18,19 +18,60 @@ function safeParse(jsonStr, defaultValue) {
 
 /**
  * 获取视频的主知识点节点（weight 最高）
+ * 若视频没有被归类到知识树节点，则取未分类节点（unclassified）作为兜底，
+ * 仍可用视频内容生成闪卡/问答题，避免流程卡死。
  * @param {string} videoId
- * @returns {Object|null} - { node_id, node_name, definition }
+ * @returns {Object|null} - { node_id, node_name, definition, is_unclassified }
  */
 export function getMainNodeForVideo(videoId) {
+  // 1. 优先取已分类节点
   const node = db.prepare(`
-    SELECT vn.node_id, vn.weight, kn.name as node_name, kn.definition
+    SELECT vn.node_id, vn.weight, kn.name as node_name, kn.definition, 0 as is_unclassified
     FROM video_nodes vn
     JOIN knowledge_nodes kn ON kn.node_id = vn.node_id
     WHERE vn.video_id = ? AND vn.is_unclassified = 0
     ORDER BY vn.weight DESC, vn.confidence DESC
     LIMIT 1
   `).get(videoId);
-  return node || null;
+  if (node) return node;
+
+  // 2. 兜底：取未分类节点
+  const unclassified = db.prepare(`
+    SELECT vn.node_id, vn.weight, vn.unclassified_name as node_name,
+           '' as definition, 1 as is_unclassified
+    FROM video_nodes vn
+    WHERE vn.video_id = ? AND vn.is_unclassified = 1
+    ORDER BY vn.confidence DESC
+    LIMIT 1
+  `).get(videoId);
+  if (unclassified) {
+    // 使用一个稳定的兜底 node_id，让 XP 系统不会报错，也不会污染真实知识树
+    return {
+      ...unclassified,
+      node_id: 'unclassified',
+      node_name: unclassified.node_name || '视频知识点',
+    };
+  }
+
+  // 3. 最后的兜底：视频完全没有被 LLM 映射到任何节点时，
+  //    用视频的 summary / title 作为主题生成闪卡，保证流程不卡死
+  const video = db.prepare(`
+    SELECT title, summary, manual_transcript FROM videos WHERE id = ?
+  `).get(videoId);
+  if (video) {
+    const fallbackTopic = (video.summary || video.title || video.manual_transcript || '本视频内容')
+      .split(/[。\.\n]/)[0]
+      .slice(0, 40);
+    return {
+      node_id: 'unclassified',
+      node_name: fallbackTopic || '视频知识点',
+      definition: '',
+      weight: 0,
+      is_unclassified: 1,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -65,6 +106,10 @@ export async function getOrCreateFlashcards(videoId, userId) {
   `).all(videoId);
 
   if (existing.length > 0) {
+    const firstNodeId = existing[0].node_id;
+    const nodeName = firstNodeId === 'unclassified'
+      ? '视频知识点'
+      : (db.prepare('SELECT name FROM knowledge_nodes WHERE node_id = ?').get(firstNodeId)?.name || firstNodeId);
     return {
       flashcards: existing.map(c => ({
         id: c.id,
@@ -73,8 +118,8 @@ export async function getOrCreateFlashcards(videoId, userId) {
         trigger_type: c.trigger_type,
         difficulty: c.difficulty,
       })),
-      node_id: existing[0].node_id,
-      node_name: existing[0].node_id,
+      node_id: firstNodeId,
+      node_name: nodeName,
     };
   }
 
