@@ -26,8 +26,8 @@ export default function LoginPage() {
 
   return (
     <div className="page active" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-      <img src="/assets/mascot-tree.png" width="120" height="120" style={{ objectFit: 'contain', marginBottom: 16 }} alt="mascot" />
-      <h1 style={{ fontFamily: 'Fredoka, ZCOOL KuaiLe, sans-serif', fontSize: 28, color: 'var(--primary)', marginBottom: 8 }}>LinguaTree</h1>
+      <img src="/assets/crystal-mascot.png" width="120" height="120" style={{ objectFit: 'contain', marginBottom: 16 }} alt="mascot" />
+      <h1 style={{ fontFamily: 'Fredoka, ZCOOL KuaiLe, sans-serif', fontSize: 28, color: 'var(--primary)', marginBottom: 8 }}>ByteCrystal</h1>
       <p style={{ fontSize: 14, color: 'var(--text-lt)', fontWeight: 600, marginBottom: 32 }}>刷视频，种知识树</p>
       <form onSubmit={handleSubmit} style={{ width: '100%' }}>
         <div className="link-input-card">

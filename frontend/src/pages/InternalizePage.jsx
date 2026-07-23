@@ -8,6 +8,7 @@ import {
   evaluateFreeform,
   completeExercises,
 } from '../api/videos.js';
+import CenterLoader from '../components/CenterLoader.jsx';
 
 const PHASE = {
   LOADING: 'loading',
@@ -138,7 +139,6 @@ export default function InternalizePage() {
   useEffect(() => {
     if (phase !== PHASE.CHOICE || showingResult) return;
     if (exercises.length === 0) {
-      // No choice exercises, load freeform and skip
       loadFreeform(0)
         .then(() => setPhase(PHASE.FREEFORM))
         .catch(e => setError('加载问答题失败: ' + e.message));
@@ -185,7 +185,7 @@ export default function InternalizePage() {
 
     const newAttempt = {
       exerciseId: q.id,
-      nodeId: q.node_id,
+      oreId: q.ore_id,
       isCorrect,
       isSkipped,
       userAnswer: String(userAnswer),
@@ -321,8 +321,8 @@ export default function InternalizePage() {
 
   if (phase === PHASE.LOADING) {
     return (
-      <div className="page active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        准备内化训练...
+      <div className="page active">
+        <CenterLoader text="准备内化训练..." spriteKey={1} />
       </div>
     );
   }
@@ -352,7 +352,7 @@ export default function InternalizePage() {
             onClick={handleFlip}
           >
             <div className="flashcard-face flashcard-front">
-              <div className="flashcard-type">{card.trigger_type === 'concept' ? '核心概念' : card.trigger_type === 'structure' ? '结构' : '例句/易错'}</div>
+              <div className="flashcard-type">{card.trigger_type === 'word' ? '单词' : card.trigger_type === 'phrase' ? '短语' : card.trigger_type === 'collocation' ? '搭配' : '单词'}</div>
               <div className="flashcard-front-text">{card.front}</div>
               <div className="flashcard-hint">点击翻面</div>
             </div>
@@ -376,17 +376,17 @@ export default function InternalizePage() {
     if (!q) return null;
 
     return (
-      <div className="page active internalize-page">
+      <div className="page active internalize-page" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {streakFire && <div className="streak-fire">🔥 STREAK! 🔥</div>}
 
-        <div className="topbar">
+        <div className="topbar" style={{ flexShrink: 0, paddingBottom: 4 }}>
           <div className="topbar-btn" onClick={() => navigate(-1)} style={{ fontSize: '20px' }}>‹</div>
           <div style={{ fontSize: 16, fontWeight: 800 }}>巩固检测</div>
           <div onClick={handleSkipChoice} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>
         </div>
 
-        <div className="training-header">
-          <div className="game-stats">
+        <div style={{ textAlign: 'center', padding: '4px 20px', flexShrink: 0 }}>
+          <div className="game-stats" style={{ justifyContent: 'center', gap: 20, marginBottom: 4 }}>
             <div className="game-stat combo-stat">
               <span className="game-stat-num">{combo}</span>
               <span className="game-stat-label">连击</span>
@@ -394,11 +394,7 @@ export default function InternalizePage() {
             <div className="game-timer">
               <svg viewBox="0 0 36 36" className="timer-ring">
                 <path className="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path
-                  className="timer-fg"
-                  strokeDasharray={`${(timeLeft / 15) * 100}, 100`}
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
+                <path className="timer-fg" strokeDasharray={`${(timeLeft / 15) * 100}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               </svg>
               <span className="timer-num">{timeLeft}</span>
             </div>
@@ -410,10 +406,10 @@ export default function InternalizePage() {
           <div className="training-q-type">{q.typeName}题 {currentQ >= exercises.length && wrongQueue.length > 0 ? '· 错题重练' : ''}</div>
         </div>
 
-        <div className="training-question">
-          <div className="training-q-text">{q.question}</div>
+        <div className="training-question" style={{ margin: '0 20px', padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'auto' }}>
+          <div className="training-q-text" style={{ fontSize: 16, marginBottom: 14 }}>{q.question}</div>
           {q.typeLabel === 'choice' && (
-            <div className="training-options">
+            <div className="training-options" style={{ gap: 8 }}>
               {q.options.map((opt, i) => {
                 const isSelected = selectedOption === i;
                 const isCorrectOption = i === q.answer;
@@ -424,7 +420,7 @@ export default function InternalizePage() {
                   cls += ' disabled';
                 }
                 return (
-                  <div key={i} className={cls} onClick={() => !showingResult && handleChoiceAnswer(i === q.answer, i, opt)}>
+                  <div key={i} className={cls} style={{ padding: '12px 14px' }} onClick={() => !showingResult && handleChoiceAnswer(i === q.answer, i, opt)}>
                     <div className="opt-letter">{'ABCD'[i]}</div>
                     <div>{opt}</div>
                   </div>
@@ -433,19 +429,9 @@ export default function InternalizePage() {
             </div>
           )}
           {q.typeLabel === 'fill' && (
-            <>
-              <input
-                className={`training-fill-input ${showingResult ? (selectedCorrect ? 'correct' : 'wrong') : ''}`}
-                placeholder="输入你的答案..."
-                disabled={showingResult}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !showingResult) {
-                    const val = e.target.value;
-                    const correct = val.trim().toLowerCase() === q.answer.toLowerCase();
-                    handleChoiceAnswer(correct, 'fill', val);
-                  }
-                }}
-              />
+            <div>
+              <input className="training-fill-input" style={{ marginBottom: 8, padding: 12 }} placeholder="输入你的答案..." disabled={showingResult}
+                onKeyDown={e => { if (e.key === 'Enter' && !showingResult) { const v = e.target.value; handleChoiceAnswer(v.trim().toLowerCase() === q.answer.toLowerCase(), 'fill', v); } }} />
               {showingResult && (
                 <div className="training-explanation show">
                   <strong>{selectedCorrect ? '✅ 正确！' : '❌ 答错了'}</strong><br />
@@ -453,20 +439,16 @@ export default function InternalizePage() {
                   {q.explanation || ''}
                 </div>
               )}
-            </>
+            </div>
           )}
           {q.typeLabel === 'truefalse' && (
-            <div className="training-options">
-              <div
-                className={`training-option ${showingResult ? (q.answer === true ? 'correct' : selectedOption === true ? 'wrong' : '') : ''} ${showingResult ? 'disabled' : ''}`}
-                onClick={() => !showingResult && handleChoiceAnswer(true === q.answer, true, 'true')}
-              >
+            <div className="training-options" style={{ gap: 8 }}>
+              <div className={`training-option ${showingResult ? (q.answer === true ? 'correct' : selectedOption === true ? 'wrong' : '') : ''} ${showingResult ? 'disabled' : ''}`}
+                style={{ padding: '12px 14px' }} onClick={() => !showingResult && handleChoiceAnswer(true === q.answer, true, 'true')}>
                 <div className="opt-letter">✓</div><div>正确</div>
               </div>
-              <div
-                className={`training-option ${showingResult ? (q.answer === false ? 'correct' : selectedOption === false ? 'wrong' : '') : ''} ${showingResult ? 'disabled' : ''}`}
-                onClick={() => !showingResult && handleChoiceAnswer(false === q.answer, false, 'false')}
-              >
+              <div className={`training-option ${showingResult ? (q.answer === false ? 'correct' : selectedOption === false ? 'wrong' : '') : ''} ${showingResult ? 'disabled' : ''}`}
+                style={{ padding: '12px 14px' }} onClick={() => !showingResult && handleChoiceAnswer(false === q.answer, false, 'false')}>
                 <div className="opt-letter">✗</div><div>错误</div>
               </div>
             </div>
@@ -487,38 +469,30 @@ export default function InternalizePage() {
     }
 
     return (
-      <div className="page active internalize-page">
-        <div className="topbar">
+      <div className="page active internalize-page" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="topbar" style={{ flexShrink: 0, paddingBottom: 4 }}>
           <div className="topbar-btn" onClick={() => navigate(-1)} style={{ fontSize: '20px' }}>‹</div>
           <div style={{ fontSize: 16, fontWeight: 800 }}>主动表达</div>
           <div onClick={handleSkipFreeform} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>
         </div>
 
-        <div className="freeform-content">
-          <div className="freeform-card">
-            <div className="freeform-tag">问答题</div>
-            <div className="freeform-question">{freeform.question}</div>
-            <div className="freeform-target">知识点：{freeform.target_knowledge}</div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 20px', overflow: 'auto', justifyContent: 'center' }}>
+          <div className="freeform-card" style={{ padding: 14, marginBottom: 12 }}>
+            <div className="freeform-tag" style={{ marginBottom: 8, padding: '3px 10px', fontSize: 11 }}>问答题</div>
+            <div className="freeform-question" style={{ fontSize: 15, lineHeight: 1.45, marginBottom: 6 }}>{freeform.question}</div>
+            <div className="freeform-target" style={{ fontSize: 12, opacity: 0.85 }}>知识点：{freeform.target_knowledge}</div>
           </div>
 
-          <div className="freeform-input-section">
-            <div className="freeform-input-label">你的回答</div>
-            <textarea
-              className="freeform-textarea"
-              placeholder="用英文写下你的回答..."
-              value={ffInput}
-              onChange={e => setFfInput(e.target.value)}
-              maxLength={200}
-              disabled={ffEvaluating}
-            />
-            <div className="freeform-char-count">{ffInput.length}/200</div>
+          <div style={{ marginBottom: 12 }}>
+            <div className="freeform-input-label" style={{ fontSize: 13, marginBottom: 6 }}>你的回答</div>
+            <textarea className="freeform-textarea" placeholder="用英文写下你的回答..." value={ffInput}
+              onChange={e => setFfInput(e.target.value)} maxLength={200} disabled={ffEvaluating}
+              style={{ minHeight: 90, height: 90, resize: 'none' }} />
+            <div className="freeform-char-count" style={{ marginTop: 4 }}>{ffInput.length}/200</div>
           </div>
 
-          <button
-            className="btn3d btn-primary freeform-submit-btn"
-            onClick={handleFreeformSubmit}
-            disabled={!ffInput.trim() || ffEvaluating}
-          >
+          <button className="btn3d btn-primary freeform-submit-btn" onClick={handleFreeformSubmit}
+            disabled={!ffInput.trim() || ffEvaluating} style={{ marginBottom: 80, padding: 14, fontSize: 15 }}>
             {ffEvaluating ? 'AI 评估中...' : '提交评估 →'}
           </button>
         </div>
@@ -528,37 +502,48 @@ export default function InternalizePage() {
 
   // ---------- Result phase ----------
   if (phase === PHASE.RESULT) {
-    const allCorrect = choiceStats.total > 0 && choiceStats.correct === choiceStats.total;
-
+    const hasChoice = choiceStats.total > 0;
+    const allCorrect = hasChoice && choiceStats.correct === choiceStats.total;
     return (
-      <div className="page active internalize-page">
-        <div className="training-result">
-          <div className="big-check">{allCorrect ? '🎉' : '✅'}</div>
-          <div className="training-result-score">{choiceStats.correct}/{choiceStats.total}</div>
-          <div className="training-result-label">内化完成！</div>
+      <div className="page active internalize-page" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="topbar" style={{ flexShrink: 0 }}>
+          <div style={{ width: 40 }}></div>
+          <div style={{ fontSize: 16, fontWeight: 800 }}>内化完成</div>
+          <div style={{ width: 40 }}></div>
+        </div>
 
-          {ffResult && (
-            <div className="freeform-mini-result">
-              <div className="freeform-mini-score">问答题 {ffResult.evaluation?.overall_score || 0} 分</div>
-              <div className="freeform-mini-suggestion">{ffResult.evaluation?.improvement || ''}</div>
-            </div>
-          )}
+        <div style={{ flex: 1, overflow: 'auto', padding: '8px 20px 100px' }}>
+          <div className="training-result" style={{ padding: '16px 0' }}>
+            <div className="big-check">{hasChoice ? (allCorrect ? '🎉' : '✅') : '💎'}</div>
+            {hasChoice ? (
+              <>
+                <div className="training-result-score">{choiceStats.correct}/{choiceStats.total}</div>
+                <div className="training-result-label">内化完成！</div>
+              </>
+            ) : (
+              <>
+                <div className="training-result-score" style={{ fontSize: 24, marginTop: 8 }}>+闪卡回忆</div>
+                <div className="training-result-label">跳过检测，内化完成</div>
+              </>
+            )}
 
-          <div className="migration-invite-card">
-            <div className="migration-invite-icon">🚀</div>
-            <div className="migration-invite-title">试试在新场景中用出来？</div>
-            <div className="migration-invite-desc">
-              你已掌握基础！完成场景迁移可获得额外 <strong style={{ color: 'var(--primary)' }}>50+ XP</strong>
-            </div>
-            <div className="migration-invite-btns">
-              <button className="btn3d btn-primary migration-invite-btn" style={{ padding: '14px 28px', fontSize: 15 }}
-                onClick={() => navigate(`/migration/${videoId}`)}>
-                开始迁移 →
-              </button>
-              <button className="btn3d btn-gray migration-invite-btn" style={{ padding: '14px 28px', fontSize: 15 }}
-                onClick={() => navigate('/')}>
-                下次再说
-              </button>
+            {ffResult && (
+              <div className="freeform-mini-result">
+                <div className="freeform-mini-score">问答题 {ffResult.evaluation?.overall_score || 0} 分</div>
+                <div className="freeform-mini-suggestion">{ffResult.evaluation?.improvement || ''}</div>
+              </div>
+            )}
+
+            <div className="migration-invite-card" style={{ padding: '16px 20px' }}>
+              <div className="migration-invite-icon" style={{ fontSize: 28 }}>🚀</div>
+              <div className="migration-invite-title" style={{ fontSize: 15 }}>试试在新场景中用出来？</div>
+              <div className="migration-invite-desc" style={{ fontSize: 12, marginBottom: 12 }}>
+                你已掌握基础！完成场景迁移可获得额外 <strong style={{ color: 'var(--primary)' }}>50+ XP</strong>
+              </div>
+              <div className="migration-invite-btns">
+                <button className="btn3d btn-primary migration-invite-btn" style={{ padding: '12px 20px', fontSize: 14, maxWidth: 130 }} onClick={() => navigate(`/migration/${videoId}`)}>开始迁移 →</button>
+                <button className="btn3d btn-gray migration-invite-btn" style={{ padding: '12px 20px', fontSize: 14, maxWidth: 130 }} onClick={() => navigate('/tree')}>查看矿石</button>
+              </div>
             </div>
           </div>
         </div>

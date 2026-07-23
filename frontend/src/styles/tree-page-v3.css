@@ -1,0 +1,445 @@
+/* ============================================= */
+/* TreePage v4 — 纯白蛇形矿石路径   Impeccable    */
+/* ============================================= */
+
+.tree-page-v3.snake-white {
+  background: #FFFFFF;
+  color: #374151;
+  position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* === 顶栏 === */
+.snake-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  padding: 0 16px 12px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.snake-stats {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 14px 0 10px;
+}
+
+.snake-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.snake-stat-icon {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.snake-stat-num {
+  font-family: "Nunito", system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.snake-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.snake-date-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #F8FAFC;
+  border-radius: 14px;
+  border: 1px solid #F1F5F9;
+}
+
+.snake-date-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.snake-date-action {
+  font-size: 12px;
+  font-weight: 800;
+  color: #58CC02;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: rgba(88, 204, 2, 0.07);
+  transition: background .15s cubic-bezier(.25, 1, .5, 1);
+}
+
+.snake-date-action:active { background: rgba(88, 204, 2, 0.16); transform: scale(.96); }
+
+/* === 矿石场 === */
+.snake-arena {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 120px;
+}
+
+.snake-field {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* 串联路径（分段） */
+.snake-path {
+  position: absolute;
+  top: 0;
+  left: -90px;
+  width: calc(100% + 180px);
+  height: calc(100% + 30px);
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* 已解锁：绿色 */
+.seg-unlocked {
+  stroke: #58CC02;
+  filter: drop-shadow(0 2px 3px rgba(88, 204, 2, 0.15));
+}
+
+/* 未解锁：灰色 */
+.seg-locked {
+  stroke: #94A3B8;
+  filter: drop-shadow(0 2px 3px rgba(148, 163, 184, 0.12));
+}
+
+/* 跑马灯流动光点 + CSS 辉光 */
+.snake-flow {
+  stroke: #BEF264;
+  stroke-dasharray: 4 30;
+  animation: flowDash 1.4s linear infinite;
+  filter:
+    drop-shadow(0 0 4px rgba(190, 242, 100, 0.9))
+    drop-shadow(0 0 8px rgba(88, 204, 2, 0.6))
+    drop-shadow(0 0 16px rgba(88, 204, 2, 0.3));
+}
+
+@keyframes flowDash {
+  to { stroke-dashoffset: -36; }
+}
+
+.snake-field {
+  cursor: grab;
+  will-change: transform;
+}
+.snake-field:active { cursor: grabbing; }
+
+@keyframes snakeLineIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === 晶体节点 === */
+.snake-ore {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 4;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .35s cubic-bezier(.25, 1, .5, 1);
+  animation: oreFadeIn .6s cubic-bezier(.25, 1, .5, 1) both;
+}
+
+@keyframes oreFadeIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.snake-ore:active { transform: translate(-50%, -50%) scale(0.88); }
+
+.snake-ore.selected {
+  transform: translate(-50%, -50%) scale(1.16);
+  z-index: 8;
+  animation: none;
+}
+
+.snake-ore-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow:
+    0 0 0 5px #FFFFFF,
+    0 0 0 6px #E2E8F0,
+    0 8px 20px rgba(15, 23, 42, 0.06);
+  opacity: 0;
+  transform: scale(0.75);
+  transition: all .35s cubic-bezier(.25, 1, .5, 1);
+}
+
+.snake-ore.selected .snake-ore-ring {
+  opacity: 1;
+  transform: scale(1);
+  box-shadow:
+    0 0 0 7px #FFFFFF,
+    0 0 0 8px color-mix(in srgb, var(--ore-color, #58CC02) 55%, transparent),
+    0 12px 32px rgba(15, 23, 42, 0.1);
+}
+
+.snake-ore .crystal-svg {
+  position: relative;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.08));
+  transition: filter .35s cubic-bezier(.25, 1, .5, 1);
+}
+
+.snake-ore.selected .crystal-svg {
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--ore-color, #58CC02) 40%, transparent))
+          drop-shadow(0 8px 16px rgba(15, 23, 42, 0.1));
+  transform: scale(1.04);
+}
+
+.snake-ore-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 5px;
+  text-align: center;
+  pointer-events: none;
+  width: max-content;
+  max-width: 76px;
+}
+
+.snake-ore-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snake-ore-level {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+/* 空坑位 - 纯色双层 */
+.snake-ore.empty {
+  pointer-events: none;
+  animation-delay: 0.05s;
+}
+
+.snake-ore-empty {
+  position: relative;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+}
+
+.snake-ore-empty-outer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #94A3B8;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
+}
+
+.snake-ore-empty-inner {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* === 选中卡片 === */
+.snake-card {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 350px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 18px 22px;
+  border: 1px solid #E2E8F0;
+  box-shadow:
+    0 16px 48px rgba(15, 23, 42, 0.1),
+    0 2px 8px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  z-index: 30;
+  text-align: center;
+  animation: snakeSlideUp .32s cubic-bezier(.25, 1, .5, 1);
+}
+
+@keyframes snakeSlideUp {
+  from { transform: translate(-50%, 32px); opacity: 0; }
+  to   { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.snake-card-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 4px;
+}
+
+.snake-card-meta {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.snake-card-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.snake-card-btn {
+  flex: 1;
+  padding: 11px;
+  border-radius: 13px;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all .15s cubic-bezier(.25, 1, .5, 1);
+}
+
+.snake-card-btn-primary {
+  background: #58CC02;
+  color: #FFFFFF;
+  box-shadow: 0 4px 0 #46A302;
+}
+
+.snake-card-btn-primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #46A302;
+}
+
+.snake-card-btn-ghost {
+  background: #F8FAFC;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
+.snake-card-btn-ghost:active { background: #F1F5F9; }
+
+/* === 空状态 === */
+.snake-empty {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  width: 80%;
+  max-width: 280px;
+}
+
+.snake-empty-icon {
+  font-size: 56px;
+  animation: snakeFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 16px rgba(15, 23, 42, 0.05));
+}
+
+@keyframes snakeFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+.snake-empty-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.snake-empty-desc {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.5;
+}
+
+.snake-go-btn {
+  margin-top: 8px;
+  padding: 12px 28px;
+  border-radius: 14px;
+  border: none;
+  background: #58CC02;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 5px 0 #46A302;
+  transition: all .12s;
+}
+
+.snake-go-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #46A302;
+}
+
+/* Toast */
+.snake-toast {
+  position: fixed;
+  bottom: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0F172A;
+  color: #FFFFFF;
+  padding: 10px 22px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 40;
+  pointer-events: none;
+  animation: toastIn .25s cubic-bezier(.25, 1, .5, 1);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Scrollbar hide */
+.tree-page-v3.snake-white::-webkit-scrollbar { display: none; }
+
+/* 底部引导文案 */
+.snake-hint {
+  text-align: center;
+  padding: 24px 16px 80px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+  letter-spacing: 0.3px;
+}

@@ -26,6 +26,11 @@ export function getVideoList() {
   return api('/api/videos');
 }
 
+// 领取矿石（解析完成后选择"立即学习"）
+export function claimVideo(videoId) {
+  return api(`/api/videos/${videoId}/claim`, { method: 'POST' });
+}
+
 // 提交巩固训练结果
 export function completeExercises(videoId, attempts) {
   return api(`/api/videos/${videoId}/exercises/complete`, {

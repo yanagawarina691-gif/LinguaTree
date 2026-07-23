@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { parseVideo, getVideoStatus, getVideoList } from '../api/videos.js';
+import { parseVideo, getVideoStatus, getVideoList, claimVideo } from '../api/videos.js';
+import LoadingMascot from '../components/LoadingMascot.jsx';
 
 const PARSE_STEPS = [
   { icon: '🎬', name: '获取视频信息', desc: '下载视频、提取音频和关键帧' },
   { icon: '🎤', name: 'ASR 语音转写', desc: '识别视频中的语音内容' },
   { icon: '📝', name: 'OCR 文字识别', desc: '识别画面中的板书和字幕' },
   { icon: '👁️', name: 'VLM 画面理解', desc: '分析画面场景和教学动作' },
-  { icon: '🧠', name: 'LLM 知识点抽取', desc: '映射到知识树节点 + 生成训练题' },
+  { icon: '🧠', name: 'LLM 知识点抽取', desc: '矿石知识提取' },
 ];
 
 export default function FeedPage() {
@@ -16,6 +17,7 @@ export default function FeedPage() {
   const [parsing, setParsing] = useState(false);
   const [parseSteps, setParseSteps] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [choiceModal, setChoiceModal] = useState(null); // { videoId, title, summary }
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -32,8 +34,15 @@ export default function FeedPage() {
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  const isUrl = (str) => {
-    return /^https?:\/\//i.test(str) || /^www\./i.test(str);
+  const isUrl = (str) => /^https?:\/\//i.test(str) || /^www\./i.test(str);
+
+  const showToast = (msg) => {
+    const toast = document.getElementById('toast');
+    if (toast) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
   };
 
   const startParse = async () => {
@@ -43,17 +52,13 @@ export default function FeedPage() {
 
     try {
       const input = link.trim();
-      const result = isUrl(input)
-        ? await parseVideo(input)
-        : await parseVideo('', input);
+      const result = isUrl(input) ? await parseVideo(input) : await parseVideo('', input);
       const videoId = result.videoId;
 
-      // Poll for status
       for (let i = 0; i < 30; i++) {
         await sleep(2000);
         const status = await getVideoStatus(videoId);
 
-        // Update step visuals based on logs
         if (status.logs) {
           setParseSteps(prev => prev.map(s => {
             const log = status.logs.find(l => l.stage && l.stage.includes(s.name.substring(0, 3)));
@@ -64,9 +69,11 @@ export default function FeedPage() {
 
         if (status.status === 'done') {
           setParseSteps(prev => prev.map(s => ({ ...s, status: 'done' })));
-          await sleep(800);
+          await sleep(600);
           setParsing(false);
-          navigate(`/deepen/${videoId}`);
+          setLink('');
+          setChoiceModal({ videoId, title: status.title || '未命名视频', summary: status.summary || '' });
+          loadVideos();
           return;
         }
         if (status.status === 'error') {
@@ -80,30 +87,35 @@ export default function FeedPage() {
     }
   };
 
-  const showToast = (msg) => {
-    const toast = document.getElementById('toast');
-    if (toast) {
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2500);
+  const handleLearnNow = async () => {
+    if (!choiceModal) return;
+    try {
+      await claimVideo(choiceModal.videoId);
+    } catch (e) {
+      // non-blocking
     }
+    const vid = choiceModal.videoId;
+    setChoiceModal(null);
+    navigate(`/deepen/${vid}`);
+  };
+
+  const handleSaveLater = () => {
+    setChoiceModal(null);
+    showToast('已记下，随时可以回来学习');
   };
 
   return (
     <div className="page active">
       <div className="topbar">
         <div className="topbar-logo">
-          <svg width="28" height="28" viewBox="0 0 32 32"><path d="M16 2C8 2 4 10 4 16c0 8 6 14 12 14s12-6 12-14c0-6-4-14-12-14z" fill="#58CC02"/><path d="M16 6v22M16 12l-4-3M16 12l4-3M16 18l-5-4M16 18l5-4" stroke="#46A302" strokeWidth="2" strokeLinecap="round" fill="none"/></svg>
-          LinguaTree
+          <img src="/assets/crystal-mascot.png" width="28" height="28" style={{ objectFit: 'contain' }} alt="ByteCrystal" />
+          ByteCrystal
         </div>
-        <div className="topbar-actions">
-          <div className="topbar-btn" onClick={() => navigate('/tree')}>🌳</div>
-          <div className="topbar-avatar" onClick={() => navigate('/me')}>{user?.nickname?.[0] || '?'}</div>
-        </div>
+        <div className="topbar-actions" />
       </div>
 
       <div className="feed-hero">
-        <img src="/assets/mascot-tree.png" width="80" height="80" style={{ objectFit: 'contain', margin: '0 auto 8px', display: 'block' }} alt="mascot" />
+        <img src="/assets/crystal-mascot.png" width="80" height="80" style={{ objectFit: 'contain', margin: '0 auto 8px', display: 'block' }} alt="mascot" />
         <h1>刷视频，种知识树</h1>
         <p>粘贴抖音英语视频链接，AI 自动解析知识点</p>
       </div>
@@ -123,6 +135,7 @@ export default function FeedPage() {
       {parsing && (
         <div className="parse-status">
           <div className="parse-card">
+            <LoadingMascot />
             <div className="parse-title">🔍 AI 正在解析视频...</div>
             <div className="parse-steps">
               {parseSteps.map((s, i) => (
@@ -145,21 +158,67 @@ export default function FeedPage() {
         {videos.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--text-lt)', padding: 32, fontSize: 14 }}>还没有解析过视频，粘贴链接开始吧</p>
         ) : (
-          videos.map(v => (
-            <div key={v.id} className="video-card" onClick={() => navigate(`/deepen/${v.id}`)}>
-              <div className="video-thumb"><span className="play-icon">▶</span></div>
+          videos.map(v => {
+            const isNew = !v.claimed;
+            const isAllDone = v.migration_completed;
+            const isInProgress = v.claimed && !isAllDone;
+            const stepLabel = v.deepen_completed
+              ? (v.migration_completed ? '已完成' : (v.freeform_completed ? '迁移中' : (v.flashcard_completed ? '内化中' : '理解中')))
+              : '待学习';
+
+            return (
+            <div key={v.id} className="video-card" onClick={() => {
+              if (v.status === 'done') navigate(`/deepen/${v.id}`);
+            }}>
+              <div className="video-thumb">
+                <span className="play-icon">{isAllDone ? '✅' : isInProgress ? '⏳' : '💎'}</span>
+              </div>
               <div className="video-info">
-                <div className="video-title">{v.title || '未命名视频'}</div>
+                <div className="video-title">{v.title || v.summary?.slice(0, 20) || '未命名视频'}</div>
                 <div className="video-tags">
                   {v.cefr_level && <span className="video-tag tag-grammar">{v.cefr_level}</span>}
-                  <span className="video-tag tag-listen">{v.status}</span>
+                  <span className="video-tag tag-listen" style={isInProgress ? { background: 'rgba(88,204,2,.1)', color: '#58CC02' } : {}}>
+                    {isNew ? '新矿石' : isAllDone ? '已学习' : stepLabel}
+                  </span>
                 </div>
-                {v.summary && <div style={{ fontSize: 12, color: 'var(--text-lt)', marginTop: 4, lineHeight: 1.4 }}>{v.summary}</div>}
+                {v.summary && <div style={{ fontSize: 12, color: 'var(--text-lt)', marginTop: 4, lineHeight: 1.4 }}>{v.summary.slice(0, 40)}</div>}
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
+
+      {/* 二选一弹窗 */}
+      {choiceModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200,
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 40
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 390,
+            padding: '32px 24px 40px', textAlign: 'center', animation: 'slideUp .35s cubic-bezier(.34,1.56,.64,1)'
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>💎</div>
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6, color: '#1A1A2E' }}>解析完成！</div>
+            <div style={{ fontSize: 13, color: '#787E87', marginBottom: 24, lineHeight: 1.5 }}>
+              {choiceModal.summary?.slice(0, 60) || 'AI 已提取知识点，收获新矿石'}
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button className="btn3d btn-primary" style={{ padding: 16, fontSize: 16, width: '100%' }}
+                onClick={handleLearnNow}>
+                ⚡ 立即学习
+              </button>
+              <button style={{
+                padding: 14, fontSize: 14, width: '100%', border: 'none', background: '#F3F4F6',
+                borderRadius: 16, fontWeight: 700, color: '#575E66', cursor: 'pointer'
+              }} onClick={handleSaveLater}>
+                📌 先记下，稍后学习
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

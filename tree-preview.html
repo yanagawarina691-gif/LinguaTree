@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>LinguaTree — 矿石页新布局预览</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+      background: #f5f5f7;
+      display: flex; justify-content: center; align-items: center;
+    }
+    #phone {
+      width: 390px; height: 844px; background: #fff; border-radius: 40px;
+      overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    }
+    @media(max-height:880px){ #phone{height:100vh;border-radius:0} }
+    @media(max-width:430px){ #phone{width:100vw;height:100vh;border-radius:0} }
+
+    .page { width:100%; height:100%; overflow-y:auto; position:relative; }
+    .page::-webkit-scrollbar { display:none; }
+
+    .snake-header {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
+      padding: 0 16px 12px; border-bottom: 1px solid #F3F4F6;
+    }
+    .snake-stats { display:flex; justify-content:center; gap:36px; padding:12px 0 8px; }
+    .snake-stat { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .snake-stat-icon { font-size:20px; }
+    .snake-stat-num { font-size:18px; font-weight:800; color:#111827; }
+    .snake-stat-label { font-size:9px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:1px; }
+    .snake-date-banner { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:#F9FAFB; border-radius:14px; border:1px solid #F3F4F6; }
+    .snake-date-text { font-size:13px; font-weight:700; color:#4B5563; }
+    .snake-date-action { font-size:12px; font-weight:800; color:#58CC02; padding:5px 12px; border-radius:10px; background:rgba(88,204,2,.08); }
+
+    .snake-field { position:relative; width:100%; min-height:100%; padding-bottom:120px; }
+    .snake-path { position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+    .snake-line { filter: drop-shadow(0 1px 2px rgba(0,0,0,.06)); }
+
+    .snake-ore {
+      position:absolute; width:54px; height:54px; transform:translate(-50%, -50%);
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      z-index:4; -webkit-tap-highlight-color:transparent;
+      transition: transform .28s cubic-bezier(.34,1.56,.64,1);
+    }
+    .snake-ore:active { transform:translate(-50%, -50%) scale(.92); }
+    .snake-ore.selected { transform:translate(-50%, -50%) scale(1.14); z-index:8; }
+    .snake-ore-ring { position:absolute; inset:-6px; border-radius:50%; background:#fff; opacity:0; transform:scale(.8); transition:all .28s; }
+    .snake-ore.selected .snake-ore-ring {
+      opacity:1; transform:scale(1);
+      box-shadow: 0 0 0 6px #fff, 0 0 0 7px color-mix(in srgb, var(--ore-color) 50%, transparent), 0 10px 26px rgba(0,0,0,.12);
+    }
+    .snake-ore .crystal { position:relative; z-index:2; width:52px; height:52px; filter:drop-shadow(0 3px 6px rgba(0,0,0,.08)); transition:filter .28s; }
+    .snake-ore.selected .crystal { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--ore-color) 35%, transparent)) drop-shadow(0 5px 12px rgba(0,0,0,.1)); }
+    .snake-ore-label { position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; text-align:center; width:max-content; max-width:66px; pointer-events:none; }
+    .snake-ore-name { font-size:11px; font-weight:800; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .snake-ore-level { font-size:9px; font-weight:700; color:#9CA3AF; margin-top:1px; }
+
+    .snake-card {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 40px); max-width: 350px; background:#fff; border-radius:20px;
+      padding:16px 20px; border:1px solid #F3F4F6; box-shadow:0 12px 40px rgba(0,0,0,.12);
+      text-align:center; z-index:30; display:none;
+    }
+    .snake-card.show { display:block; animation: slideUp .3s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes slideUp { from { transform:translate(-50%,24px); opacity:0 } to { transform:translate(-50%,0); opacity:1 } }
+    .snake-card-name { font-size:16px; font-weight:800; color:#111827; margin-bottom:4px; }
+    .snake-card-meta { font-size:12px; color:#6B7280; font-weight:600; margin-bottom:12px; }
+    .snake-card-btns { display:flex; gap:10px; }
+    .snake-card-btn { flex:1; padding:10px; border-radius:12px; border:none; font-size:13px; font-weight:800; cursor:pointer; }
+    .snake-card-btn-primary { background:#58CC02; color:#fff; box-shadow:0 4px 0 #46A302; }
+    .snake-card-btn-ghost { background:#F9FAFB; color:#6B7280; border:1px solid #E5E7EB; }
+  </style>
+</head>
+<body>
+  <div id="phone">
+    <div class="page">
+      <div class="snake-header">
+        <div class="snake-stats">
+          <div class="snake-stat"><span class="snake-stat-icon">💎</span><span class="snake-stat-num">8</span><span class="snake-stat-label">矿石</span></div>
+          <div class="snake-stat"><span class="snake-stat-icon">⚡</span><span class="snake-stat-num">128</span><span class="snake-stat-label">XP</span></div>
+          <div class="snake-stat"><span class="snake-stat-icon">🔗</span><span class="snake-stat-num">5</span><span class="snake-stat-label">矿脉</span></div>
+        </div>
+        <div class="snake-date-banner">
+          <span class="snake-date-text">7月23日 · 矿石之路</span>
+          <span class="snake-date-action">+ 新解析</span>
+        </div>
+      </div>
+
+      <div class="snake-field" id="field"></div>
+
+      <div class="snake-card" id="card">
+        <div class="snake-card-name" id="card-name">Present Perfect</div>
+        <div class="snake-card-meta" id="card-meta">阶段 2/4 · 掌握度 65%</div>
+        <div class="snake-card-btns">
+          <button class="snake-card-btn snake-card-btn-primary">📖 复习</button>
+          <button class="snake-card-btn snake-card-btn-ghost" onclick="closeCard()">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ores = [
+      { id: 1, name: '一般现在时', level: 2, color: '#58CC02', shape: 'hex' },
+      { id: 2, name: '过去进行时', level: 1, color: '#A855F7', shape: 'tetra' },
+      { id: 3, name: '现在完成时', level: 2, color: '#3B82F6', shape: 'octa' },
+      { id: 4, name: '被动语态', level: 1, color: '#EF4444', shape: 'rhombo' },
+      { id: 5, name: '条件句', level: 3, color: '#F59E0B', shape: 'dodeca' },
+      { id: 6, name: '定语从句', level: 2, color: '#EC4899', shape: 'gem' },
+      { id: 7, name: '虚拟语气', level: 1, color: '#06B6D4', shape: 'hex' },
+      { id: 8, name: '倒装句', level: 0, color: '#84CC16', shape: 'tetra' },
+      { id: 9, name: '强调句', level: 1, color: '#F97316', shape: 'octa' },
+      { id: 10, name: '间接引语', level: 2, color: '#6366F1', shape: 'rhombo' },
+      { id: 11, name: '情态动词', level: 3, color: '#14B8A6', shape: 'dodeca' },
+      { id: 12, name: '非谓语', level: 1, color: '#D946EF', shape: 'gem' },
+    ];
+
+    const ROW_HEIGHT = 128, START_Y = 88, COLS = 5, MARGIN_X = 34;
+    const field = document.getElementById('field');
+
+    function makeCrystal(color, shape) {
+      const s = 1.5;
+      const shapes = {
+        hex: `<polygon points="${-28*s},${-48*s} ${28*s},${-48*s} ${44*s},${-8*s} ${28*s},${32*s} ${-28*s},${32*s} ${-44*s},${-8*s}" fill="${color}" stroke="${darken(color)}" stroke-width="${1.8*s}" stroke-linejoin="round"/><polygon points="${-28*s},${-48*s} ${0},${-75*s} ${28*s},${-48*s}" fill="${lighten(color)}" opacity="0.5"/>`,
+        tetra: `<polygon points="${0},${-70*s} ${-40*s},${28*s} ${40*s},${28*s}" fill="${color}" stroke="${darken(color)}" stroke-width="${1.6*s}" stroke-linejoin="round"/><polygon points="${0},${-70*s} ${40*s},${28*s} ${0},${16*s}" fill="${lighten(color)}" opacity="0.5"/>`,
+        octa: `<polygon points="${0},${72*s} ${-46*s},${0} ${0},${0} ${46*s},${0}" fill="${color}" stroke="${darken(color)}" stroke-width="${1.5*s}" stroke-linejoin="round"/><polygon points="${0},${-72*s} ${-46*s},${0} ${0},${0} ${46*s},${0}" fill="${color}" stroke="${darken(color)}" stroke-width="${1.5*s}" stroke-linejoin="round"/>`,
+        rhombo: `<polygon points="${-24*s},${-54*s} ${32*s},${-60*s} ${44*s},${20*s} ${-12*s},${32*s}" fill="${color}" stroke="${darken(color)}" stroke-width="${1.7*s}" stroke-linejoin="round"/>`,
+        dodeca: `<circle cx="0" cy="0" r="${46*s}" fill="${color}" stroke="${darken(color)}" stroke-width="${1.8*s}"/>`,
+        gem: `<polygon points="${0},${-80*s} ${-22*s},${-48*s} ${-32*s},${0} ${-18*s},${36*s} ${18*s},${36*s} ${32*s},${0} ${22*s},${-48*s}" fill="${color}" stroke="${darken(color)}" stroke-width="${1.6*s}" stroke-linejoin="round"/>`,
+      };
+      return `<svg viewBox="-80 -100 160 180" class="crystal">${shapes[shape] || shapes.hex}</svg>`;
+    }
+    function darken(hex){ const r=Math.floor(parseInt(hex.slice(1,3),16)*.35),g=Math.floor(parseInt(hex.slice(3,5),16)*.35),b=Math.floor(parseInt(hex.slice(5,7),16)*.35); return `rgb(${r},${g},${b})`; }
+    function lighten(hex){ const r=Math.min(255,parseInt(hex.slice(1,3),16)+120),g=Math.min(255,parseInt(hex.slice(3,5),16)+120),b=Math.min(255,parseInt(hex.slice(5,7),16)+120); return `rgb(${r},${g},${b})`; }
+
+    function render() {
+      const width = field.offsetWidth;
+      const usable = Math.max(0, width - MARGIN_X * 2);
+      const step = usable / (COLS - 1);
+      const colX = Array.from({ length: COLS }, (_, i) => MARGIN_X + i * step);
+      const positions = ores.map((_, i) => {
+        const row = Math.floor(i / COLS), isReversed = row % 2 === 1, colIndex = i % COLS;
+        return { x: isReversed ? colX[COLS - 1 - colIndex] : colX[colIndex], y: START_Y + row * ROW_HEIGHT };
+      });
+      const totalHeight = START_Y + Math.ceil(ores.length / COLS) * ROW_HEIGHT + 120;
+      field.style.height = totalHeight + 'px';
+
+      let d = `M ${positions[0].x} ${positions[0].y}`;
+      for (let i = 1; i < positions.length; i++) {
+        const p = positions[i-1], c = positions[i];
+        if (p.y !== c.y) { const my = (p.y+c.y)/2; d += ` L ${p.x} ${my} L ${c.x} ${my} L ${c.x} ${c.y}`; }
+        else d += ` L ${c.x} ${c.y}`;
+      }
+
+      field.innerHTML = `
+        <svg class="snake-path" viewBox="0 0 ${width} ${totalHeight}" preserveAspectRatio="none">
+          <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E5E7EB"/><stop offset="100%" stop-color="#D1D5DB"/></linearGradient></defs>
+          <path class="snake-line" d="${d}" fill="none" stroke="url(#grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="${d}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        ${ores.map((ore, i) => `
+          <div class="snake-ore" style="left:${positions[i].x}px; top:${positions[i].y}px; --ore-color:${ore.color}" onclick="selectOre(${ore.id})">
+            <div class="snake-ore-ring"></div>
+            ${makeCrystal(ore.color, ore.shape)}
+            <div class="snake-ore-label"><div class="snake-ore-name">${ore.name}</div><div class="snake-ore-level">Lv.${ore.level}</div></div>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    let selectedId = null;
+    function selectOre(id) {
+      document.querySelectorAll('.snake-ore').forEach(el => el.classList.remove('selected'));
+      const ore = ores.find(o => o.id === id);
+      if (selectedId === id) { selectedId = null; document.getElementById('card').classList.remove('show'); return; }
+      selectedId = id;
+      const el = [...document.querySelectorAll('.snake-ore')].find((_,i)=>ores[i].id===id);
+      if (el) el.classList.add('selected');
+      document.getElementById('card-name').textContent = ore.name;
+      document.getElementById('card-meta').textContent = `阶段 ${ore.level}/4 · 掌握度 ${Math.round(50+Math.random()*40)}%`;
+      document.getElementById('card').classList.add('show');
+    }
+    function closeCard() { selectedId = null; document.querySelectorAll('.snake-ore').forEach(el => el.classList.remove('selected')); document.getElementById('card').classList.remove('show'); }
+
+    render();
+    window.addEventListener('resize', render);
+  </script>
+</body>
+</html>

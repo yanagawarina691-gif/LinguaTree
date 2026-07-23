@@ -1,32 +1,24 @@
-import jwt from 'jsonwebtoken';
-import { config } from '../config.js';
+import db from '../db/index.js';
+import { nanoid } from 'nanoid';
+
+const DEFAULT_USER_ID = 'default';
 
 /**
- * JWT 认证中间件
- * 从 Authorization: Bearer <token> 中解析用户 ID
+ * 确保默认用户存在
  */
-export function authRequired(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: '未提供认证 token，请先登录' });
-  }
-
-  const token = authHeader.slice(7);
-  try {
-    const payload = jwt.verify(token, config.JWT_SECRET);
-    req.userId = payload.userId;
-    req.userNickname = payload.nickname;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: 'token 无效或已过期，请重新登录' });
+function ensureDefaultUser() {
+  const exists = db.prepare('SELECT id FROM users WHERE id = ?').get(DEFAULT_USER_ID);
+  if (!exists) {
+    db.prepare('INSERT INTO users (id, nickname) VALUES (?, ?)').run(DEFAULT_USER_ID, 'Learner');
   }
 }
 
 /**
- * 生成 JWT token
+ * 无需登录，所有请求使用默认用户
  */
-export function generateToken(userId, nickname) {
-  return jwt.sign({ userId, nickname }, config.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+export function authRequired(req, res, next) {
+  ensureDefaultUser();
+  req.userId = DEFAULT_USER_ID;
+  req.userNickname = 'Learner';
+  next();
 }

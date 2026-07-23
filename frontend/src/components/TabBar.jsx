@@ -5,8 +5,7 @@ export default function TabBar() {
   const location = useLocation();
   const routes = [
     { path: '/', icon: '📺', label: 'Feed' },
-    { path: '/tree', icon: '🌳', label: '知识树' },
-    { path: '/practice', icon: '✏️', label: '练习', badge: 'v2', disabled: true },
+    { path: '/tree', icon: '💎', label: '矿石' },
     { path: '/me', icon: '👤', label: '我的' },
   ];
 

@@ -1,401 +1,501 @@
-/**
- * 矿石星图（Crystal Galaxy）专用样式
- * 从 frosted-crystal-garden.html 的 <style> 迁移
- * 前缀从 #chromatic-lithosphere 改为 .crystal-galaxy
- */
+/* ============================================= */
+/* Crystal Galaxy — 矿石星图 样式系统 v2         */
+/* 优化：层次、节奏、空间、精致细节               */
+/* ============================================= */
 
-/* ====== CSS 变量映射（HTML 变量 → 项目 global.css 变量） ====== */
-.crystal-galaxy {
-  --viz-series-2: var(--orange);
-  --viz-series-3: var(--blue);
-  --viz-series-4: var(--purple);
-  --viz-series-5: var(--yellow);
-  --card: #fff;
-  --popover: #fff;
-  --popover-foreground: var(--text);
-  --foreground: var(--text);
-  --primary-foreground: #fff;
-  --muted: var(--bg-gray);
-  --muted-foreground: var(--text-lt);
-  --gem-accent: #FE8BF2;
-  --gem-shadow: #FB4DFE;
-  width: 100%;
-  height: 100%;
-  color: var(--foreground);
-}
+/* ---------- 作用域统一样式 ---------- */
+.crystal-galaxy-app *,
+.crystal-galaxy-app *::before,
+.crystal-galaxy-app *::after { box-sizing: border-box; }
 
-/* ====== 顶部工具栏 ====== */
-.crystal-galaxy .cl-bar {
+.crystal-galaxy-app {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #F8F9FC 0%, #F0F2F8 100%);
+}
+
+/* ====== 统计概览 ====== */
+.crystal-galaxy-app .galaxy-stats {
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px 8px;
+  justify-content: center;
+  gap: 24px;
+  padding: 10px 20px 8px;
 }
-.crystal-galaxy .cl-brand {
+.crystal-galaxy-app .galaxy-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.crystal-galaxy-app .galaxy-stats .stat-num {
+  font-family: "Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1A1A2E;
+  line-height: 1;
+}
+.crystal-galaxy-app .galaxy-stats .stat-label {
+  font-size: 10px;
   font-weight: 600;
-  font-size: 18px;
-  color: var(--primary);
+  color: #9CA3AF;
+  letter-spacing: .4px;
+  text-transform: uppercase;
 }
-.crystal-galaxy .cl-status {
-  font-size: 12px;
-  color: var(--text-lt);
+
+/* ====== 图谱区容器 ====== */
+.crystal-galaxy-wrapper {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  margin: 0 10px 8px;
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.03);
 }
-.crystal-galaxy .viz-row {
+
+/* ====== 浮动工具栏 (pill) ====== */
+.crystal-galaxy-wrapper .graph-toolbar {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 8px 6px 14px;
+  background: rgba(26,26,46,.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  z-index: 10;
+  pointer-events: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
 }
-.crystal-galaxy .btn {
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 13px;
+.crystal-galaxy-wrapper .graph-status {
+  font-family: "Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 11px;
   font-weight: 600;
-  background: var(--bg-gray);
-  color: var(--text);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: transform .12s;
-}
-.crystal-galaxy .btn:active { transform: scale(.92); }
-.crystal-galaxy .btn-ghost { background: transparent; color: var(--text-lt); }
-.crystal-galaxy .btn-primary {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 3px 0 var(--primary-dk);
-}
-.crystal-galaxy .btn-primary:active { box-shadow: 0 1px 0 var(--primary-dk); }
-.crystal-galaxy .btn-primary:disabled {
-  background: var(--bg-gray);
-  color: var(--text-lt);
-  box-shadow: none;
-  cursor: default;
-}
-
-/* ====== SVG 舞台 ====== */
-.crystal-galaxy .cl-stage {
-  position: relative;
-  flex: 1;
+  color: rgba(255,255,255,.8);
+  max-width: 200px;
   overflow: hidden;
-  background: var(--card);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1;
 }
-.crystal-galaxy #cl-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
+.crystal-galaxy-wrapper .graph-controls {
+  display: flex;
+  gap: 2px;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
-.crystal-galaxy #cl-svg.dragging { cursor: grabbing; }
-
-/* ====== 矿区带 ====== */
-.crystal-galaxy .cl-zone {
-  fill: none;
-  stroke: var(--border);
-  stroke-width: 1;
-  stroke-dasharray: 5 11;
-  opacity: .16;
-}
-.crystal-galaxy .cl-zone-label {
-  fill: #030095;
-  font: 500 12px system-ui, sans-serif;
-  letter-spacing: 0;
-  opacity: .44;
-}
-
-/* ====== 关联边 ====== */
-.crystal-galaxy .cl-link {
-  fill: none;
-  stroke: var(--border);
-  stroke-width: 1.2;
-  opacity: .15;
-  transition: opacity .45s, stroke-width .45s, stroke .45s;
-}
-.crystal-galaxy .cl-link.active {
-  stroke: var(--viz-series-3);
-  stroke-width: calc(1.2px + var(--s) * 4px);
-  opacity: calc(.18 + var(--s) * .8);
-  stroke-dasharray: 6 8;
-  animation: cl-flow 1.5s linear infinite;
-}
-
-/* ====== 节点 ====== */
-.crystal-galaxy .cl-node {
+.crystal-galaxy-wrapper .graph-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  opacity: .92;
-  transition: opacity .5s, filter .5s;
+  transition: background .15s, transform .15s;
+  padding: 0;
 }
-.crystal-galaxy .cl-node.dim { opacity: .15; filter: saturate(.18); }
-.crystal-galaxy .cl-node.lit { opacity: 1; }
-.crystal-galaxy .cl-node.low { filter: url(#cl-glow-low); }
-.crystal-galaxy .cl-node.mid { filter: url(#cl-glow-mid); }
-.crystal-galaxy .cl-node.high { filter: url(#cl-glow-high); }
-.crystal-galaxy .cl-node.inactive { cursor: default; opacity: .35; }
-.crystal-galaxy .cl-node.inactive .cl-label { opacity: .5; }
-
-.crystal-galaxy .cl-node.lit .cl-core {
-  opacity: calc(.35 + var(--s) * .65);
-  animation: cl-core 2.1s ease-in-out infinite;
+.crystal-galaxy-wrapper .graph-btn:hover {
+  background: rgba(255,255,255,.22);
 }
-.crystal-galaxy .cl-node.lit .cl-spark {
-  opacity: calc(.22 + var(--s) * .78);
-  animation: cl-spark 1.8s ease-in-out infinite;
+.crystal-galaxy-wrapper .graph-btn:active {
+  transform: scale(.9);
 }
-.crystal-galaxy .cl-node.growing .cl-mineral {
-  transform-box: fill-box;
-  transform-origin: center bottom;
-  animation: cl-grow .9s cubic-bezier(.2,.86,.24,1.18);
-}
-.crystal-galaxy .cl-node.growing .cl-rise { animation: cl-rise .85s ease-out; }
-
-/* ====== 晶体几何 ====== */
-/* stage 0 暗灰石头 - 硬编码颜色避免 color-mix 兼容问题 */
-.crystal-galaxy .cl-rock {
-  fill: #C8C8C8;
-  stroke: #999;
-  stroke-width: 1;
-}
-/* 晶体主体：fill 用 currentColor（g 元素已设 color），stroke 用 inline var 或 fallback */
-.crystal-galaxy .cl-body {
-  fill: currentColor;
-  stroke: rgba(0, 0, 0, 0.4);
-  stroke-width: 1.6;
-  stroke-linejoin: round;
-}
-/* 切面 - 用半透明黑色，不依赖 CSS 变量 */
-.crystal-galaxy .cl-facet {
-  fill: rgba(0, 0, 0, 0.45);
-  opacity: .78;
-}
-/* 高光 - 用半透明白色 */
-.crystal-galaxy .cl-light {
-  fill: rgba(255, 255, 255, 0.7);
-  opacity: .84;
-}
-.crystal-galaxy .cl-vein {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.6);
-  stroke-width: 1.4;
-  opacity: .78;
-}
-.crystal-galaxy .cl-core {
-  fill: url(#cl-core);
-  opacity: .08;
-  transition: opacity .5s;
-  transform-box: fill-box;
-  transform-origin: center;
-  mix-blend-mode: screen;
-}
-.crystal-galaxy .cl-inner-beam {
-  fill: rgba(255, 255, 255, 0.2);
-  opacity: .14;
-  mix-blend-mode: screen;
-  transition: opacity .45s;
-}
-.crystal-galaxy .cl-node.lit .cl-inner-beam {
-  opacity: calc(.22 + var(--s, 0) * .62);
-  animation: cl-beam 2.35s ease-in-out infinite;
-}
-.crystal-galaxy .cl-spark {
-  fill: #fff;
-  opacity: .12;
-  transform-box: fill-box;
-  transform-origin: center;
+.crystal-galaxy-wrapper .graph-btn svg {
+  width: 14px;
+  height: 14px;
+  color: #FFFFFF;
 }
 
-/* ====== 标签 ====== */
-.crystal-galaxy .cl-label {
-  fill: #030095;
-  font: 500 13px system-ui, sans-serif;
-  text-anchor: middle;
-  letter-spacing: 0;
-  paint-order: stroke;
-  stroke: #F8FAFB;
-  stroke-width: 5;
-  stroke-linejoin: round;
-}
-.crystal-galaxy .cl-meta {
-  fill: #186AFE;
-  font: 400 11px system-ui, sans-serif;
-  text-anchor: middle;
-  letter-spacing: 0;
-  paint-order: stroke;
-  stroke: #F8FAFB;
-  stroke-width: 4;
-}
-
-/* ====== 图例 ====== */
-.crystal-galaxy .cl-key {
+/* ====== 图例 (标签风格) ====== */
+.crystal-galaxy-wrapper .graph-legend {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 10px;
+  left: 12px;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  color: var(--text);
-  pointer-events: none;
-  font-size: 11px;
-}
-.crystal-galaxy .cl-key span {
-  display: flex;
-  align-items: center;
   gap: 6px;
+  z-index: 5;
+  pointer-events: none;
 }
-.crystal-galaxy .cl-dot {
-  width: 9px;
-  height: 9px;
+.crystal-galaxy-wrapper .graph-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.85);
+  font-size: 10px;
+  font-weight: 600;
+  color: #6B7280;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.crystal-galaxy-wrapper .legend-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  display: inline-block;
 }
-.crystal-galaxy .cl-dot.grammar { background: var(--purple); }
-.crystal-galaxy .cl-dot.words { background: var(--orange); }
-.crystal-galaxy .cl-dot.growth { background: var(--blue); box-shadow: 0 0 0 5px color-mix(in srgb, var(--blue) 22%, transparent); }
+.crystal-galaxy-wrapper .legend-dot.connected { background: #58CC02; }
+.crystal-galaxy-wrapper .legend-dot.selected { background: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,.2); }
+.crystal-galaxy-wrapper .legend-dot.dormant { background: #D1D5DB; }
 
-.crystal-galaxy .cl-pan {
+/* ====== 拖拽提示 ====== */
+.crystal-galaxy-wrapper .graph-hint {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 10px;
+  right: 12px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  z-index: 5;
   pointer-events: none;
-  font-size: 11px;
-  color: var(--text-lt);
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.85);
+  font-size: 10px;
+  font-weight: 600;
+  color: #9CA3AF;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  opacity: .8;
+}
+
+/* ====== SVG 画布 ====== */
+.crystal-galaxy-wrapper .graph-container {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  display: flex;
+  height: 100%;
+}
+.crystal-galaxy-wrapper #graph-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+.crystal-galaxy-wrapper #graph-svg.dragging { cursor: grabbing; }
+
+/* ====== 节点 ====== */
+.crystal-galaxy-wrapper .graph-node {
+  cursor: pointer;
+  transition: opacity .4s cubic-bezier(.4,0,.2,1), filter .4s cubic-bezier(.4,0,.2,1);
+}
+.crystal-galaxy-wrapper .graph-node:hover .crystal-group {
+  filter: brightness(1.15);
+  transition: filter .18s ease;
+}
+.crystal-galaxy-wrapper .graph-node.dim {
+  opacity: .14;
+  filter: saturate(.08);
+}
+.crystal-galaxy-wrapper .graph-node.lit { opacity: 1; }
+.crystal-galaxy-wrapper .graph-node.low  { filter: url(#glow-green-low); }
+.crystal-galaxy-wrapper .graph-node.mid  { filter: url(#glow-green-mid); }
+.crystal-galaxy-wrapper .graph-node.high { filter: url(#glow-green-high); }
+
+.crystal-galaxy-wrapper .node-halo {
+  fill: none;
+  stroke: #58CC02;
+  stroke-width: 2;
+  opacity: 0;
+  transform: scale(.5);
+  transform-origin: center;
+  transition: opacity .4s cubic-bezier(.34,1.56,.64,1),
+              transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.crystal-galaxy-wrapper .graph-node.selected.lit .node-halo {
+  opacity: .5;
+  transform: scale(1);
+  animation: haloPulse 2.4s ease-in-out infinite;
+}
+@keyframes haloPulse {
+  0%, 100% { stroke-opacity: .4; stroke-width: 2; }
+  50%      { stroke-opacity: .85; stroke-width: 3; }
+}
+
+.crystal-galaxy-wrapper .graph-label {
+  font-family: "Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-anchor: middle;
+  letter-spacing: -.1px;
+  fill: #1A1A2E;
+  paint-order: stroke;
+  stroke: #FFFFFF;
+  stroke-width: 4.5;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* ====== 连线 ====== */
+.crystal-galaxy-wrapper .graph-link {
+  fill: none;
+  stroke: #E5E7EB;
+  stroke-width: 1;
+  opacity: .18;
+  transition: opacity .4s, stroke .4s, stroke-width .4s;
+  pointer-events: none;
+}
+.crystal-galaxy-wrapper .graph-link.dim { opacity: .03; }
+.crystal-galaxy-wrapper .graph-link.active {
+  stroke: #58CC02;
+  stroke-width: calc(1px + var(--s,.5) * 5px);
+  opacity: calc(.2 + var(--s,.5) * .7);
+  stroke-dasharray: 5 7;
+  animation: linkPulse 1.6s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(88,204,2,.16));
+}
+@keyframes linkPulse { to { stroke-dashoffset: -24; } }
+
+/* ====== 生长动画 ====== */
+.crystal-galaxy-wrapper .graph-node.growing .crystal-group {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: crystalPop .8s cubic-bezier(.2,.86,.24,1.18);
+}
+@keyframes crystalPop {
+  0%   { transform: scale(.8,.62); }
+  45%  { transform: scale(1.12,1.2); }
+  100% { transform: scale(1); }
 }
 
 /* ====== 详情面板 ====== */
-.crystal-galaxy .cl-detail {
-  position: absolute;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  width: min(340px, calc(100% - 28px));
-  padding: 12px 16px;
-  color: var(--text);
-  background: color-mix(in srgb, var(--popover) 94%, transparent);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 12%, transparent);
-  backdrop-filter: blur(14px);
-  z-index: 10;
+.crystal-galaxy-app .detail-panel {
+  flex-shrink: 0;
+  margin: 6px 10px 8px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04);
+  border: 1px solid rgba(0,0,0,.05);
+  animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
 }
-.crystal-galaxy .cl-detail-main {
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.crystal-galaxy-app .detail-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
-.crystal-galaxy .cl-heading {
+.crystal-galaxy-app .detail-id {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 3px;
 }
-.crystal-galaxy .cl-heading strong {
-  font-size: 15px;
+.crystal-galaxy-app .detail-kind {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 10.5px;
   font-weight: 700;
-  color: var(--text);
+  letter-spacing: .3px;
+  line-height: 1;
 }
-.crystal-galaxy .viz-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+.crystal-galaxy-app .detail-kind.grammar { background: #EEF2FF; color: #4F6EF6; }
+.crystal-galaxy-app .detail-kind.vocab   { background: #F5F3FF; color: #7C3AED; }
+.crystal-galaxy-app .detail-name {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  color: #111827;
+}
+.crystal-galaxy-app .detail-meta {
+  text-align: right;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.crystal-galaxy-app .detail-stage {
+  font-size: 10px;
   font-weight: 600;
-  background: var(--bg-gray);
-  color: var(--text-lt);
+  color: #9CA3AF;
+  letter-spacing: .3px;
 }
-.crystal-galaxy .cl-stage-label {
-  font-size: 11px;
-  color: var(--text-lt);
+.crystal-galaxy-app .detail-score {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -.8px;
+  line-height: 1;
 }
-.crystal-galaxy .cl-related {
-  font-size: 11px;
-  color: var(--text-lt);
+.crystal-galaxy-app .detail-score-unit {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9CA3AF;
+}
+
+.crystal-galaxy-app .detail-related {
+  font-size: 10px;
+  font-weight: 500;
+  color: #6B7280;
   line-height: 1.5;
+  margin-bottom: 6px;
+  padding: 5px 0;
+  border-top: 1px solid #F3F4F6;
+  border-bottom: 1px solid #F3F4F6;
 }
-.crystal-galaxy .cl-growth-track {
+
+.crystal-galaxy-app .detail-growth {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
-  margin-top: 9px;
+  grid-template-columns: repeat(4,1fr);
+  gap: 3px;
+  margin-bottom: 2px;
 }
-.crystal-galaxy .cl-growth-track span {
+.crystal-galaxy-app .detail-growth span {
   height: 4px;
   border-radius: 2px;
-  background: var(--bg-gray);
-  transition: background .35s, box-shadow .35s;
+  background: #F3F4F6;
+  transition: background .4s, box-shadow .4s;
 }
-.crystal-galaxy .cl-growth-track span.on {
-  background: var(--blue);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--blue) 50%, transparent);
+.crystal-galaxy-app .detail-growth span.on {
+  background: #58CC02;
+  box-shadow: 0 0 8px rgba(88,204,2,.24);
+}
+.crystal-galaxy-app .detail-growth-labels {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 3px;
+  margin-bottom: 6px;
+  font-size: 8.5px;
+  font-weight: 600;
+  color: #D1D5DB;
+  text-align: center;
+}
+.crystal-galaxy-app .detail-growth-labels span.on { color: #58CC02; }
+
+.crystal-galaxy-app .detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ====== 按钮 ====== */
+.crystal-galaxy-app .btn {
+  flex: 1;
+  padding: 11px;
+  border-radius: 12px;
+  font-family: "Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -.1px;
+  cursor: pointer;
+  border: none;
+  transition: all .15s cubic-bezier(.16,1,.3,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  -webkit-tap-highlight-color: transparent;
+}
+.crystal-galaxy-app .btn:active { transform: scale(.96); }
+.crystal-galaxy-app .btn-primary {
+  background: #58CC02;
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(88,204,2,.22);
+}
+.crystal-galaxy-app .btn-primary:hover { background: #4CA601; }
+.crystal-galaxy-app .btn-primary:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.crystal-galaxy-app .btn-secondary {
+  background: #F3F4F6;
+  color: #6B7280;
+  flex: 0 0 auto;
+  width: 40px;
+  padding: 11px;
+}
+.crystal-galaxy-app .btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 /* ====== Toast ====== */
-.crystal-galaxy .cl-toast {
-  position: absolute;
+.crystal-galaxy-app .galaxy-toast {
+  position: fixed;
+  top: 24px;
   left: 50%;
-  top: 22%;
-  transform: translate(-50%, -8px);
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: #fff;
-  background: var(--primary);
-  opacity: 0;
+  transform: translate(-50%, -120%);
+  background: #111827;
+  color: #FFFFFF;
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  letter-spacing: -.1px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.14);
+  z-index: 100;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  white-space: nowrap;
   pointer-events: none;
-  transition: opacity .2s, transform .2s;
-  z-index: 20;
-  font-size: 13px;
-  font-weight: 600;
 }
-.crystal-galaxy .cl-toast.show {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
+.crystal-galaxy-app .galaxy-toast.show { transform: translate(-50%,0); }
 
-/* ====== 动画 ====== */
-@keyframes cl-flow { to { stroke-dashoffset: -28; } }
-@keyframes cl-core {
-  0%, 100% { transform: scale(.72); opacity: .32; }
-  50% { transform: scale(1.18); opacity: 1; }
+/* ====== 空状态 / 加载 / 错误 ====== */
+.crystal-galaxy-app .galaxy-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 16px;
+  text-align: center;
 }
-@keyframes cl-spark {
-  0%, 100% { transform: scale(.6) rotate(0deg); opacity: .28; }
-  50% { transform: scale(1.28) rotate(45deg); opacity: 1; }
+.crystal-galaxy-app .galaxy-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #F0F4FF, #EDF7EE);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.04);
 }
-@keyframes cl-beam {
-  0%, 100% { transform: translateY(8px) scaleY(.72); opacity: .18; }
-  50% { transform: translateY(-5px) scaleY(1.08); opacity: .88; }
+.crystal-galaxy-app .galaxy-empty-title {
+  font-family: "Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
 }
-@keyframes cl-grow {
-  0% { transform: scale(.86, .72); }
-  42% { transform: scale(1.08, 1.15); }
-  100% { transform: scale(1); }
-}
-@keyframes cl-rise {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
+.crystal-galaxy-app .galaxy-empty-desc {
+  font-size: 12px;
+  color: #9CA3AF;
+  line-height: 1.5;
+  max-width: 220px;
 }
 
 /* ====== 响应式 ====== */
-@media (max-width: 430px) {
-  .crystal-galaxy .cl-key { max-width: 180px; font-size: 10px; }
-  .crystal-galaxy .cl-pan { display: none; }
-  .crystal-galaxy .cl-detail { width: calc(100% - 20px); padding: 10px 12px; }
-  .crystal-galaxy .cl-detail-main { align-items: flex-start; }
+@media (min-width: 768px) {
+  .crystal-galaxy-wrapper .graph-label { font-size: 12.5px; }
 }
-
-/* ====== 无障碍 ====== */
 @media (prefers-reduced-motion: reduce) {
-  .crystal-galaxy .cl-link.active,
-  .crystal-galaxy .cl-node.lit .cl-core,
-  .crystal-galaxy .cl-node.lit .cl-spark,
-  .crystal-galaxy .cl-node.lit .cl-inner-beam,
-  .crystal-galaxy .cl-node.growing .cl-mineral,
-  .crystal-galaxy .cl-node.growing .cl-rise {
-    animation: none;
-  }
+  .crystal-galaxy-wrapper .graph-link.active,
+  .crystal-galaxy-wrapper .graph-node.growing .crystal-group,
+  .crystal-galaxy-wrapper .graph-node.selected.lit .node-halo,
+  .crystal-galaxy-app .detail-panel { animation: none; }
 }

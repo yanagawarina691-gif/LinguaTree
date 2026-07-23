@@ -1,6 +1,6 @@
 import app from './app.js';
 import { config } from './config.js';
-import { initSchema, seedKnowledgeTree } from './db/index.js';
+import { initSchema } from './db/index.js';
 import { logger } from './utils/logger.js';
 
 /**
@@ -9,7 +9,7 @@ import { logger } from './utils/logger.js';
 async function start() {
   // 初始化数据库
   initSchema();
-  seedKnowledgeTree();
+  console.log('[LinguaTree] v2 动态矿石网络已就绪');
 
   // 启动 Express
   app.listen(config.PORT, () => {

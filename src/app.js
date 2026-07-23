@@ -2,9 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
-import authRoutes from './routes/auth.js';
 import videoRoutes from './routes/videos.js';
 import treeRoutes from './routes/tree.js';
+import oreRoutes from './routes/ores.js';
 import userRoutes from './routes/user.js';
 
 const app = express();
@@ -30,9 +30,9 @@ app.get('/health', (req, res) => {
 });
 
 // API 路由
-app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/tree', treeRoutes);
+app.use('/api/ores', oreRoutes);
 app.use('/api/user', userRoutes);
 
 // 根路由 — API 信息

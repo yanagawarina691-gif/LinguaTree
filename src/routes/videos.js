@@ -11,6 +11,7 @@ import {
   completeFlashcards,
   completeChoiceExercises,
 } from '../services/internalizeService.js';
+import { updateTreeFromVideo } from '../services/treeService.js';
 import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 
@@ -97,27 +98,26 @@ router.get('/:id', (req, res) => {
     });
   }
 
-  // 获取节点映射
-  const nodes = db.prepare(`
-    SELECT vn.node_id, vn.weight, vn.confidence, vn.is_unclassified, vn.unclassified_name,
-           kn.name as node_name, kn.top_branch_name
-    FROM video_nodes vn
-    LEFT JOIN knowledge_nodes kn ON kn.node_id = vn.node_id
-    WHERE vn.video_id = ?
+  // 获取矿石映射
+  const ores = db.prepare(`
+    SELECT vo.ore_id, vo.confidence,
+           o.name as ore_name, o.description, o.tags
+    FROM video_ores vo
+    JOIN ore_nodes o ON o.id = vo.ore_id
+    WHERE vo.video_id = ?
   `).all(req.params.id);
 
   // 获取题目
   const exercises = db.prepare(`
-    SELECT id, node_id, type, question, options, answer, explanation
+    SELECT id, ore_id, type, question, options, answer, explanation
     FROM exercises WHERE video_id = ?
   `).all(req.params.id);
 
-  // 格式化题目（统一使用 question 字段）
   const formattedExercises = {};
   for (const ex of exercises) {
     const formatted = {
       id: ex.id,
-      node_id: ex.node_id,
+      ore_id: ex.ore_id,
       type: ex.type,
       question: ex.question,
       explanation: ex.explanation,
@@ -135,8 +135,7 @@ router.get('/:id', (req, res) => {
 
   res.json({
     ...video,
-    nodes: nodes.filter(n => !n.is_unclassified),
-    unclassified: nodes.filter(n => n.is_unclassified),
+    ores,
     exercises: formattedExercises,
   });
 });
@@ -147,7 +146,9 @@ router.get('/:id', (req, res) => {
  */
 router.get('/', (req, res) => {
   const videos = db.prepare(`
-    SELECT id, source_url, title, author, status, cefr_level, summary, created_at
+    SELECT id, source_url, title, author, status, cefr_level, summary, claimed,
+           deepen_completed, flashcard_completed, choice_completed, freeform_completed, migration_completed,
+           created_at
     FROM videos WHERE user_id = ?
     ORDER BY created_at DESC
   `).all(req.userId);
@@ -156,9 +157,25 @@ router.get('/', (req, res) => {
 });
 
 /**
+ * POST /api/videos/:id/claim
+ * 用户选择"立即学习"，发放初始矿石 XP
+ */
+router.post('/:id/claim', (req, res) => {
+  const video = db.prepare('SELECT id FROM videos WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+  if (!video) return res.status(404).json({ error: '视频不存在' });
+
+  const oreIds = db.prepare('SELECT ore_id FROM video_ores WHERE video_id = ?').all(req.params.id).map(r => r.ore_id);
+  const result = updateTreeFromVideo(req.userId, req.params.id, oreIds, 1.0, []);
+
+  db.prepare('UPDATE videos SET claimed = 1 WHERE id = ?').run(req.params.id);
+
+  res.json({ claimed: true, treeUpdate: result });
+});
+
+/**
  * POST /api/videos/:id/exercises/complete
  * 提交巩固训练结果
- * body: { attempts: [{ exerciseId, nodeId, isCorrect, isSkipped, userAnswer }] }
+ * body: { attempts: [{ exerciseId, oreId, isCorrect, isSkipped, userAnswer }] }
  */
 router.post('/:id/exercises/complete', (req, res) => {
   const { attempts } = req.body;

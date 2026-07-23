@@ -35,61 +35,123 @@ function updateVideoStatus(videoId, status, extra = {}) {
 /**
  * 保存解析结果到数据库
  */
+/**
+ * 清理矿石名称：去除引号、前缀、空格，截断到 12 字符
+ */
+function cleanOreName(raw) {
+  if (!raw) return '未分类知识点';
+  let name = String(raw)
+    .replace(/['""''「」《》\[\]【】`]+/g, '')
+    .replace(/^(本视频|视频|主要|核心|该视频|此视频)?(聚焦于|聚焦|讲解|讨论|介绍|关于|讲述|分享|涉及)/, '')
+    .replace(/^(的|是|一个|一种|这项|该|此|内容)/, '')
+    .replace(/[，。,.\n].*$/s, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (name.length > 12) name = name.slice(0, 12);
+  return name || '未分类知识点';
+}
+
+/**
+ * 保存 AI 抽取结果 — 动态创建矿石节点
+ * v2: 每次解析创建新矿石，或合并到已有矿石
+ */
 function saveExtractionResult(videoId, extractionResult) {
-  const { nodes, unclassified, exercises } = extractionResult;
+  const { ores, exercises } = extractionResult;
 
-  // 检查 node_id 是否存在于 knowledge_nodes 表中
-  const allNodes = db.prepare('SELECT node_id FROM knowledge_nodes').all();
-  const validNodeIds = new Set(allNodes.map(r => r.node_id));
+  const TAG_COLORS = [
+    '#58CC02', '#3B82F6', '#A855F7', '#EF4444',
+    '#F59E0B', '#EC4899', '#06B6D4', '#84CC16', '#F97316',
+  ];
 
-  // 保存视频-节点映射
-  const insertNode = db.prepare(`
-    INSERT INTO video_nodes (video_id, node_id, weight, confidence, is_unclassified, unclassified_name)
-    VALUES (?, ?, ?, ?, ?, ?)
+  // 注册/更新标签
+  const ensureTag = db.prepare(`
+    INSERT INTO tags (name, color, ore_count) VALUES (?, ?, 1)
+    ON CONFLICT(name) DO UPDATE SET ore_count = ore_count + 1
   `);
 
-  let savedNodes = 0;
-  for (const node of nodes) {
-    if (!validNodeIds.has(node.node_id)) {
-      logger.warn('PIPELINE', `跳过不存在的节点: ${node.node_id}`);
-      continue;
-    }
-    try {
-      insertNode.run(videoId, node.node_id, node.weight, node.confidence, 0, '');
-      savedNodes++;
-    } catch (e) {
-      logger.warn('PIPELINE', `插入节点 ${node.node_id} 失败: ${e.message}`);
-    }
-  }
+  // 创建/获取矿石节点
+  const insertOre = db.prepare(`
+    INSERT INTO ore_nodes (name, description, tags, color, created_from_video_id)
+    VALUES (?, ?, ?, ?, ?)
+  `);
 
-  // 保存未分类节点（不需要 FK 检查，因为 is_unclassified=1 时不关联 knowledge_nodes）
-  if (unclassified) {
-    for (const unc of unclassified) {
-      try {
-        insertNode.run(videoId, 'unclassified', 0, unc.confidence || 0.5, 1, unc.name || '');
-      } catch (e) {
-        logger.warn('PIPELINE', `插入未分类节点失败: ${e.message}`);
+  // 视频-矿石映射
+  const insertVideoOre = db.prepare(`
+    INSERT OR IGNORE INTO video_ores (video_id, ore_id, confidence)
+    VALUES (?, ?, ?)
+  `);
+
+  // 更新矿石 video_count
+  const bumpOreCount = db.prepare(`
+    UPDATE ore_nodes SET video_count = video_count + 1 WHERE id = ?
+  `);
+
+  const savedOreIds = [];
+
+  const txn = db.transaction(() => {
+    for (const ore of (ores || [])) {
+      let oreId;
+
+      // 合并逻辑：如果 LLM 提示合并到已有矿石
+      if (ore.merge_hint) {
+        const existing = db.prepare('SELECT id FROM ore_nodes WHERE id = ?').get(ore.merge_hint);
+        if (existing) {
+          oreId = existing.id;
+          bumpOreCount.run(oreId);
+          insertVideoOre.run(videoId, oreId, ore.confidence || 0.7);
+          savedOreIds.push(oreId);
+          continue;
+        }
       }
-    }
-  }
 
-  // 保存题目
+      // 去重：检查是否已有同名矿石
+      const dup = db.prepare('SELECT id FROM ore_nodes WHERE name = ?').get(ore.name);
+      if (dup) {
+        oreId = dup.id;
+        bumpOreCount.run(oreId);
+        insertVideoOre.run(videoId, oreId, ore.confidence || 0.7);
+        savedOreIds.push(oreId);
+        continue;
+      }
+
+      // 创建新矿石
+      const tags = ore.tags || [];
+      const tagColor = TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)];
+      const cleanedName = cleanOreName(ore.name);
+
+      const result = insertOre.run(
+        cleanedName,
+        ore.description || '',
+        JSON.stringify(tags),
+        tagColor,
+        videoId
+      );
+      oreId = result.lastInsertRowid;
+
+      // 注册标签
+      for (const tag of tags) {
+        try { ensureTag.run(tag, tagColor); } catch {}
+      }
+
+      insertVideoOre.run(videoId, oreId, ore.confidence || 0.7);
+      savedOreIds.push(oreId);
+    }
+  });
+
+  txn();
+
+  // 保存题目（关联到第一个矿石）
   const insertExercise = db.prepare(`
-    INSERT INTO exercises (id, video_id, node_id, type, question, options, answer, explanation)
+    INSERT INTO exercises (id, video_id, ore_id, type, question, options, answer, explanation)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const saveExercise = (ex, type) => {
-    if (!ex) return;
-    const nodeId = ex.node_id || 'unclassified';
-    if (!validNodeIds.has(nodeId)) {
-      logger.warn('PIPELINE', `跳过题目（节点不存在）: ${nodeId}`);
-      return;
-    }
+    if (!ex || savedOreIds.length === 0) return;
     try {
       insertExercise.run(
-        nanoid(12), videoId, nodeId, type,
-        ex.question || ex.sentence || ex.statement || '',
+        nanoid(12), videoId, savedOreIds[0], type,
+        ex.question || '',
         JSON.stringify(ex.options || []),
         String(ex.answer),
         ex.explanation || ''
@@ -99,11 +161,12 @@ function saveExtractionResult(videoId, extractionResult) {
     }
   };
 
-  saveExercise(exercises.choice, 'choice');
-  saveExercise(exercises.fill, 'fill');
-  saveExercise(exercises.judge, 'judge');
+  saveExercise(exercises?.choice, 'choice');
+  saveExercise(exercises?.fill, 'fill');
+  saveExercise(exercises?.judge, 'judge');
 
-  logger.stage('PIPELINE', `保存结果: ${savedNodes} 节点, ${unclassified?.length || 0} 未分类`);
+  logger.stage('PIPELINE', `保存结果: ${savedOreIds.length} 个矿石`);
+  return savedOreIds;
 }
 
 /**
@@ -232,31 +295,25 @@ export async function runPipeline(videoId, userId, url, manualTranscript = '') {
       manual_transcript: manualTranscript,
     });
 
-    logParse(videoId, 'llm', 'success', `抽取 ${extractionResult.nodes?.length || 0} 个节点`, Date.now() - llmStart);
+    logParse(videoId, 'llm', 'success', `抽取 ${extractionResult.ores?.length || 0} 个矿石`, Date.now() - llmStart);
 
-    // 保存解析结果
-    saveExtractionResult(videoId, extractionResult);
+    // 保存解析结果（创建矿石节点）
+    const savedOreIds = saveExtractionResult(videoId, extractionResult);
+
+    // 如果没有真实视频标题（比如手动文字稿），用第一颗矿石名作为标题
+    if (!title && savedOreIds.length > 0) {
+      const firstOre = db.prepare('SELECT name FROM ore_nodes WHERE id = ?').get(savedOreIds[0]);
+      if (firstOre) {
+        db.prepare("UPDATE videos SET title = ? WHERE id = ?").run(firstOre.name, videoId);
+        title = firstOre.name;
+      }
+    }
 
     // 更新视频记录
     updateVideoStatus(videoId, 'done', {
       cefr_level: extractionResult.cefr_level || '',
       summary: extractionResult.summary || '',
     });
-
-    // ========== 阶段三：知识树更新 ==========
-
-    // MVP 阶段：完播率默认为 1.0（实际前端可以传入）
-    // 巩固训练的 XP 在用户提交答案后再更新
-    const completionRate = 1.0;
-    const treeResult = updateTreeFromVideo(
-      userId,
-      videoId,
-      extractionResult.nodes || [],
-      completionRate,
-      [] // 巩固训练答对列表，初始为空
-    );
-
-    logParse(videoId, 'tree_update', 'success', `${treeResult.updatedNodes.length} 节点更新, ${treeResult.leveledUpNodes.length} 升级`);
 
     // 清理临时文件
     cleanupTempFiles(tempFiles);
@@ -272,12 +329,11 @@ export async function runPipeline(videoId, userId, url, manualTranscript = '') {
       asrText,
       ocrText,
       vlmDescription,
-      nodes: extractionResult.nodes || [],
-      unclassified: extractionResult.unclassified || [],
+      ores: extractionResult.ores || [],
+      oreIds: savedOreIds,
       cefrLevel: extractionResult.cefr_level || '',
       summary: extractionResult.summary || '',
       exercises: extractionResult.exercises || {},
-      treeUpdate: treeResult,
       duration: totalDuration,
     };
   } catch (error) {
@@ -293,16 +349,12 @@ export async function runPipeline(videoId, userId, url, manualTranscript = '') {
 }
 
 /**
- * 处理巩固训练完成后的树更新
- * @param {string} userId
- * @param {string} videoId
- * @param {Array} attempts - [{ exerciseId, nodeId, isCorrect, isSkipped, userAnswer }]
- * @returns {Object} - { correctNodeIds, treeUpdate }
+ * 处理巩固训练完成后的矿石更新
  */
 export function processExerciseCompletion(userId, videoId, attempts) {
-  const correctNodeIds = [];
+  const correctOreIds = [];
   const insertAttempt = db.prepare(`
-    INSERT INTO exercise_attempts (user_id, exercise_id, video_id, node_id, is_correct, is_skipped, user_answer)
+    INSERT INTO exercise_attempts (user_id, exercise_id, video_id, ore_id, is_correct, is_skipped, user_answer)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -311,33 +363,25 @@ export function processExerciseCompletion(userId, videoId, attempts) {
       userId,
       attempt.exerciseId,
       videoId,
-      attempt.nodeId,
+      attempt.oreId || attempt.nodeId,
       attempt.isCorrect ? 1 : 0,
       attempt.isSkipped ? 1 : 0,
       attempt.userAnswer || ''
     );
 
     if (attempt.isCorrect && !attempt.isSkipped) {
-      if (!correctNodeIds.includes(attempt.nodeId)) {
-        correctNodeIds.push(attempt.nodeId);
+      const oid = attempt.oreId || attempt.nodeId;
+      if (!correctOreIds.includes(oid)) {
+        correctOreIds.push(oid);
       }
     }
   }
 
-  // 获取该视频映射的节点
-  const videoNodes = db.prepare(`
-    SELECT node_id, weight FROM video_nodes
-    WHERE video_id = ? AND is_unclassified = 0
-  `).all(videoId);
+  const videoOres = db.prepare(`
+    SELECT ore_id FROM video_ores WHERE video_id = ?
+  `).all(videoId).map(r => r.ore_id);
 
-  // 重新计算树更新（包含答题正确加的 XP）
-  const treeResult = updateTreeFromVideo(
-    userId,
-    videoId,
-    videoNodes,
-    1.0,
-    correctNodeIds
-  );
+  const treeResult = updateTreeFromVideo(userId, videoId, videoOres, 1.0, correctOreIds);
 
-  return { correctNodeIds, treeResult };
+  return { correctOreIds, treeResult };
 }

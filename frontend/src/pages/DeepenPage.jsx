@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDeepen, completeDeepen, feedbackDeepen } from '../api/videos.js';
+import CenterLoader from '../components/CenterLoader.jsx';
 
 export default function DeepenPage() {
   const { videoId } = useParams();
@@ -65,11 +66,8 @@ export default function DeepenPage() {
 
   if (loading) {
     return (
-      <div className="page active deepen-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-lt)' }}>
-          <div className="parse-spinner" style={{ margin: '0 auto 12px' }}></div>
-          <div>AI 正在整理加深理解内容...</div>
-        </div>
+      <div className="page active deepen-page">
+        <CenterLoader text="AI 正在整理加深理解内容..." spriteKey={1} />
       </div>
     );
   }
@@ -135,7 +133,7 @@ export default function DeepenPage() {
           <div className="deepen-section">
             <div className="deepen-section-title">📌 还可以了解</div>
             {content.supplements.map((s, idx) => (
-              <div key={idx} className="deepen-supplement-card" onClick={() => s.related_node_id && navigate('/tree')}>
+              <div key={idx} className="deepen-supplement-card" onClick={() => s.related_ore_id && navigate('/tree')}>
                 <div className="deepen-supplement-title">{s.title}</div>
                 <div className="deepen-supplement-content">{s.content}</div>
                 {s.relation && <div className="deepen-supplement-relation">↳ {s.relation}</div>}

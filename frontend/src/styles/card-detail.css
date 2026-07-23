@@ -1,0 +1,352 @@
+/* ============================================= */
+/* Knowledge Card — Obsidian 风格知识卡片          */
+/* ============================================= */
+
+.card-detail-page {
+  background: var(--bg) !important;
+}
+
+.card-body {
+  padding: 0 16px 12px;
+}
+
+/* ---------- 卡片头 ---------- */
+.card-header-block {
+  margin-bottom: 14px;
+  padding: 18px 14px 14px;
+  background: linear-gradient(135deg, #F5F7FF, #F8FAF5);
+  border-radius: 16px;
+  border: 1px solid rgba(88,204,2,.08);
+}
+.card-breadcrumb {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.card-breadcrumb-tag {
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: rgba(88,204,2,.1);
+  color: #4CA601;
+  font-size: 11px;
+  font-weight: 600;
+}
+.card-title {
+  font-family: "Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 8px;
+  letter-spacing: -.3px;
+}
+.card-meta-row {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #9CA3AF;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.card-mastery-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-mastery-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #E5E7EB;
+  overflow: hidden;
+}
+.card-mastery-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #58CC02, #3DDC84);
+  transition: width .5s ease;
+}
+.card-mastery-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: #58CC02;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ---------- 内容块 ---------- */
+.card-block {
+  margin-bottom: 12px;
+  padding: 14px;
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.05);
+}
+.card-block-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-sec {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #F9FAFB;
+}
+.card-sec:last-child { margin-bottom: 0; }
+.card-sec.highlight {
+  background: rgba(88,204,2,.05);
+  border-left: 3px solid #58CC02;
+}
+.card-sec-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 4px;
+}
+.card-sec-content {
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* ---------- 标签编辑 ---------- */
+.card-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #F3F4F6;
+  color: #6B7280;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.card-tag:hover { background: #E5E7EB; }
+.card-tag-add {
+  border: 1.5px dashed #D1D5DB;
+  background: transparent;
+  color: #9CA3AF;
+}
+.card-tag-input {
+  border: 1.5px solid #58CC02;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  outline: none;
+}
+
+/* ---------- 来源视频 ---------- */
+.card-source-video {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background .12s;
+}
+.card-source-video:hover { background: #F3F4F6; }
+.card-sub-text {
+  margin-left: auto;
+  font-size: 10px;
+  color: #9CA3AF;
+}
+
+/* ---------- Backlinks ---------- */
+.card-backlinks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.card-backlink-card {
+  padding: 10px;
+  border-radius: 10px;
+  background: #F9FAFB;
+  cursor: pointer;
+  transition: background .12s, transform .12s;
+  border: 1px solid rgba(0,0,0,.04);
+}
+.card-backlink-card:hover { background: #F0F2F5; transform: translateY(-1px); }
+.card-backlink-card:active { transform: scale(.97); }
+.card-backlink-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+.card-backlink-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 10px;
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+/* ---------- 补充知识 ---------- */
+.card-supplement-item {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #F9FAFB;
+}
+.card-supplement-item:last-child { margin-bottom: 0; }
+.card-supplement-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 3px;
+}
+.card-supplement-content {
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.5;
+}
+
+/* ---------- 常见错误 ---------- */
+.card-correction-item {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #FEF2F2;
+}
+.card-correction-item:last-child { margin-bottom: 0; }
+.card-correction-wrong {
+  font-size: 12px;
+  color: #DC2626;
+  margin-bottom: 2px;
+}
+.card-correction-right {
+  font-size: 12px;
+  color: #16A34A;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.card-correction-note {
+  font-size: 11px;
+  color: #9CA3AF;
+  line-height: 1.4;
+}
+
+/* ---------- 我的错题 ---------- */
+.card-wrong-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+}
+.card-wrong-item:last-child { margin-bottom: 0; }
+.card-wrong-q {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+.card-wrong-your, .card-wrong-correct {
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+.card-wrong-expl {
+  font-size: 11px;
+  color: #9CA3AF;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.text-red { color: #DC2626; font-weight: 600; }
+.text-green { color: #16A34A; font-weight: 600; }
+.text-orange { color: #F59E0B; font-weight: 600; }
+
+/* ---------- 迁移记录 ---------- */
+.card-migration-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #F9FAFB;
+  margin-bottom: 6px;
+}
+.card-migration-item:last-child { margin-bottom: 0; }
+.card-migration-scenario {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  flex: 1;
+}
+.card-migration-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.card-migration-score {
+  font-size: 13px;
+  font-weight: 700;
+}
+.card-flashcards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.card-flashcard-mini {
+  padding: 8px;
+  border-radius: 8px;
+  background: #F9FAFB;
+  text-align: center;
+}
+.card-flashcard-mini-front {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 3px;
+}
+.card-flashcard-mini-back {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+/* 复习按钮条 */
+.card-review-bar {
+  padding: 16px 16px 24px;
+  background: #FFFFFF;
+  border-top: 1px solid #F1F5F9;
+  text-align: center;
+}
+
+.card-review-bar .snake-card-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 14px;
+  border-radius: 14px;
+}
+
+.card-review-bar .snake-card-btn:disabled {
+  background: #E2E8F0;
+  color: #94A3B8;
+  box-shadow: none;
+  cursor: default;
+}
+
+.card-review-msg {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #58CC02;
+}
