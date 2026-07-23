@@ -1,0 +1,54 @@
+# Render Blueprint — LinguaTree / ByteCrystal
+# One-click deploy: https://render.com/deploy?repo=https://github.com/yanagawarina691-gif/LinguaTree
+#
+# After deploying, set the environment variables below in the Render dashboard.
+
+services:
+  - type: web
+    name: linguatree
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: JWT_SECRET
+        generateValue: true
+      # === AI / LLM Configuration ===
+      # Use DashScope (Aliyun Qwen) for China direct access, or OpenAI
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in dashboard
+      - key: OPENAI_BASE_URL
+        value: https://dashscope.aliyuncs.com/compatible-mode/v1
+      - key: LLM_MODEL
+        value: qwen-plus
+      - key: VLM_MODEL
+        value: qwen-vl-max
+      # === ASR Configuration ===
+      - key: ASR_PROVIDER
+        value: dashscope
+      - key: ASR_MODEL
+        value: paraformer-v2
+      - key: DASHSCOPE_API_KEY
+        sync: false  # Set manually in dashboard
+      - key: DASHSCOPE_BASE_URL
+        value: https://dashscope.aliyuncs.com
+      # === Video Processing ===
+      - key: TEMP_DIR
+        value: /app/temp
+      - key: MAX_VIDEO_DURATION
+        value: "300"
+      - key: KEYFRAME_COUNT
+        value: "5"
+      # === Timeouts (ms) ===
+      - key: ASR_TIMEOUT
+        value: "120000"
+      - key: LLM_TIMEOUT
+        value: "30000"
+      - key: PIPELINE_TIMEOUT
+        value: "180000"

@@ -69,6 +69,16 @@ npm run dev
 | GET | `/api/videos` | 获取用户视频列表 |
 | POST | `/api/videos/:id/exercises/complete` | 提交巩固训练答题结果 |
 
+### 加深理解（v2 阶段一 · M1）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/videos/:id/deepen` | 获取加深理解内容（AI 回应 + 纠错 + 补充 + 整理，缓存优先） |
+| GET | `/api/videos/:id/deepen/stream` | SSE 流式推送加深理解内容（首屏早报 → 分段推送） |
+| POST | `/api/videos/:id/deepen/feedback` | 提交反馈（body: `{ type: "useful" \| "question", message? }`） |
+| POST | `/api/videos/:id/deepen/regenerate` | 清除缓存，重新生成加深理解内容 |
+| POST | `/api/videos/:id/deepen/complete` | 标记完成并发放 +10 XP（幂等） |
+
 ### 知识树
 
 | 方法 | 路径 | 说明 |

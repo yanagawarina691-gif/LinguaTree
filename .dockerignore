@@ -1,0 +1,17 @@
+node_modules/
+frontend/node_modules/
+.git/
+.gitignore
+.env
+.env.example
+.workbuddy/
+temp/
+test/
+*.md
+*.log
+.DS_Store
+Thumbs.db
+src/db/linguatree.db
+src/db/linguatree.db-shm
+src/db/linguatree.db-wal
+tree-preview.html
