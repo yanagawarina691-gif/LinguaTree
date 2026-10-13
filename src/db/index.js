@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import '../config.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync } from 'fs';
@@ -6,7 +7,7 @@ import { readFileSync } from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const DB_PATH = join(__dirname, 'linguatree.db');
+const DB_PATH = process.env.DB_PATH || join(__dirname, 'linguatree.db');
 const SCHEMA_PATH = join(__dirname, 'schema.sql');
 
 const db = new Database(DB_PATH);

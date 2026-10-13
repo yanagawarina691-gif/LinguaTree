@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import db from '../db/index.js';
-import { authRequired } from '../middleware/auth.js';
+import { attachDemoUser } from '../middleware/demoUser.js';
 import { runPipeline, processExerciseCompletion } from '../services/pipeline.js';
 import { getOrCreateMigrationScenario, evaluateMigrationAttempt } from '../services/migrationService.js';
 import { getOrCreateDeepenUnderstanding, markDeepenCompleted, recordDeepenFeedback } from '../services/deepenService.js';
@@ -16,7 +16,7 @@ import { nanoid } from 'nanoid';
 import { logger } from '../utils/logger.js';
 
 const router = Router();
-router.use(authRequired);
+router.use(attachDemoUser);
 
 /**
  * POST /api/videos/parse
@@ -147,7 +147,11 @@ router.get('/:id', (req, res) => {
 router.get('/', (req, res) => {
   const videos = db.prepare(`
     SELECT id, source_url, title, author, status, cefr_level, summary, claimed,
-           deepen_completed, flashcard_completed, choice_completed, freeform_completed, migration_completed,
+           deepen_completed, freeform_completed, migration_completed,
+           EXISTS(SELECT 1 FROM flashcard_attempts f
+                  WHERE f.video_id = videos.id AND f.user_id = videos.user_id) AS flashcard_completed,
+           EXISTS(SELECT 1 FROM exercise_attempts e
+                  WHERE e.video_id = videos.id AND e.user_id = videos.user_id) AS choice_completed,
            created_at
     FROM videos WHERE user_id = ?
     ORDER BY created_at DESC

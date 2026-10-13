@@ -1,5 +1,4 @@
 import db from '../db/index.js';
-import { nanoid } from 'nanoid';
 
 const DEFAULT_USER_ID = 'default';
 
@@ -14,9 +13,9 @@ function ensureDefaultUser() {
 }
 
 /**
- * 无需登录，所有请求使用默认用户
+ * 通过 demoAccess 访问保护后，所有请求使用同一个演示用户
  */
-export function authRequired(req, res, next) {
+export function attachDemoUser(req, res, next) {
   ensureDefaultUser();
   req.userId = DEFAULT_USER_ID;
   req.userNickname = 'Learner';

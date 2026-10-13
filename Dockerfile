@@ -4,7 +4,7 @@
 # ============================================================
 
 # ---------- Stage 1: Build frontend ----------
-FROM node:18-bookworm-slim AS frontend-builder
+FROM node:22-bookworm-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -21,7 +21,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---------- Stage 2: Runtime ----------
-FROM node:18-bookworm-slim AS runtime
+FROM node:22-bookworm-slim AS runtime
 
 # Install system dependencies:
 #   - ffmpeg: video processing (audio extraction, keyframe extraction)
@@ -57,6 +57,7 @@ RUN mkdir -p /app/temp
 
 # Expose port (Render sets PORT env var automatically)
 ENV PORT=3000
+ENV HOST=0.0.0.0
 ENV NODE_ENV=production
 EXPOSE 3000
 

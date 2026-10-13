@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import db from '../db/index.js';
-import { authRequired } from '../middleware/auth.js';
+import { attachDemoUser } from '../middleware/demoUser.js';
 import { addOreXP, calculateMastery } from '../services/treeService.js';
 
 const router = Router();
-router.use(authRequired);
+router.use(attachDemoUser);
 
 function safeParse(jsonStr, defaultValue) {
   try { return JSON.parse(jsonStr || JSON.stringify(defaultValue)); }

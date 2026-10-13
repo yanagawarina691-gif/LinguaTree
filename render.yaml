@@ -17,8 +17,10 @@ services:
         value: production
       - key: PORT
         value: 3000
-      - key: JWT_SECRET
-        generateValue: true
+      - key: HOST
+        value: 0.0.0.0
+      - key: DEMO_PASSWORD
+        sync: false  # 随机口令，至少 24 字符；未设置时拒绝启动
       # === AI / LLM Configuration ===
       # Use DashScope (Aliyun Qwen) for China direct access, or OpenAI
       - key: OPENAI_API_KEY

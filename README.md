@@ -1,213 +1,94 @@
-# LinguaTree Backend
+# LinguaTree
 
-AI 驱动的英语学习后端 — 抖音视频 → ASR/OCR/VLM 多模态解析 → LLM 知识点映射 → 知识树生长。
+个人英语学习原型：将视频或手动文字稿解析成知识点，再通过知识图谱、闪卡、问答和迁移练习复习。
 
-## 快速开始
+<img src="docs/preview.png" alt="LinguaTree 个人学习演示" width="320">
 
-### 1. 安装依赖
+**当前为单账户演示。** 所有获准访问的人共用 `default` 用户和同一份学习记录，没有注册登录或多用户数据隔离。请勿将其用于存放多个用户的私密数据。
+
+## 已有流程与限制
+
+- 视频下载、音频转写、可选图像分析与语言模型解析；也可手动提供文字稿。
+- 动态生成知识矿石和关联，配合学习记录与练习页面。
+- Express + SQLite 后端，React + Vite 前端。
+- 视频源的下载限制、网络环境和模型输出会影响解析结果；这是原型，尚未实现公开服务所需的任务队列、并发配额和完整防滥用措施。
+
+## 本地启动
+
+需要 Node.js 22 或更高版本。视频流程另需 ffmpeg、Python 3；相关 Python ASR 路径依赖 `requests` 和 `dashscope`。yt-dlp 用于支持的平台视频下载。只浏览界面、查看空知识库和运行基础测试无需付费密钥。
 
 ```bash
-npm install
-```
-
-### 2. 配置环境变量
-
-```bash
+npm ci
+npm --prefix frontend ci
 cp .env.example .env
-# 编辑 .env，填入 OPENAI_API_KEY
-```
-
-**API Key 获取方式（任选其一）：**
-
-| 平台 | 获取地址 | Base URL | 模型 |
-|------|---------|----------|------|
-| OpenAI | https://platform.openai.com/api-keys | `https://api.openai.com/v1` | gpt-4o-mini, gpt-4o, whisper-1 |
-| 通义千问 | https://dashscope.console.aliyun.com/ | `https://dashscope.aliyuncs.com/compatible-mode/v1` | qwen-plus, qwen-vl-max |
-| DeepSeek | https://platform.deepseek.com/ | `https://api.deepseek.com/v1` | deepseek-chat（无 vision） |
-
-如果在国内直连 OpenAI 失败，取消 `.env` 中代理行的注释：
-```
-HTTP_PROXY=http://127.0.0.1:7897
-HTTPS_PROXY=http://127.0.0.1:7897
-```
-
-### 3. 初始化数据库
-
-```bash
 npm run migrate
-```
-
-这会创建 SQLite 数据库文件 `src/db/linguatree.db` 并 seed 42 个知识树节点。
-
-### 4. 启动服务
-
-```bash
+npm run build:frontend
 npm start
-# 或开发模式（文件改动自动重启）
-npm run dev
 ```
 
-服务默认运行在 `http://localhost:3000`。
+打开 <http://127.0.0.1:3000>。前端由 Express 同源提供，首次启动自动创建数据库。知识节点随解析动态产生，不再预置 42 个固定节点。
 
-## API 接口
+需要 AI 功能时，根据 `.env.example` 配置模型与密钥：`OPENAI_API_KEY`/`OPENAI_BASE_URL` 用于兼容接口的语言与视觉模型；`ASR_PROVIDER` 决定语音服务，DashScope 语音另用 `DASHSCOPE_API_KEY`。这些服务能力不能仅靠替换 Base URL 任意互换。调用会消耗所配置服务的额度。
 
-### 认证
+前端热更新开发：运行 `npm run dev` 启动后端，另开终端运行 `npm --prefix frontend run dev`。Vite 将 `/api` 转发到本机后端。
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/auth/register` | 注册（body: `{ "nickname": "小陈" }`） |
-| POST | `/api/auth/login` | 登录（body: `{ "nickname": "小陈" }`） |
-| GET | `/api/auth/me` | 获取当前用户（需 Bearer token） |
+## 访问保护
 
-### 视频解析
+默认 `HOST=127.0.0.1`，仅监听本机。若设置 `DEMO_PASSWORD`，页面和 API 均使用 HTTP Basic 访问保护，浏览器会提示输入用户名 `learner` 和该口令。
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/videos/parse` | 提交视频链接开始解析（body: `{ "url": "https://..." }` 或 `{ "manualTranscript": "文字稿..." }`） |
-| GET | `/api/videos/:id/status` | 查询解析状态和进度 |
-| GET | `/api/videos/:id` | 获取解析结果（含知识点映射 + 巩固训练题） |
-| GET | `/api/videos` | 获取用户视频列表 |
-| POST | `/api/videos/:id/exercises/complete` | 提交巩固训练答题结果 |
-
-### 加深理解（v2 阶段一 · M1）
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/videos/:id/deepen` | 获取加深理解内容（AI 回应 + 纠错 + 补充 + 整理，缓存优先） |
-| GET | `/api/videos/:id/deepen/stream` | SSE 流式推送加深理解内容（首屏早报 → 分段推送） |
-| POST | `/api/videos/:id/deepen/feedback` | 提交反馈（body: `{ type: "useful" \| "question", message? }`） |
-| POST | `/api/videos/:id/deepen/regenerate` | 清除缓存，重新生成加深理解内容 |
-| POST | `/api/videos/:id/deepen/complete` | 标记完成并发放 +10 XP（幂等） |
-
-### 知识树
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/tree` | 获取完整知识树（含每个节点 XP/等级/掌握度） |
-| GET | `/api/tree/branch/:branchId` | 获取某个分支详情（branchId: grammar/vocabulary/pronunciation/listening/culture） |
-| GET | `/api/tree/weak?count=3` | 获取弱项节点 |
-| GET | `/api/tree/stats` | 获取知识树统计 |
-
-### 用户
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/user/stats` | 获取用户学习统计 |
-
-## AI 解析 Pipeline
-
-```
-用户粘贴抖音链接
-    │
-    ▼
-┌─────────────────────────────────────────────┐
-│  阶段一：多模态理解                              │
-│  1. 下载视频 (yt-dlp / 直链)                     │
-│  2. ffmpeg 提取音频 + 关键帧                       │
-│  3. ASR 语音转文字 (Whisper)                     │
-│  4. OCR 画面文字识别 (GPT-4o vision)              │
-│  5. VLM 画面场景描述 (GPT-4o vision)              │
-└──────────────────────┬──────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────┐
-│  阶段二：LLM 知识点抽取与映射                       │
-│  6. 知识点识别 → 42 节点知识树映射                   │
-│  7. 权重判定 (1-5) + confidence 评估              │
-│  8. CEFR 难度评估                                │
-│  9. 巩固训练题生成 (选择/填空/判断)                  │
-└──────────────────────┬──────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────┐
-│  阶段三：知识树更新与推荐                           │
-│  10. XP 计算 (weight × 完播率 × 10)              │
-│  11. 节点自动升级 (休眠→发芽→茂叶→开花)             │
-│  12. 掌握度计算 (答题正确率×0.7 + XP归一化×0.3)      │
-└─────────────────────────────────────────────┘
-```
-
-### 降级策略
-
-- **视频下载失败** → 提示用户手动粘贴文字稿
-- **ASR 失败** → 使用手动文字稿，跳过音频
-- **OCR/VLM 失败** → 仅使用文本信息
-- **LLM 返回空结果** → 提示"未识别到英语知识点"
-
-## 知识树结构
-
-5 个一级分支，18 个二级分支，42 个叶子节点：
-
-| 分支 | 节点数 | 颜色 |
-|------|--------|------|
-| 语法 (Grammar) | 18 | #CE82FF |
-| 词汇 (Vocabulary) | 10 | #FF9600 |
-| 发音 (Pronunciation) | 7 | #FF4B4B |
-| 听力 (Listening) | 4 | #1CB0F6 |
-| 文化 (Culture) | 3 | #FFC800 |
-
-### 节点等级
-
-| 等级 | 名称 | 所需 XP | 视觉 |
-|------|------|---------|------|
-| Lv0 | 休眠 | 0 | 灰白半透明 |
-| Lv1 | 发芽 | ≥10 | 浅绿嫩叶 |
-| Lv2 | 茂叶 | ≥50 | 翠绿茂密 |
-| Lv3 | 开花 | ≥150 | 金色花朵 |
-
-### XP 来源
-
-- 视频解析命中节点：`weight × completion_rate × 10`
-- 巩固训练答对：`+5 XP/题`
-- 答错不扣 XP（正向激励）
-
-## 项目结构
-
-```
-linguatree-backend/
-├── src/
-│   ├── server.js              # 入口
-│   ├── app.js                 # Express app
-│   ├── config.js              # 环境配置
-│   ├── db/
-│   │   ├── index.js           # SQLite 连接 + 迁移
-│   │   ├── schema.sql         # 数据库 schema
-│   │   ├── migrate.js         # 迁移脚本
-│   │   └── linguatree.db      # SQLite 数据库（自动生成）
-│   ├── data/
-│   │   └── knowledgeTree.json # 42 节点知识树定义
-│   ├── middleware/
-│   │   └── auth.js            # JWT 认证
-│   ├── routes/
-│   │   ├── auth.js            # 认证路由
-│   │   ├── videos.js          # 视频解析路由
-│   │   ├── tree.js            # 知识树路由
-│   │   └── user.js            # 用户路由
-│   ├── services/
-│   │   ├── videoDownload.js   # 视频下载（yt-dlp/直链）
-│   │   ├── mediaProcess.js    # ffmpeg 音频+关键帧提取
-│   │   ├── asrService.js      # Whisper 语音转文字
-│   │   ├── llmService.js      # LLM 知识抽取 + GPT-4o vision OCR/VLM
-│   │   ├── treeService.js     # 知识树 XP/升级/掌握度
-│   │   └── pipeline.js        # AI Pipeline 编排器
-│   └── utils/
-│       └── logger.js          # 日志工具
-├── .env.example
-├── .gitignore
-├── package.json
-└── README.md
-```
-
-## 前置依赖
-
-- **Node.js** ≥ 18
-- **ffmpeg** — 音频提取和关键帧截图（`brew install ffmpeg`）
-- **yt-dlp**（可选）— 抖音视频下载（`brew install yt-dlp`）
-
-## 开发
+生成随机口令：
 
 ```bash
-# 开发模式（文件改动自动重启）
-npm run dev
+node -e "console.log(require('node:crypto').randomBytes(24).toString('base64url'))"
+```
 
-# 重新初始化数据库（删除旧 db 后重新 migrate）
-rm src/db/linguatree.db && npm run migrate
+将生成结果设置为 `DEMO_PASSWORD`，不要提交到 Git。口令至少 24 个字符；生产模式或对外监听时，缺少口令会拒绝启动。`/health` 仅返回无敏感内容的健康状态，无需口令。
+
+对外部署需同时配置：
+
+- `NODE_ENV=production`
+- `HOST=0.0.0.0`
+- 强随机 `DEMO_PASSWORD`
+- HTTPS 入口，以及持久化 SQLite 数据目录。`DB_PATH` 可指定数据库文件路径，父目录需预先创建。
+
+Docker/Render 配置按前后端同源服务运行。现有独立静态托管配置不构成访问保护；以 Express 服务提供页面和 API 为本版本的推荐运行方式。不要把 API Key 或演示口令写入前端环境变量。
+
+**访问口令只限制谁能进入演示，不提供用户之间的数据隔离。** 知道口令的访客都会看到和修改同一份演示数据。HTTP Basic 凭据可能由浏览器缓存，演示后关闭独立浏览器会话；需要撤销已分享的访问权限时轮换口令。
+
+## 核心 API
+
+以下路由遵循同一访问保护规则；没有 `/api/auth/register`、`/api/auth/login` 或 JWT 账户接口。
+
+| 路径 | 用途 |
+| --- | --- |
+| `GET /api/info` | 当前运行模式及接口摘要 |
+| `POST /api/videos/parse` | 提交 `url` 或 `manualTranscript` |
+| `GET /api/videos` | 共享演示的视频列表 |
+| `GET /api/videos/:id/status` | 解析状态 |
+| `GET /api/videos/:id` | 解析内容与练习 |
+| `GET /api/tree` | 知识图谱 |
+| `GET /api/user/stats` | 共享账户学习统计 |
+
+更多路由定义见 `src/routes/`。旧版固定知识树、SSE 和注册登录说明不再代表当前实现。
+
+## 测试
+
+```bash
+npm test
+```
+
+`npm test` 先构建前端，再运行基础集成测试。测试启动真实服务，使用临时数据库，检查访问保护、视频列表、知识图谱和学习统计；不读取个人数据库，不调用模型 API。CI 使用同样的检查。
+
+`test/test_asr_llm.mjs` 与 `test/test_ocr_vlm.mjs` 是手动模型诊断脚本，需要各自指定的本地音视频素材和密钥，会调用外部服务，不属于默认测试。
+
+## 目录
+
+```text
+frontend/          React 前端与素材源文件
+src/routes/        API 路由
+src/services/      视频处理、AI 调用和学习流程
+src/middleware/    演示访问保护与共享用户上下文
+src/db/            SQLite schema 与初始化
+public/            前端构建产物，由构建生成
+test/             集成测试和手动诊断脚本
 ```

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authRequired } from '../middleware/auth.js';
+import { attachDemoUser } from '../middleware/demoUser.js';
 import {
   getCardList,
   getCardDetail,
@@ -10,7 +10,7 @@ import {
 import { logger } from '../utils/logger.js';
 
 const router = Router();
-router.use(authRequired);
+router.use(attachDemoUser);
 
 /**
  * GET /api/cards
