@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import db from '../db/index.js';
-import { authRequired } from '../middleware/auth.js';
+import { attachDemoUser } from '../middleware/demoUser.js';
 import { getUserTree } from '../services/treeService.js';
 import { getGalaxy } from '../services/galaxyService.js';
 
 const router = Router();
-router.use(authRequired);
+router.use(attachDemoUser);
 
 /**
  * GET /api/tree/galaxy — 矿石星图数据

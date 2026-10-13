@@ -30,3 +30,11 @@ Thumbs.db
 # 日志
 *.log
 .workbuddy/
+
+# 本地配置变体与测试报告
+.env.*
+!.env.example
+test-results/
+
+# 由 frontend/ 构建；素材源文件在 frontend/public/
+/public/

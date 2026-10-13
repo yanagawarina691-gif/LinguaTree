@@ -1,5 +1,5 @@
 import express from 'express';
-import cors from 'cors';
+import { createDemoAccess } from './middleware/demoAccess.js';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
 import videoRoutes from './routes/videos.js';
@@ -8,10 +8,6 @@ import oreRoutes from './routes/ores.js';
 import userRoutes from './routes/user.js';
 
 const app = express();
-
-// 中间件
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
 
 // 请求日志
 app.use((req, res, next) => {
@@ -29,6 +25,10 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 所有页面和 API 共用访问保护；仅无敏感内容的健康检查公开。
+app.use(createDemoAccess(config));
+app.use(express.json({ limit: '10mb' }));
+
 // API 路由
 app.use('/api/videos', videoRoutes);
 app.use('/api/tree', treeRoutes);
@@ -40,13 +40,10 @@ app.get('/api/info', (req, res) => {
   res.json({
     name: 'LinguaTree Backend API',
     version: '1.0.0',
-    docs: '/health',
+    mode: 'single-user-demo',
+    access: 'HTTP Basic when DEMO_PASSWORD is configured; username: learner',
+    limitations: 'All authorized visitors share the same learning data.',
     endpoints: {
-      auth: {
-        'POST /api/auth/register': '注册（body: { nickname }）',
-        'POST /api/auth/login': '登录（body: { nickname }）',
-        'GET /api/auth/me': '获取当前用户（需 Bearer token）',
-      },
       videos: {
         'POST /api/videos/parse': '提交视频解析（body: { url?, manualTranscript? }）',
         'GET /api/videos/:id/status': '查询解析状态',

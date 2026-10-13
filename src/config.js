@@ -1,14 +1,15 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: process.env.DOTENV_CONFIG_PATH || '.env' });
 
 export const config = {
   // 服务
   PORT: parseInt(process.env.PORT || '3000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
 
-  // JWT 密钥（demo 用，生产环境请换强密钥）
-  JWT_SECRET: process.env.JWT_SECRET || 'linguatree-demo-secret-2026',
+  // 个人演示：对外监听时要求访问口令，不提供多用户账户。
+  HOST: process.env.HOST || '127.0.0.1',
+  DEMO_PASSWORD: process.env.DEMO_PASSWORD || '',
 
   // ========== OpenAI 兼容 API 配置（LLM + VLM）==========
   // 通义千问 DashScope: base_url=https://dashscope.aliyuncs.com/compatible-mode/v1

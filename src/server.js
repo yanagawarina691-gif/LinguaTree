@@ -12,7 +12,8 @@ async function start() {
   console.log('[LinguaTree] v2 动态矿石网络已就绪');
 
   // 启动 Express
-  app.listen(config.PORT, () => {
+  const server = app.listen(config.PORT, config.HOST, () => {
+    logger.info(`Listening: http://${config.HOST}:${server.address().port}`);
     logger.info('='.repeat(50));
     logger.info(`  LinguaTree Backend`);
     logger.info(`  Port: ${config.PORT}`);
