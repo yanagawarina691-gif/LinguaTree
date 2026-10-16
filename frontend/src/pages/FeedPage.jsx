@@ -17,16 +17,22 @@ export default function FeedPage() {
   const [parsing, setParsing] = useState(false);
   const [parseSteps, setParseSteps] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [loadError, setLoadError] = useState('');
+  const [loadingVideos, setLoadingVideos] = useState(true);
   const [choiceModal, setChoiceModal] = useState(null); // { videoId, title, summary }
-  const { user } = useAuth();
+  const { readOnly } = useAuth();
   const navigate = useNavigate();
 
   const loadVideos = useCallback(async () => {
     try {
+      setLoadingVideos(true);
+      setLoadError('');
       const list = await getVideoList();
       setVideos(list);
     } catch (err) {
-      console.error('Failed to load videos:', err);
+      setLoadError(err.message);
+    } finally {
+      setLoadingVideos(false);
     }
   }, []);
 
@@ -46,6 +52,7 @@ export default function FeedPage() {
   };
 
   const startParse = async () => {
+    if (readOnly) return;
     if (!link.trim()) { showToast('请先粘贴视频链接或文字稿'); return; }
     setParsing(true);
     setParseSteps(PARSE_STEPS.map((s, i) => ({ ...s, idx: i, status: 'pending' })));
@@ -88,7 +95,7 @@ export default function FeedPage() {
   };
 
   const handleLearnNow = async () => {
-    if (!choiceModal) return;
+    if (readOnly || !choiceModal) return;
     try {
       await claimVideo(choiceModal.videoId);
     } catch (e) {
@@ -117,10 +124,10 @@ export default function FeedPage() {
       <div className="feed-hero">
         <img src="/assets/crystal-mascot.png" width="80" height="80" style={{ objectFit: 'contain', margin: '0 auto 8px', display: 'block' }} alt="mascot" />
         <h1>刷视频，种知识树</h1>
-        <p>粘贴抖音英语视频链接，AI 自动解析知识点</p>
+        <p>{readOnly ? '浏览虚构课程，探索预生成的英语知识点' : '粘贴抖音英语视频链接，AI 自动解析知识点'}</p>
       </div>
 
-      <div className="link-input-wrap">
+      {!readOnly && <div className="link-input-wrap">
         <div className="link-input-card">
           <div className="link-input-row">
             <input type="text" value={link} onChange={e => setLink(e.target.value)} placeholder="粘贴抖音视频链接，或输入文字稿..." />
@@ -130,9 +137,9 @@ export default function FeedPage() {
             {parsing ? '解析中...' : '🚀 开始解析'}
           </button>
         </div>
-      </div>
+      </div>}
 
-      {parsing && (
+      {!readOnly && parsing && (
         <div className="parse-status">
           <div className="parse-card">
             <LoadingMascot />
@@ -154,9 +161,16 @@ export default function FeedPage() {
       )}
 
       <div className="video-section">
-        <div className="section-title">最近解析 <span className="count">{videos.length} 条</span></div>
-        {videos.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-lt)', padding: 32, fontSize: 14 }}>还没有解析过视频，粘贴链接开始吧</p>
+        <div className="section-title">{readOnly ? '示例课程' : '最近解析'} <span className="count">{videos.length} 条</span></div>
+        {loadError ? (
+          <div className="demo-empty" role="alert">
+            <p>{loadError}</p>
+            <button className="btn3d btn-gray" onClick={loadVideos}>重新加载</button>
+          </div>
+        ) : loadingVideos ? (
+          <p className="demo-empty">加载课程中...</p>
+        ) : videos.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-lt)', padding: 32, fontSize: 14 }}>{readOnly ? '暂时没有可浏览的示例课程' : '还没有解析过视频，粘贴链接开始吧'}</p>
         ) : (
           videos.map(v => {
             const isNew = !v.claimed;
@@ -171,14 +185,14 @@ export default function FeedPage() {
               if (v.status === 'done') navigate(`/deepen/${v.id}`);
             }}>
               <div className="video-thumb">
-                <span className="play-icon">{isAllDone ? '✅' : isInProgress ? '⏳' : '💎'}</span>
+                <span className="play-icon">{readOnly ? '💎' : isAllDone ? '✅' : isInProgress ? '⏳' : '💎'}</span>
               </div>
               <div className="video-info">
                 <div className="video-title">{v.title || v.summary?.slice(0, 20) || '未命名视频'}</div>
                 <div className="video-tags">
                   {v.cefr_level && <span className="video-tag tag-grammar">{v.cefr_level}</span>}
                   <span className="video-tag tag-listen" style={isInProgress ? { background: 'rgba(88,204,2,.1)', color: '#58CC02' } : {}}>
-                    {isNew ? '新矿石' : isAllDone ? '已学习' : stepLabel}
+                    {readOnly ? '预生成示例' : isNew ? '新矿石' : isAllDone ? '已学习' : stepLabel}
                   </span>
                 </div>
                 {v.summary && <div style={{ fontSize: 12, color: 'var(--text-lt)', marginTop: 4, lineHeight: 1.4 }}>{v.summary.slice(0, 40)}</div>}
@@ -190,7 +204,7 @@ export default function FeedPage() {
       </div>
 
       {/* 二选一弹窗 */}
-      {choiceModal && (
+      {!readOnly && choiceModal && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200,
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 40

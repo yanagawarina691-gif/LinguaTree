@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMigration, evaluateMigration } from '../api/videos.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import CenterLoader from '../components/CenterLoader.jsx';
 
 export default function MigrationPage() {
   const { videoId } = useParams();
+  const { readOnly } = useAuth();
   const navigate = useNavigate();
   const [scenario, setScenario] = useState(null);
   const [userInput, setUserInput] = useState('');
@@ -18,6 +20,7 @@ export default function MigrationPage() {
   const loadScenario = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await getMigration(videoId);
       setScenario(data);
     } catch (err) {
@@ -36,6 +39,7 @@ export default function MigrationPage() {
   };
 
   const handleSubmit = async () => {
+    if (readOnly) return;
     if (userInput.trim().length < 5) {
       setError('请至少写出5个字符的回答');
       return;
@@ -55,7 +59,7 @@ export default function MigrationPage() {
   // ===== 加载中 =====
   if (loading) return (
     <div className="page active migration-page">
-      <CenterLoader text="AI 正在生成迁移场景..." spriteKey={2} />
+      <CenterLoader text={readOnly ? "加载预生成场景..." : "AI 正在生成迁移场景..."} spriteKey={2} />
     </div>
   );
 
@@ -70,7 +74,8 @@ export default function MigrationPage() {
 
   // ===== 评估结果展示 =====
   if (result) {
-    const { evaluation, xpGained, treeUpdate } = result;
+    const { evaluation, treeUpdate } = result;
+    const xpGained = evaluation.xpGained ?? result.xpGained ?? 0;
     const score = evaluation.overall_score || 0;
     const scoreColor = score >= 80 ? 'var(--primary)' : score >= 60 ? 'var(--orange)' : 'var(--red)';
 
@@ -101,7 +106,7 @@ export default function MigrationPage() {
 
           {treeUpdate?.leveledUp && (
             <div className="migration-levelup" style={{ padding: '8px 14px', fontSize: 13, marginBottom: 10 }}>
-              🌳 知识节点「{treeUpdate.node_name}」升级了！
+              🌳 知识节点「{treeUpdate.node_name || scenario.ore_name}」升级了！
             </div>
           )}
 
@@ -140,10 +145,10 @@ export default function MigrationPage() {
       <div className="topbar" style={{ flexShrink: 0, paddingBottom: 4 }}>
         <div className="topbar-btn" onClick={() => navigate('/tree')} style={{ fontSize: '20px' }}>‹</div>
         <div style={{ fontSize: 16, fontWeight: 800 }}>场景迁移</div>
-        <div onClick={() => setShowSkipConfirm(true)} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>
+        {!readOnly && <div onClick={() => setShowSkipConfirm(true)} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>}
       </div>
 
-      {showSkipConfirm && (
+      {!readOnly && showSkipConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 40 }}>
           <div style={{ background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 390, padding: '28px 24px 36px', textAlign: 'center' }}>
             <div style={{ fontSize: 36, marginBottom: 8 }}>💎</div>
@@ -167,7 +172,7 @@ export default function MigrationPage() {
 
       <div style={{ flex: 1, overflow: 'auto', padding: '0 20px' }}>
         <div className="migration-xp-hint" style={{ padding: '8px 14px', fontSize: 12, marginBottom: 10 }}>
-          ✨ 完成迁移可获得额外 50+ XP
+          {readOnly ? '预生成场景示例 · 不提交回答或产生评分' : '✨ 完成迁移可获得额外 50+ XP'}
         </div>
 
         <div className="migration-scenario-card" style={{ padding: '14px 16px', marginBottom: 10 }}>
@@ -179,23 +184,32 @@ export default function MigrationPage() {
         </div>
 
         <div className="migration-task-card" style={{ padding: '12px 16px', marginBottom: 10 }}>
-          <div className="migration-task-label" style={{ fontSize: 12, marginBottom: 4 }}>✏️ 你的任务</div>
+          <div className="migration-task-label" style={{ fontSize: 12, marginBottom: 4 }}>✏️ {readOnly ? '示例任务' : '你的任务'}</div>
           <div className="migration-task-text" style={{ fontSize: 13 }}>{scenario.user_task}</div>
         </div>
 
-        <div style={{ marginBottom: 8 }}>
+        {readOnly ? (
+          <div className="migration-task-card">
+            <div className="migration-task-label">参考表达（预生成）</div>
+            <div className="migration-task-text">{scenario.sample_answer || '可以回到讲解页查看相关表达。演示模式不接收作答。'}</div>
+          </div>
+        ) : <div style={{ marginBottom: 8 }}>
           <div className="migration-input-label" style={{ fontSize: 13, marginBottom: 6 }}>你的回答</div>
           <textarea className="migration-textarea" placeholder="在这里用英文写出你的回答..." value={userInput}
             onChange={handleInput} rows={4} maxLength={500} style={{ minHeight: 80 }} />
           <div className="migration-char-count">{charCount}/500</div>
-        </div>
+        </div>}
 
         {error && <div className="migration-error">{error}</div>}
 
-        <button className="btn3d btn-primary migration-submit-btn" onClick={handleSubmit}
+        {!readOnly && <button className="btn3d btn-primary migration-submit-btn" onClick={handleSubmit}
           disabled={submitting || userInput.trim().length < 5} style={{ width: '100%', padding: 14, fontSize: 15, marginBottom: 80 }}>
           {submitting ? <><div className="parse-spinner" style={{ width: 16, height: 16 }}></div> AI 评估中...</> : <>提交评估 →</>}
-        </button>
+        </button>}
+        {readOnly && <div className="demo-navigation">
+          <button className="btn3d btn-gray" onClick={() => navigate(`/internalize/${videoId}`)}>浏览内化练习</button>
+          <button className="btn3d btn-primary" onClick={() => navigate('/tree')}>查看示例知识树</button>
+        </div>}
       </div>
     </div>
   );

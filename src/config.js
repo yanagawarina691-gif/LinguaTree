@@ -2,14 +2,22 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: process.env.DOTENV_CONFIG_PATH || '.env' });
 
+const APP_MODE = process.env.APP_MODE || 'demo';
+if (!['demo', 'personal'].includes(APP_MODE)) {
+  throw new Error('APP_MODE 必须为 demo（只读示例）或 personal（个人学习）');
+}
+
 export const config = {
   // 服务
   PORT: parseInt(process.env.PORT || '3000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
+  APP_MODE,
 
   // 个人演示：对外监听时要求访问口令，不提供多用户账户。
   HOST: process.env.HOST || '127.0.0.1',
   DEMO_PASSWORD: process.env.DEMO_PASSWORD || '',
+  // HTTPS 反向代理后的公开来源，用于校验浏览器请求；不信任转发请求头。
+  PUBLIC_ORIGIN: process.env.PUBLIC_ORIGIN || '',
 
   // ========== OpenAI 兼容 API 配置（LLM + VLM）==========
   // 通义千问 DashScope: base_url=https://dashscope.aliyuncs.com/compatible-mode/v1

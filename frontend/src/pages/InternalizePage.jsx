@@ -8,6 +8,8 @@ import {
   evaluateFreeform,
   completeExercises,
 } from '../api/videos.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import InternalizePreviewPage from './InternalizePreviewPage.jsx';
 import CenterLoader from '../components/CenterLoader.jsx';
 
 const PHASE = {
@@ -19,6 +21,11 @@ const PHASE = {
 };
 
 export default function InternalizePage() {
+  const { readOnly } = useAuth();
+  return readOnly ? <InternalizePreviewPage /> : <InteractiveInternalizePage />;
+}
+
+function InteractiveInternalizePage() {
   const { videoId } = useParams();
   const navigate = useNavigate();
 
@@ -54,7 +61,7 @@ export default function InternalizePage() {
   const [ffResult, setFfResult] = useState(null);
 
   // Final state
-  const [totalXp, setTotalXp] = useState(0);
+  const [freeformXp, setFreeformXp] = useState(0);
   const [finalStats, setFinalStats] = useState(null);
 
   const timerRef = useRef(null);
@@ -283,7 +290,7 @@ export default function InternalizePage() {
     try {
       const result = await evaluateFreeform(videoId, ffInput);
       setFfResult(result);
-      setTotalXp(prev => prev + (result.xpGained || 0));
+      setFreeformXp(result.evaluation?.xpGained ?? result.xpGained ?? 0);
       setFinalStats({
         flashcardsKnown: fcKnown,
         choiceCorrect: choiceStats.correct,
@@ -529,7 +536,7 @@ export default function InternalizePage() {
 
             {ffResult && (
               <div className="freeform-mini-result">
-                <div className="freeform-mini-score">问答题 {ffResult.evaluation?.overall_score || 0} 分</div>
+                <div className="freeform-mini-score">问答题 {ffResult.evaluation?.overall_score || 0} 分 · +{freeformXp} XP</div>
                 <div className="freeform-mini-suggestion">{ffResult.evaluation?.improvement || ''}</div>
               </div>
             )}

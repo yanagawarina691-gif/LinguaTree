@@ -1,12 +1,14 @@
+import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function TabBar() {
   const navigate = useNavigate();
+  const { readOnly } = useAuth();
   const location = useLocation();
   const routes = [
     { path: '/', icon: '📺', label: 'Feed' },
     { path: '/tree', icon: '💎', label: '矿石' },
-    { path: '/me', icon: '👤', label: '我的' },
+    { path: '/me', icon: '👤', label: readOnly ? '示例档案' : '我的' },
   ];
 
   return (

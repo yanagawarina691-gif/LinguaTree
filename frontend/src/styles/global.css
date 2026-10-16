@@ -662,3 +662,35 @@ position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3),0 0 0 12px #2a2a4a,0 0 0
   display: block;
   margin-bottom: 4px;
 }
+
+/* ====== READ-ONLY FICTIONAL DEMO ====== */
+#phone.read-only-demo{display:flex;flex-direction:column}
+.read-only-demo #app{flex:1;min-height:0;height:auto}
+.demo-notice{flex-shrink:0;padding:10px 18px;background:#F0F8EB;border-bottom:1px solid #D5EAC9;color:#365827;line-height:1.5;z-index:30}
+.demo-notice strong{display:block;font-size:12px;font-weight:800}
+.demo-notice span{display:block;font-size:11px}
+.mode-error{height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;padding:28px;text-align:center}
+.mode-error h1{font-size:20px}
+.mode-error p{font-size:14px;line-height:1.6}
+.mode-error button,.demo-empty button{padding:12px 20px}
+.demo-empty{padding:32px 20px;text-align:center;font-size:14px;line-height:1.7}
+.demo-empty button{margin-top:16px}
+.demo-inline-note,.demo-profile-note{font-size:12px;color:#626A72;line-height:1.7}
+.demo-profile-note{padding:0 24px 20px;text-align:center}
+.demo-preview-content{padding:8px 20px 40px}
+.demo-preview-section{margin:22px 0}
+.demo-preview-section h2{font-size:16px;margin-bottom:12px}
+.demo-preview-section .freeform-card{padding:18px}
+.demo-preview-section .freeform-question{font-size:16px}
+.demo-flashcard{display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;width:100%;min-height:190px;background:#fff;border:2px solid var(--border);border-radius:20px;padding:24px 20px;color:var(--text)}
+.demo-flashcard-text{font-size:21px;font-weight:800;line-height:1.5}
+.demo-navigation{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 26px}
+.demo-navigation button{flex:1;min-width:110px;padding:13px 12px;font-size:13px}
+.demo-exercise{border:1px solid var(--border);background:#fff;border-radius:16px;padding:18px;margin-bottom:12px}
+.demo-exercise h3{font-size:14px;line-height:1.65}
+.demo-options{padding:10px 0 4px 24px;font-size:14px;line-height:1.8}
+.demo-answer{padding:12px;background:#F0F8EC;border-radius:12px;font-size:13px;line-height:1.7;margin-top:12px;overflow-wrap:anywhere}
+.demo-answer summary{cursor:pointer;font-weight:700;color:#365827}
+.demo-answer p{margin-top:8px;white-space:pre-wrap}
+button:disabled{cursor:not-allowed;opacity:.5}
+.demo-flashcard:focus-visible,.demo-navigation button:focus-visible,.demo-answer summary:focus-visible{outline:3px solid var(--blue);outline-offset:3px}

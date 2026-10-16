@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDeepen, completeDeepen, feedbackDeepen } from '../api/videos.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import CenterLoader from '../components/CenterLoader.jsx';
 
 export default function DeepenPage() {
   const { videoId } = useParams();
+  const { readOnly } = useAuth();
   const navigate = useNavigate();
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,6 +18,7 @@ export default function DeepenPage() {
   const loadDeepen = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await getDeepen(videoId);
       setContent(data);
     } catch (err) {
@@ -28,6 +31,7 @@ export default function DeepenPage() {
   useEffect(() => { loadDeepen(); }, [loadDeepen]);
 
   const handleStartPractice = async () => {
+    if (readOnly) { navigate(`/internalize/${videoId}`); return; }
     try {
       await completeDeepen(videoId, false);
       navigate(`/internalize/${videoId}`);
@@ -37,6 +41,7 @@ export default function DeepenPage() {
   };
 
   const handleSkip = async () => {
+    if (readOnly) { navigate(`/internalize/${videoId}`); return; }
     try {
       await completeDeepen(videoId, true);
       navigate(`/internalize/${videoId}`);
@@ -46,6 +51,7 @@ export default function DeepenPage() {
   };
 
   const handleFeedback = async (type, index = -1) => {
+    if (readOnly) return;
     try {
       await feedbackDeepen(videoId, type, index);
       showToast(type === 'useful' ? '感谢反馈，我们会继续优化 ✨' : '已记录，AI 会据此改进');
@@ -67,7 +73,7 @@ export default function DeepenPage() {
   if (loading) {
     return (
       <div className="page active deepen-page">
-        <CenterLoader text="AI 正在整理加深理解内容..." spriteKey={1} />
+        <CenterLoader text={readOnly ? "加载预生成讲解..." : "AI 正在整理加深理解内容..."} spriteKey={1} />
       </div>
     );
   }
@@ -89,7 +95,7 @@ export default function DeepenPage() {
       <div className="topbar">
         <div className="topbar-btn" onClick={() => navigate('/')} style={{ fontSize: '20px' }}>‹</div>
         <div style={{ fontSize: 16, fontWeight: 800 }}>加深理解</div>
-        <div onClick={handleSkip} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>跳过</div>
+        <div onClick={handleSkip} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-lt)', cursor: 'pointer' }}>{readOnly ? '看练习' : '跳过'}</div>
       </div>
 
       <div className="deepen-content">
@@ -119,10 +125,10 @@ export default function DeepenPage() {
                   <span className="deepen-right">{c.corrected}</span>
                 </div>
                 <div className="deepen-correction-explain">{c.explanation}</div>
-                <div className="deepen-correction-actions">
+                {!readOnly && <div className="deepen-correction-actions">
                   <button className="deepen-feedback-btn" onClick={() => handleFeedback('useful', idx)}>👍 有用</button>
                   <button className="deepen-feedback-btn" onClick={() => handleFeedback('confused', idx)}>💬 有疑问</button>
-                </div>
+                </div>}
               </div>
             ))}
           </div>
@@ -167,14 +173,14 @@ export default function DeepenPage() {
 
       {/* 底部固定操作栏 */}
       <div className="deepen-footer">
-        <button className="deepen-footer-btn deepen-btn-confused" onClick={() => handleFeedback('confused')}>
+        {!readOnly && <><button className="deepen-footer-btn deepen-btn-confused" onClick={() => handleFeedback('confused')}>
           💬 我有疑问
         </button>
         <button className="deepen-footer-btn deepen-btn-useful" onClick={() => handleFeedback('useful')} disabled={thanked}>
           {thanked ? '👍 已标记有用' : '👍 有用'}
-        </button>
+        </button></>}
         <button className="btn3d btn-primary deepen-start-btn" onClick={handleStartPractice}>
-          开始练习 →
+          {readOnly ? '浏览预生成练习 →' : '开始练习 →'}
         </button>
       </div>
     </div>

@@ -191,9 +191,10 @@ function buildSnakeSegments(positions, oreNodes) {
 
 export default function TreePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { readOnly } = useAuth();
   const [galaxy, setGalaxy] = useState({ nodes: [], links: [], stats: {} });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const fieldRef = useRef(null);
   const [fieldWidth, setFieldWidth] = useState(390);
@@ -216,7 +217,7 @@ export default function TreePage() {
         });
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
   useLayoutEffect(() => {
@@ -293,6 +294,8 @@ export default function TreePage() {
             <div className="snake-empty-icon">💎</div>
             <div className="snake-empty-title">正在唤醒晶体...</div>
           </div>
+        ) : error ? (
+          <div className="snake-empty" role="alert"><p>{error}</p></div>
         ) : (
           <div
             ref={fieldRef}
@@ -366,7 +369,7 @@ export default function TreePage() {
         )}
 
         {!loading && (
-          <div className="snake-hint">探索更多视频，积累水晶</div>
+          <div className="snake-hint">{readOnly ? '点击水晶，浏览示例知识卡片' : '探索更多视频，积累水晶'}</div>
         )}
       </div>
 
@@ -375,10 +378,10 @@ export default function TreePage() {
         <div className="snake-card" onClick={handleOpenCard}>
           <div className="snake-card-name">{selectedOre.name}</div>
           <div className="snake-card-meta">
-            阶段 {selectedOre.level || 0}/4 · 掌握度 {Math.round((selectedOre.mastery || 0) * 100)}%
+            {readOnly ? '示例阶段 ' : '阶段 '}{selectedOre.level || 0}/4 · 掌握度 {Math.round((selectedOre.mastery || 0) * 100)}%
           </div>
           <div className="snake-card-btns">
-            <button className="snake-card-btn snake-card-btn-primary" onClick={(e) => { e.stopPropagation(); handleOpenCard(); }}>📖 复习</button>
+            <button className="snake-card-btn snake-card-btn-primary" onClick={(e) => { e.stopPropagation(); handleOpenCard(); }}>{readOnly ? '📖 查看卡片' : '📖 复习'}</button>
             <button className="snake-card-btn snake-card-btn-ghost" onClick={(e) => { e.stopPropagation(); setSelectedId(null); }}>关闭</button>
           </div>
         </div>
