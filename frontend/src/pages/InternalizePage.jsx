@@ -61,7 +61,7 @@ function InteractiveInternalizePage() {
   const [ffResult, setFfResult] = useState(null);
 
   // Final state
-  const [totalXp, setTotalXp] = useState(0);
+  const [freeformXp, setFreeformXp] = useState(0);
   const [finalStats, setFinalStats] = useState(null);
 
   const timerRef = useRef(null);
@@ -290,7 +290,7 @@ function InteractiveInternalizePage() {
     try {
       const result = await evaluateFreeform(videoId, ffInput);
       setFfResult(result);
-      setTotalXp(prev => prev + (result.xpGained || 0));
+      setFreeformXp(result.evaluation?.xpGained ?? result.xpGained ?? 0);
       setFinalStats({
         flashcardsKnown: fcKnown,
         choiceCorrect: choiceStats.correct,
@@ -536,7 +536,7 @@ function InteractiveInternalizePage() {
 
             {ffResult && (
               <div className="freeform-mini-result">
-                <div className="freeform-mini-score">问答题 {ffResult.evaluation?.overall_score || 0} 分</div>
+                <div className="freeform-mini-score">问答题 {ffResult.evaluation?.overall_score || 0} 分 · +{freeformXp} XP</div>
                 <div className="freeform-mini-suggestion">{ffResult.evaluation?.improvement || ''}</div>
               </div>
             )}

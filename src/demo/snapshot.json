@@ -1194,7 +1194,8 @@
     "totalMigrations": 1,
     "totalMigrationCorrect": 1,
     "totalChoiceCorrect": 2,
-    "totalFillCorrect": 1
+    "totalFillCorrect": 1,
+    "streakDays": 3
   },
   "galaxy": {
     "nodes": [

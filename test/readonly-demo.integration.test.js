@@ -28,6 +28,12 @@ test('default demo serves immutable fiction without importing personal code or p
   assert.equal(info.readOnly, true);
   assert.equal(info.dataset, 'fictional-pregenerated');
   assert.equal(info.endpoints.videos['POST /api/videos/parse'], undefined);
+  assert.equal(info.endpoints.tree['GET /api/tree/branch/:branchId'], undefined);
+  assert.equal(info.endpoints.tree['GET /api/tree/weak'], undefined);
+  assert.ok(info.endpoints.tree['GET /api/tree/galaxy']);
+  for (const path of ['/deepen', '/internalize/flashcards', '/internalize/freeform', '/migration']) {
+    assert.ok(info.endpoints.videos[`GET /api/videos/:id${path}`]);
+  }
 
   const listResponse = await get('/api/videos');
   assert.equal(listResponse.status, 200);

@@ -54,6 +54,9 @@ app.get('/api/info', (req, res) => {
         'GET /api/videos/:id/status': '查询解析状态',
         'GET /api/videos/:id': '获取解析结果',
         'GET /api/videos': '视频列表',
+        'GET /api/videos/:id/deepen': readOnly ? '预生成讲解示例' : '获取或生成讲解',
+        'GET /api/videos/:id/internalize/flashcards': readOnly ? '预生成闪卡示例' : '获取或生成闪卡',
+        'GET /api/videos/:id/internalize/freeform': readOnly ? '预生成问答示例' : '获取或生成问答',
         'GET /api/videos/:id/migration': readOnly ? '预生成迁移示例' : '获取或生成迁移场景',
         ...(!readOnly && {
           'POST /api/videos/parse': '提交视频解析（body: { url?, manualTranscript? }）',
@@ -63,8 +66,7 @@ app.get('/api/info', (req, res) => {
       },
       tree: {
         'GET /api/tree': '获取完整知识树',
-        'GET /api/tree/branch/:branchId': '获取分支详情',
-        'GET /api/tree/weak': '获取弱项节点',
+        'GET /api/tree/galaxy': '获取矿石星图',
         'GET /api/tree/stats': '获取知识树统计',
       },
       user: {

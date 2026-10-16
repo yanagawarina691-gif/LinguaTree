@@ -74,7 +74,8 @@ export default function MigrationPage() {
 
   // ===== 评估结果展示 =====
   if (result) {
-    const { evaluation, xpGained, treeUpdate } = result;
+    const { evaluation, treeUpdate } = result;
+    const xpGained = evaluation.xpGained ?? result.xpGained ?? 0;
     const score = evaluation.overall_score || 0;
     const scoreColor = score >= 80 ? 'var(--primary)' : score >= 60 ? 'var(--orange)' : 'var(--red)';
 
@@ -105,7 +106,7 @@ export default function MigrationPage() {
 
           {treeUpdate?.leveledUp && (
             <div className="migration-levelup" style={{ padding: '8px 14px', fontSize: 13, marginBottom: 10 }}>
-              🌳 知识节点「{treeUpdate.node_name}」升级了！
+              🌳 知识节点「{treeUpdate.node_name || scenario.ore_name}」升级了！
             </div>
           )}
 

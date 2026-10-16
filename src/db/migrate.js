@@ -9,7 +9,7 @@ if (config.APP_MODE !== 'personal') {
   console.log('只读演示使用预生成示例，不需要数据库迁移。个人学习请设置 APP_MODE=personal。');
   process.exit(0);
 }
-const { initSchema } = await import('./index.js');
+const { default: db, initSchema } = await import('./index.js');
 
 console.log('=== LinguaTree v2 Database Migration ===\n');
 
@@ -17,5 +17,5 @@ initSchema();
 
 console.log('\n=== Migration complete ===');
 console.log('Ore nodes are created dynamically when videos are parsed.');
-console.log('Database file: src/db/linguatree.db');
+console.log(`Database file: ${db.name}`);
 process.exit(0);

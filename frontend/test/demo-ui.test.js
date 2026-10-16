@@ -83,6 +83,9 @@ test('each reachable demo route renders fictional snapshot content without input
     await mount(path);
     assert.match(text(), /只读演示 · 虚构示例/, path);
     assert.ok(text().includes(expected), `${path}: missing ${expected}`);
+    if (path === '/me') {
+      assert.ok(renderer.root.findAllByProps({ className: 'count-up' }).every(node => textOf(node) !== '—'));
+    }
     assert.equal(renderer.root.findAllByType('input').length, 0, path);
     assert.equal(renderer.root.findAllByType('textarea').length, 0, path);
     assert.ok(calls.every(call => call.method === 'GET'), path);
@@ -197,4 +200,50 @@ test('demo internalize never starts the interactive trainer timer', async () => 
   } finally {
     globalThis.setInterval = originalSetInterval;
   }
+});
+
+test('personal migration displays the reward returned inside evaluation', async () => {
+  mockApi(PERSONAL);
+  const read = globalThis.fetch;
+  globalThis.fetch = async (path, options = {}) => {
+    if (path === '/api/videos/demo-cafe/migration/evaluate' && options.method === 'POST') {
+      calls.push({ path, method: options.method });
+      return { ok: true, status: 200, json: async () => ({
+        evaluation: { overall_score: 90, xpGained: 60, criteria_scores: [] },
+        treeUpdate: { leveledUp: true, ore_id: 101 },
+      }) };
+    }
+    return read(path, options);
+  };
+  await mount('/migration/demo-cafe');
+  await act(async () => renderer.root.findByType('textarea').props.onChange({ target: { value: 'Could I have a coffee, please?' } }));
+  await click('提交评估');
+  assert.match(text(), /迁移结果/);
+  assert.match(text(), /\+60 XP/);
+  assert.ok(text().includes(`知识节点「${snapshot.migration['demo-cafe'].ore_name}」升级了`));
+  assert.equal(calls.filter(call => call.method === 'POST').length, 1);
+});
+
+test('personal freeform completion displays its server-awarded XP without model calls', async () => {
+  mockApi(PERSONAL);
+  const read = globalThis.fetch;
+  globalThis.fetch = async (path, options = {}) => {
+    const response = value => ({ ok: true, status: 200, json: async () => structuredClone(value) });
+    if (options.method === 'POST') {
+      calls.push({ path, method: options.method });
+      if (path.endsWith('/flashcards/complete')) return response({ xpGained: 10 });
+      assert.equal(path, '/api/videos/demo-cafe/internalize/freeform/evaluate');
+      return response({ evaluation: { overall_score: 85, xpGained: 30, improvement: 'Keep practicing.' }, treeUpdate: { xpGain: 30 } });
+    }
+    if (path === '/api/videos/demo-cafe') return response({ ...snapshot.videoDetails['demo-cafe'], exercises: {} });
+    if (path.endsWith('/flashcards')) return response({ flashcards: snapshot.flashcards['demo-cafe'].flashcards.slice(0, 1) });
+    return read(path.split('?')[0], options);
+  };
+  await mount('/internalize/demo-cafe');
+  await click('我知道');
+  await act(async () => renderer.root.findByType('textarea').props.onChange({ target: { value: 'Could I have a coffee, please?' } }));
+  await click('提交评估');
+  assert.match(text(), /内化完成/);
+  assert.match(text(), /问答题 85 分 · \+30 XP/);
+  assert.equal(calls.filter(call => call.path.endsWith('/freeform/evaluate')).length, 1);
 });

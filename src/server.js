@@ -16,19 +16,25 @@ async function start() {
 
   // 启动 Express
   const server = app.listen(config.PORT, config.HOST, () => {
-    logger.info(`Listening: http://${config.HOST}:${server.address().port}`);
+    const port = server.address().port;
+    const host = config.HOST.includes(':') ? `[${config.HOST}]` : config.HOST;
+    const origin = `http://${host}:${port}`;
+    logger.info(`Listening: ${origin}`);
     logger.info('='.repeat(50));
     logger.info(`  LinguaTree Backend`);
-    logger.info(`  Port: ${config.PORT}`);
+    logger.info(`  Port: ${port}`);
     logger.info(`  Env: ${config.NODE_ENV}`);
     logger.info(`  Mode: ${config.APP_MODE}`);
-    logger.info(`  OpenAI Base: ${config.OPENAI_BASE_URL}`);
-    logger.info(`  LLM Model: ${config.LLM_MODEL}`);
-    logger.info(`  VLM Model: ${config.VLM_MODEL}`);
-    logger.info(`  ASR Model: ${config.ASR_MODEL}`);
+    if (config.APP_MODE === 'personal') {
+      logger.info(`  OpenAI Base: ${config.OPENAI_BASE_URL}`);
+      logger.info(`  LLM Model: ${config.LLM_MODEL}`);
+      logger.info(`  VLM Model: ${config.VLM_MODEL}`);
+      logger.info(`  ASR Model: ${config.ASR_MODEL}`);
+    }
     logger.info('='.repeat(50));
-    logger.info(`  API docs: http://localhost:${config.PORT}/`);
-    logger.info(`  Health:   http://localhost:${config.PORT}/health`);
+    logger.info(`  App:      ${origin}/`);
+    logger.info(`  API info: ${origin}/api/info`);
+    logger.info(`  Health:   ${origin}/health`);
     logger.info('='.repeat(50));
 
     if (config.APP_MODE === 'personal' && !config.OPENAI_API_KEY) {
