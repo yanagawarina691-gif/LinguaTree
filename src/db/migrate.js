@@ -3,7 +3,13 @@
  * 数据库迁移脚本 v2 - 创建 schema（动态矿石网络，无需 seed）
  * 用法: node src/db/migrate.js
  */
-import { initSchema } from './index.js';
+import { config } from '../config.js';
+
+if (config.APP_MODE !== 'personal') {
+  console.log('只读演示使用预生成示例，不需要数据库迁移。个人学习请设置 APP_MODE=personal。');
+  process.exit(0);
+}
+const { initSchema } = await import('./index.js');
 
 console.log('=== LinguaTree v2 Database Migration ===\n');
 

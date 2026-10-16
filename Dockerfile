@@ -59,6 +59,7 @@ RUN mkdir -p /app/temp
 ENV PORT=3000
 ENV HOST=0.0.0.0
 ENV NODE_ENV=production
+ENV APP_MODE=demo
 EXPOSE 3000
 
 # Health check

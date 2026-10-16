@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { knowledgeCard, updateOreTags, reviewOre } from '../api/ores.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import CenterLoader from '../components/CenterLoader.jsx';
 import '../styles/card-detail.css';
 
@@ -8,6 +9,7 @@ const STAGE_NAMES = ['种子', '苗芽', '晶簇', '盛晶'];
 
 export default function KnowledgeCardPage() {
   const { oreId } = useParams();
+  const { readOnly } = useAuth();
   const navigate = useNavigate();
 
   const [card, setCard] = useState(null);
@@ -21,6 +23,7 @@ export default function KnowledgeCardPage() {
   const loadCard = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await knowledgeCard(oreId);
       setCard(data);
     } catch (e) {
@@ -33,6 +36,7 @@ export default function KnowledgeCardPage() {
   useEffect(() => { loadCard(); }, [loadCard]);
 
   const addTag = async () => {
+    if (readOnly) return;
     const tag = newTag.trim();
     if (!tag || !card) return;
     const tags = [...card.tags, tag];
@@ -42,12 +46,14 @@ export default function KnowledgeCardPage() {
   };
 
   const removeTag = async (tagToRemove) => {
+    if (readOnly) return;
     const tags = card.tags.filter(t => t !== tagToRemove);
     await updateOreTags(oreId, tags);
     setCard({ ...card, tags });
   };
 
   const handleCompleteReview = async () => {
+    if (readOnly) return;
     try {
       const data = await reviewOre(oreId);
       setReviewed(true);
@@ -103,8 +109,9 @@ export default function KnowledgeCardPage() {
             ))}
           </div>
           <div className="card-title">{card.name}</div>
+          {readOnly && <p className="demo-inline-note">以下等级与掌握度为虚构展示数据</p>}
           <div className="card-meta-row">
-            <span>📅 {p.last_review_at ? new Date(p.last_review_at).toLocaleDateString() : '未学习'}</span>
+            <span>{readOnly ? '示例日期 ' : '📅 '}{p.last_review_at ? new Date(p.last_review_at).toLocaleDateString() : '未学习'}</span>
             <span>📊 阶段 {p.level}/{STAGE_NAMES.length} {STAGE_NAMES[p.level] || ''}</span>
           </div>
           <div className="card-mastery-bar-wrap">
@@ -120,9 +127,10 @@ export default function KnowledgeCardPage() {
           <div className="card-block-title">🏷️ 标签</div>
           <div className="card-tags-row">
             {card.tags.map((t, i) => (
-              <span key={i} className="card-tag" onClick={() => removeTag(t)} title="点击删除">#{t} ×</span>
+              <span key={i} className="card-tag" onClick={readOnly ? undefined : () => removeTag(t)}
+                style={readOnly ? { cursor: 'default' } : undefined} title={readOnly ? '示例标签' : '点击删除'}>#{t}{!readOnly && ' ×'}</span>
             ))}
-            {editingTags ? (
+            {!readOnly && (editingTags ? (
               <span style={{ display: 'inline-flex', gap: 4 }}>
                 <input className="card-tag-input" value={newTag} onChange={e => setNewTag(e.target.value)}
                   placeholder="输入标签" onKeyDown={e => { if (e.key === 'Enter') addTag(); }} style={{ width: 80 }} />
@@ -131,7 +139,7 @@ export default function KnowledgeCardPage() {
               </span>
             ) : (
               <span className="card-tag card-tag-add" onClick={() => setEditingTags(true)}>+ 自定义标签</span>
-            )}
+            ))}
           </div>
         </div>
 
@@ -209,11 +217,11 @@ export default function KnowledgeCardPage() {
         {/* === 我的错题 === */}
         {card.wrong_answers?.length > 0 && (
           <div className="card-block">
-            <div className="card-block-title">❌ 我的错题</div>
+            <div className="card-block-title">❌ {readOnly ? '示例错题（虚构）' : '我的错题'}</div>
             {card.wrong_answers.map((wa, i) => (
               <div key={i} className="card-wrong-item">
                 <div className="card-wrong-q">Q: {wa.question}</div>
-                <div className="card-wrong-your">你的答案: <span className="text-red">{wa.user_answer}</span></div>
+                <div className="card-wrong-your">{readOnly ? '示例答案' : '你的答案'}: <span className="text-red">{wa.user_answer}</span></div>
                 <div className="card-wrong-correct">正确答案: <span className="text-green">{wa.correct_answer}</span></div>
                 {wa.explanation && <div className="card-wrong-expl">{wa.explanation}</div>}
               </div>
@@ -224,7 +232,7 @@ export default function KnowledgeCardPage() {
         {/* === 迁移记录 === */}
         {card.migrations?.length > 0 && (
           <div className="card-block">
-            <div className="card-block-title">🎯 迁移记录</div>
+            <div className="card-block-title">🎯 {readOnly ? '示例迁移记录（虚构）' : '迁移记录'}</div>
             {card.migrations.map((m, i) => (
               <div key={i} className="card-migration-item">
                 <div className="card-migration-scenario">{m.scenario_title}</div>
@@ -259,12 +267,12 @@ export default function KnowledgeCardPage() {
       </div>
 
       {/* 复习按钮 */}
-      <div className="card-review-bar">
+      {!readOnly && <div className="card-review-bar">
         <button className="snake-card-btn snake-card-btn-primary" onClick={handleCompleteReview} disabled={reviewed}>
           {reviewed ? '✔ 已复习' : '📖 完成复习 +3 XP'}
         </button>
         {reviewMsg && <div className="card-review-msg">{reviewMsg}</div>}
-      </div>
+      </div>}
     </div>
   );
 }

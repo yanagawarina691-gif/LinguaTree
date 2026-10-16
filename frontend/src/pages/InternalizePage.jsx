@@ -8,6 +8,8 @@ import {
   evaluateFreeform,
   completeExercises,
 } from '../api/videos.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import InternalizePreviewPage from './InternalizePreviewPage.jsx';
 import CenterLoader from '../components/CenterLoader.jsx';
 
 const PHASE = {
@@ -19,6 +21,11 @@ const PHASE = {
 };
 
 export default function InternalizePage() {
+  const { readOnly } = useAuth();
+  return readOnly ? <InternalizePreviewPage /> : <InteractiveInternalizePage />;
+}
+
+function InteractiveInternalizePage() {
   const { videoId } = useParams();
   const navigate = useNavigate();
 

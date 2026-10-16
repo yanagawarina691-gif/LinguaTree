@@ -15,42 +15,15 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: APP_MODE
+        value: demo
       - key: PORT
         value: 3000
       - key: HOST
         value: 0.0.0.0
       - key: DEMO_PASSWORD
         sync: false  # 随机口令，至少 24 字符；未设置时拒绝启动
-      # === AI / LLM Configuration ===
-      # Use DashScope (Aliyun Qwen) for China direct access, or OpenAI
-      - key: OPENAI_API_KEY
-        sync: false  # Set manually in dashboard
-      - key: OPENAI_BASE_URL
-        value: https://dashscope.aliyuncs.com/compatible-mode/v1
-      - key: LLM_MODEL
-        value: qwen-plus
-      - key: VLM_MODEL
-        value: qwen-vl-max
-      # === ASR Configuration ===
-      - key: ASR_PROVIDER
-        value: dashscope
-      - key: ASR_MODEL
-        value: paraformer-v2
-      - key: DASHSCOPE_API_KEY
-        sync: false  # Set manually in dashboard
-      - key: DASHSCOPE_BASE_URL
-        value: https://dashscope.aliyuncs.com
-      # === Video Processing ===
-      - key: TEMP_DIR
-        value: /app/temp
-      - key: MAX_VIDEO_DURATION
-        value: "300"
-      - key: KEYFRAME_COUNT
-        value: "5"
-      # === Timeouts (ms) ===
-      - key: ASR_TIMEOUT
-        value: "120000"
-      - key: LLM_TIMEOUT
-        value: "30000"
-      - key: PIPELINE_TIMEOUT
-        value: "180000"
+      - key: PUBLIC_ORIGIN
+        sync: false  # 对外 HTTPS 来源（例如 https://your-demo.onrender.com），无路径
+      # Read-only demo needs no AI keys, media storage or database disk.
+      # For a private personal instance, explicitly opt in using README.md.

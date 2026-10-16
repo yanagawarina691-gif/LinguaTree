@@ -2,15 +2,13 @@ import express from 'express';
 import { createDemoAccess } from './middleware/demoAccess.js';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
-import videoRoutes from './routes/videos.js';
-import treeRoutes from './routes/tree.js';
-import oreRoutes from './routes/ores.js';
-import userRoutes from './routes/user.js';
 
 const app = express();
 
 // 请求日志
 app.use((req, res, next) => {
+  res.set('Content-Security-Policy', "frame-ancestors 'none'");
+  res.set('X-Content-Type-Options', 'nosniff');
   logger.debug(`${req.method} ${req.url}`);
   next();
 });
@@ -27,31 +25,41 @@ app.get('/health', (req, res) => {
 
 // 所有页面和 API 共用访问保护；仅无敏感内容的健康检查公开。
 app.use(createDemoAccess(config));
-app.use(express.json({ limit: '10mb' }));
 
-// API 路由
-app.use('/api/videos', videoRoutes);
-app.use('/api/tree', treeRoutes);
-app.use('/api/ores', oreRoutes);
-app.use('/api/user', userRoutes);
+const readOnly = config.APP_MODE === 'demo';
+// Fail closed before parsing request bodies, including unknown/future endpoints.
+if (readOnly) {
+  app.use((req, res, next) => {
+    if (!['GET', 'HEAD'].includes(req.method)) {
+      return res.status(403).json({ code: 'DEMO_READ_ONLY', error: '这是只读示例，不能修改数据或调用 AI。' });
+    }
+    next();
+  });
+}
 
 // 根路由 — API 信息
 app.get('/api/info', (req, res) => {
   res.json({
     name: 'LinguaTree Backend API',
     version: '1.0.0',
-    mode: 'single-user-demo',
+    mode: readOnly ? 'read-only-demo' : 'single-user-personal',
+    readOnly,
+    dataset: readOnly ? 'fictional-pregenerated' : null,
     access: 'HTTP Basic when DEMO_PASSWORD is configured; username: learner',
-    limitations: 'All authorized visitors share the same learning data.',
+    limitations: readOnly
+      ? 'Fictional, pregenerated examples only. No personal database, writes, downloads or model calls.'
+      : 'All authorized visitors share and can modify the same personal learning data.',
     endpoints: {
       videos: {
-        'POST /api/videos/parse': '提交视频解析（body: { url?, manualTranscript? }）',
         'GET /api/videos/:id/status': '查询解析状态',
         'GET /api/videos/:id': '获取解析结果',
         'GET /api/videos': '视频列表',
-        'POST /api/videos/:id/exercises/complete': '提交巩固训练结果',
-        'GET /api/videos/:id/migration': '获取迁移场景（M2，无则自动生成）',
-        'POST /api/videos/:id/migration/evaluate': '提交迁移回答并获取AI评估（M2）',
+        'GET /api/videos/:id/migration': readOnly ? '预生成迁移示例' : '获取或生成迁移场景',
+        ...(!readOnly && {
+          'POST /api/videos/parse': '提交视频解析（body: { url?, manualTranscript? }）',
+          'POST /api/videos/:id/exercises/complete': '提交巩固训练结果',
+          'POST /api/videos/:id/migration/evaluate': '提交迁移回答并获取 AI 评估',
+        }),
       },
       tree: {
         'GET /api/tree': '获取完整知识树',
@@ -65,6 +73,21 @@ app.get('/api/info', (req, res) => {
     },
   });
 });
+
+if (readOnly) {
+  // Deliberately do not import personal routes, SQLite or generation services.
+  const { default: demoRoutes } = await import('./demo/routes.js');
+  app.use('/api', demoRoutes);
+} else {
+  app.use(express.json({ limit: '10mb' }));
+  const [{ default: videos }, { default: tree }, { default: ores }, { default: user }] = await Promise.all([
+    import('./routes/videos.js'), import('./routes/tree.js'), import('./routes/ores.js'), import('./routes/user.js'),
+  ]);
+  app.use('/api/videos', videos);
+  app.use('/api/tree', tree);
+  app.use('/api/ores', ores);
+  app.use('/api/user', user);
+}
 
 // 静态文件服务（前端 H5 应用）
 import { fileURLToPath } from 'url';

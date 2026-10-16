@@ -19,13 +19,13 @@ test('external and production demos require a strong access password', () => {
   assert.throws(() => validateDemoAccess({ HOST: '127.0.0.1', NODE_ENV: 'development', DEMO_PASSWORD: 'short' }), /24/);
 });
 
-test('shared demo protects HTML and APIs while allowing health checks', { timeout: 15000 }, async (t) => {
+test('explicit personal mode preserves the shared SQLite workflow behind access protection', { timeout: 15000 }, async (t) => {
   const temp = await mkdtemp(join(tmpdir(), 'linguatree-demo-'));
   const dbPath = join(temp, 'test.db');
   const password = randomBytes(24).toString('base64url');
   const child = spawn(process.execPath, ['src/server.js'], {
     cwd: new URL('..', import.meta.url),
-    env: { ...process.env, DOTENV_CONFIG_PATH: join(temp, 'absent.env'), HOST: '127.0.0.1', PORT: '0', NODE_ENV: 'production', DEMO_PASSWORD: password, DB_PATH: dbPath, OPENAI_API_KEY: '', DASHSCOPE_API_KEY: '' },
+    env: { ...process.env, DOTENV_CONFIG_PATH: join(temp, 'absent.env'), APP_MODE: 'personal', PUBLIC_ORIGIN: '', HOST: '127.0.0.1', PORT: '0', NODE_ENV: 'production', DEMO_PASSWORD: password, DB_PATH: dbPath, OPENAI_API_KEY: '', DASHSCOPE_API_KEY: '' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   t.after(async () => {
@@ -48,7 +48,7 @@ test('shared demo protects HTML and APIs while allowing health checks', { timeou
       if (match) resolve(match[1]);
     });
   });
-  const headers = { Authorization: `Basic ${Buffer.from(`learner:${password}`).toString('base64')}` };
+  const headers = { Authorization: `Basic ${Buffer.from(`learner:${password}`).toString('base64')}`, Origin: base };
   assert.equal((await fetch(base + '/health')).status, 200);
   for (const path of ['/', '/tree', '/api/videos', '/api/tree', '/api/user/stats']) {
     const response = await fetch(base + path);
@@ -77,6 +77,15 @@ test('shared demo protects HTML and APIs while allowing health checks', { timeou
   assert.equal((await fetch(base + '/api/tree', { headers })).status, 200);
   assert.equal((await fetch(base + '/api/user/stats', { headers })).status, 200);
   const info = await (await fetch(base + '/api/info', { headers })).json();
-  assert.equal(info.mode, 'single-user-demo');
+  assert.equal(info.mode, 'single-user-personal');
+  assert.equal(info.readOnly, false);
   assert.equal(info.endpoints.auth, undefined);
+
+  // Personal writes still work; this endpoint has no download or model calls.
+  const claim = await fetch(base + '/api/videos/fixture/claim', { method: 'POST', headers });
+  assert.equal(claim.status, 200);
+  assert.equal((await claim.json()).claimed, true);
+  const inspect = new Database(dbPath);
+  try { assert.equal(inspect.prepare("SELECT claimed FROM videos WHERE id = 'fixture'").get().claimed, 1); }
+  finally { inspect.close(); }
 });

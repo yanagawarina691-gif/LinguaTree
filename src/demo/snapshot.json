@@ -1,0 +1,3224 @@
+{
+  "notice": "所有课程、对话、进度和学习记录均为预先编写的虚构演示数据。没有真实视频或真实用户数据。",
+  "videos": [
+    {
+      "id": "demo-cafe",
+      "title": "咖啡馆里的礼貌点单（虚构演示）",
+      "summary": "虚构课程：用 I’d like 和 Could you 礼貌点单，并练习 a cup of 的数量表达。",
+      "cefr_level": "A2",
+      "claimed": 1,
+      "deepen_completed": 1,
+      "flashcard_completed": 1,
+      "choice_completed": 1,
+      "freeform_completed": 1,
+      "migration_completed": 1,
+      "created_at": "2026-01-14T10:00:00.000Z",
+      "source_url": "",
+      "author": "LinguaTree 虚构课程",
+      "status": "done",
+      "synthetic": true
+    },
+    {
+      "id": "demo-city",
+      "title": "从图书馆到车站（虚构演示）",
+      "summary": "虚构课程：学习问路、按顺序描述路线，以及 next to、opposite 等地点表达。",
+      "cefr_level": "A2",
+      "claimed": 1,
+      "deepen_completed": 1,
+      "flashcard_completed": 0,
+      "choice_completed": 1,
+      "freeform_completed": 0,
+      "migration_completed": 0,
+      "created_at": "2026-01-13T10:00:00.000Z",
+      "source_url": "",
+      "author": "LinguaTree 虚构课程",
+      "status": "done",
+      "synthetic": true
+    },
+    {
+      "id": "demo-hobbies",
+      "title": "聊聊尝试过的爱好（虚构演示）",
+      "summary": "虚构课程：用现在完成时谈经历，再用一般过去时补充具体时间。",
+      "cefr_level": "B1",
+      "claimed": 0,
+      "deepen_completed": 0,
+      "flashcard_completed": 0,
+      "choice_completed": 0,
+      "freeform_completed": 0,
+      "migration_completed": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "source_url": "",
+      "author": "LinguaTree 虚构课程",
+      "status": "done",
+      "synthetic": true
+    }
+  ],
+  "videoDetails": {
+    "demo-cafe": {
+      "id": "demo-cafe",
+      "title": "咖啡馆里的礼貌点单（虚构演示）",
+      "summary": "虚构课程：用 I’d like 和 Could you 礼貌点单，并练习 a cup of 的数量表达。",
+      "cefr_level": "A2",
+      "claimed": 1,
+      "deepen_completed": 1,
+      "flashcard_completed": 1,
+      "choice_completed": 1,
+      "freeform_completed": 1,
+      "migration_completed": 1,
+      "created_at": "2026-01-14T10:00:00.000Z",
+      "source_url": "",
+      "author": "LinguaTree 虚构课程",
+      "status": "done",
+      "synthetic": true,
+      "user_id": "fictional-demo",
+      "cover_url": "",
+      "asr_text": "[Fictional teaching dialogue]\nGuest: I’d like a cup of tea and a sandwich, please.\nServer: Of course. Would you like milk with your tea?\nGuest: Yes, please. Could you bring two cups of water as well?\nServer: Certainly.\nPractice mistake: Could you brings the menu?\nCorrection: Could you bring the menu?",
+      "ocr_text": "",
+      "vlm_description": "虚构文字课程，没有关联的视频文件。",
+      "manual_transcript": "[Fictional teaching dialogue]\nGuest: I’d like a cup of tea and a sandwich, please.\nServer: Of course. Would you like milk with your tea?\nGuest: Yes, please. Could you bring two cups of water as well?\nServer: Certainly.\nPractice mistake: Could you brings the menu?\nCorrection: Could you bring the menu?",
+      "completion_rate": 1,
+      "error_message": "",
+      "updated_at": "2026-01-14T10:00:00.000Z",
+      "ores": [
+        {
+          "ore_id": 101,
+          "confidence": 0.98,
+          "ore_name": "Could you…? 礼貌请求",
+          "description": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+          "tags": "[\"日常交流\", \"礼貌表达\"]"
+        },
+        {
+          "ore_id": 102,
+          "confidence": 0.94,
+          "ore_name": "I would like… 点餐表达",
+          "description": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+          "tags": "[\"日常交流\", \"礼貌表达\"]"
+        },
+        {
+          "ore_id": 103,
+          "confidence": 0.9,
+          "ore_name": "可数与不可数名词",
+          "description": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+          "tags": "[\"日常交流\", \"语法\"]"
+        }
+      ],
+      "exercises": {
+        "choice": {
+          "id": "demo-cafe-choice",
+          "ore_id": 101,
+          "type": "choice",
+          "question": "哪一句是在咖啡馆礼貌请求菜单的表达？",
+          "answer": 0,
+          "explanation": "could 后直接接动词原形 bring，please 使语气更友好。",
+          "synthetic": true,
+          "options": [
+            "Could you bring the menu, please?",
+            "Could you brings the menu?",
+            "You could bringing the menu.",
+            "Could you to bring the menu?"
+          ]
+        },
+        "fill": {
+          "id": "demo-cafe-fill",
+          "ore_id": 103,
+          "type": "fill",
+          "question": "补全句子：I’d like two ___ of tea, please.",
+          "answer": "cups",
+          "explanation": "two 后接复数 cups；two cups of tea 表示两杯茶。",
+          "synthetic": true
+        },
+        "judge": {
+          "id": "demo-cafe-judge",
+          "ore_id": 102,
+          "type": "judge",
+          "question": "“I’d like a sandwich, please.” 可以用来礼貌点餐。",
+          "answer": true,
+          "explanation": "I’d like 是 I would like 的缩写，适合礼貌表达想要的食物。",
+          "synthetic": true
+        }
+      }
+    },
+    "demo-city": {
+      "id": "demo-city",
+      "title": "从图书馆到车站（虚构演示）",
+      "summary": "虚构课程：学习问路、按顺序描述路线，以及 next to、opposite 等地点表达。",
+      "cefr_level": "A2",
+      "claimed": 1,
+      "deepen_completed": 1,
+      "flashcard_completed": 0,
+      "choice_completed": 1,
+      "freeform_completed": 0,
+      "migration_completed": 0,
+      "created_at": "2026-01-13T10:00:00.000Z",
+      "source_url": "",
+      "author": "LinguaTree 虚构课程",
+      "status": "done",
+      "synthetic": true,
+      "user_id": "fictional-demo",
+      "cover_url": "",
+      "asr_text": "[Fictional teaching dialogue; no real location]\nVisitor: Excuse me. Could you tell me how to get to the station?\nGuide: Go straight, then turn left at the library. The station is opposite the park and next to the café.\nVisitor: Thank you. Is it far from here?\nGuide: No, it is a short walk.\nPractice mistake: Turn to left at the library.\nCorrection: Turn left at the library.",
+      "ocr_text": "",
+      "vlm_description": "虚构文字课程，没有关联的视频文件。",
+      "manual_transcript": "[Fictional teaching dialogue; no real location]\nVisitor: Excuse me. Could you tell me how to get to the station?\nGuide: Go straight, then turn left at the library. The station is opposite the park and next to the café.\nVisitor: Thank you. Is it far from here?\nGuide: No, it is a short walk.\nPractice mistake: Turn to left at the library.\nCorrection: Turn left at the library.",
+      "completion_rate": 0.25,
+      "error_message": "",
+      "updated_at": "2026-01-13T10:00:00.000Z",
+      "ores": [
+        {
+          "ore_id": 104,
+          "confidence": 0.98,
+          "ore_name": "Turn left / go straight",
+          "description": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+          "tags": "[\"旅行英语\", \"日常交流\"]"
+        },
+        {
+          "ore_id": 105,
+          "confidence": 0.94,
+          "ore_name": "地点介词 next to / opposite",
+          "description": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+          "tags": "[\"旅行英语\", \"语法\"]"
+        },
+        {
+          "ore_id": 101,
+          "confidence": 0.9,
+          "ore_name": "Could you…? 礼貌请求",
+          "description": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+          "tags": "[\"日常交流\", \"礼貌表达\"]"
+        }
+      ],
+      "exercises": {
+        "choice": {
+          "id": "demo-city-choice",
+          "ore_id": 104,
+          "type": "choice",
+          "question": "“一直走，然后在图书馆左转。”最自然的英文是？",
+          "answer": 0,
+          "explanation": "turn left 是“向左转”；at the library 指转弯的地标。",
+          "synthetic": true,
+          "options": [
+            "Go straight, then turn left at the library.",
+            "Go straight, then turn to left at the library.",
+            "Go straight, then left turn the library.",
+            "Go straight, then turning left the library."
+          ]
+        },
+        "fill": {
+          "id": "demo-city-fill",
+          "ore_id": 105,
+          "type": "fill",
+          "question": "补全句子：The station is ___ to the café.（车站紧挨着咖啡馆。）",
+          "answer": "next",
+          "explanation": "next to 是固定搭配，表示紧挨着。",
+          "synthetic": true
+        },
+        "judge": {
+          "id": "demo-city-judge",
+          "ore_id": 105,
+          "type": "judge",
+          "question": "“The station is opposite the park.” 表示车站紧挨着公园。",
+          "answer": false,
+          "explanation": "opposite 表示在对面，next to 才表示紧挨着。",
+          "synthetic": true
+        }
+      }
+    },
+    "demo-hobbies": {
+      "id": "demo-hobbies",
+      "title": "聊聊尝试过的爱好（虚构演示）",
+      "summary": "虚构课程：用现在完成时谈经历，再用一般过去时补充具体时间。",
+      "cefr_level": "B1",
+      "claimed": 0,
+      "deepen_completed": 0,
+      "flashcard_completed": 0,
+      "choice_completed": 0,
+      "freeform_completed": 0,
+      "migration_completed": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "source_url": "",
+      "author": "LinguaTree 虚构课程",
+      "status": "done",
+      "synthetic": true,
+      "user_id": "fictional-demo",
+      "cover_url": "",
+      "asr_text": "[Fictional teaching dialogue]\nSpeaker A: Have you ever tried painting?\nSpeaker B: Yes, I have. I joined a painting class last Saturday.\nSpeaker A: Have you tried pottery as well?\nSpeaker B: No, I have never tried it, but I would like to.\nPractice mistake: I have joined a painting class last Saturday.\nCorrection: I joined a painting class last Saturday.",
+      "ocr_text": "",
+      "vlm_description": "虚构文字课程，没有关联的视频文件。",
+      "manual_transcript": "[Fictional teaching dialogue]\nSpeaker A: Have you ever tried painting?\nSpeaker B: Yes, I have. I joined a painting class last Saturday.\nSpeaker A: Have you tried pottery as well?\nSpeaker B: No, I have never tried it, but I would like to.\nPractice mistake: I have joined a painting class last Saturday.\nCorrection: I joined a painting class last Saturday.",
+      "completion_rate": 0,
+      "error_message": "",
+      "updated_at": "2026-01-12T10:00:00.000Z",
+      "ores": [
+        {
+          "ore_id": 106,
+          "confidence": 0.98,
+          "ore_name": "现在完成时：经历",
+          "description": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。",
+          "tags": "[\"语法\", \"经历分享\"]"
+        },
+        {
+          "ore_id": 107,
+          "confidence": 0.94,
+          "ore_name": "一般过去时：明确时间",
+          "description": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。",
+          "tags": "[\"语法\", \"经历分享\"]"
+        },
+        {
+          "ore_id": 108,
+          "confidence": 0.9,
+          "ore_name": "ever / never 谈论经历",
+          "description": "ever 常用于询问是否有过某种经历；never 表示从未。",
+          "tags": "[\"经历分享\"]"
+        }
+      ],
+      "exercises": {
+        "choice": {
+          "id": "demo-hobbies-choice",
+          "ore_id": 106,
+          "type": "choice",
+          "question": "哪一句正确询问对方是否有过画画的经历？",
+          "answer": 0,
+          "explanation": "现在完成时疑问句用 Have + 主语 + 过去分词；try 的过去分词是 tried。",
+          "synthetic": true,
+          "options": [
+            "Have you ever tried painting?",
+            "Did you ever tried painting?",
+            "Have you ever try painting?",
+            "Do you have tried painting?"
+          ]
+        },
+        "fill": {
+          "id": "demo-hobbies-fill",
+          "ore_id": 107,
+          "type": "fill",
+          "question": "补全句子：I ___ a painting class last Saturday.（join）",
+          "answer": "joined",
+          "explanation": "last Saturday 对应一般过去时，join 的过去式为 joined。",
+          "synthetic": true
+        },
+        "judge": {
+          "id": "demo-hobbies-judge",
+          "ore_id": 108,
+          "type": "judge",
+          "question": "“I have never tried pottery.” 表示到现在为止从未尝试过陶艺。",
+          "answer": true,
+          "explanation": "have never + 过去分词描述截至现在没有过的经历。",
+          "synthetic": true
+        }
+      }
+    }
+  },
+  "videoStatus": {
+    "demo-cafe": {
+      "id": "demo-cafe",
+      "status": "done",
+      "title": "咖啡馆里的礼貌点单（虚构演示）",
+      "author": "LinguaTree 虚构课程",
+      "cefr_level": "A2",
+      "summary": "虚构课程：用 I’d like 和 Could you 礼貌点单，并练习 a cup of 的数量表达。",
+      "created_at": "2026-01-14T10:00:00.000Z",
+      "error_message": "",
+      "updated_at": "2026-01-14T10:00:00.000Z",
+      "logs": [
+        {
+          "stage": "预置演示",
+          "status": "done",
+          "message": "虚构课程已随应用预置；未执行下载、转写或模型调用。",
+          "duration_ms": 0,
+          "created_at": "2026-01-14T10:00:00.000Z"
+        }
+      ],
+      "synthetic": true
+    },
+    "demo-city": {
+      "id": "demo-city",
+      "status": "done",
+      "title": "从图书馆到车站（虚构演示）",
+      "author": "LinguaTree 虚构课程",
+      "cefr_level": "A2",
+      "summary": "虚构课程：学习问路、按顺序描述路线，以及 next to、opposite 等地点表达。",
+      "created_at": "2026-01-13T10:00:00.000Z",
+      "error_message": "",
+      "updated_at": "2026-01-13T10:00:00.000Z",
+      "logs": [
+        {
+          "stage": "预置演示",
+          "status": "done",
+          "message": "虚构课程已随应用预置；未执行下载、转写或模型调用。",
+          "duration_ms": 0,
+          "created_at": "2026-01-13T10:00:00.000Z"
+        }
+      ],
+      "synthetic": true
+    },
+    "demo-hobbies": {
+      "id": "demo-hobbies",
+      "status": "done",
+      "title": "聊聊尝试过的爱好（虚构演示）",
+      "author": "LinguaTree 虚构课程",
+      "cefr_level": "B1",
+      "summary": "虚构课程：用现在完成时谈经历，再用一般过去时补充具体时间。",
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "error_message": "",
+      "updated_at": "2026-01-12T10:00:00.000Z",
+      "logs": [
+        {
+          "stage": "预置演示",
+          "status": "done",
+          "message": "虚构课程已随应用预置；未执行下载、转写或模型调用。",
+          "duration_ms": 0,
+          "created_at": "2026-01-12T10:00:00.000Z"
+        }
+      ],
+      "synthetic": true
+    }
+  },
+  "deepen": {
+    "demo-cafe": {
+      "id": "demo-cafe-deepen",
+      "video_id": "demo-cafe",
+      "ore_id": 101,
+      "video_title": "咖啡馆里的礼貌点单（虚构演示）",
+      "brief_comment": "这是一段预先编写的虚构点餐对话。把礼貌请求、想要的物品和数量放在一起，就能清楚表达需求。",
+      "comment_type": "supplement",
+      "corrections": [
+        {
+          "original": "Could you brings the menu?",
+          "corrected": "Could you bring the menu?",
+          "explanation": "情态动词 could 后接动词原形，不随主语变化。"
+        }
+      ],
+      "supplements": [
+        {
+          "title": "想点餐，还是想做某事？",
+          "content": "I’d like tea 表示想要茶；I’d like to sit here 表示想坐在这里。to 后接动词原形。",
+          "related_ore_id": 102,
+          "relation": "同一虚构课程中的关联知识"
+        }
+      ],
+      "structured_content": [
+        {
+          "section": "核心概念",
+          "content": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。"
+        },
+        {
+          "section": "结构",
+          "content": "Could you + 动词原形 + …?"
+        },
+        {
+          "section": "例句",
+          "content": "Could you show me the way to the station?\nI’d like a cup of tea, please.\nTwo cups of tea and a sandwich, please."
+        },
+        {
+          "section": "易错点",
+          "content": "情态动词 could 后接动词原形，不随主语变化。"
+        }
+      ],
+      "synthetic": true
+    },
+    "demo-city": {
+      "id": "demo-city-deepen",
+      "video_id": "demo-city",
+      "ore_id": 104,
+      "video_title": "从图书馆到车站（虚构演示）",
+      "brief_comment": "这段虚构问路对话使用“先路线，后地标”的顺序。go straight 和 turn left 指动作；opposite 和 next to 说明位置。",
+      "comment_type": "supplement",
+      "corrections": [
+        {
+          "original": "Turn to left at the library.",
+          "corrected": "Turn left at the library.",
+          "explanation": "表示向左转时，常用 turn left；left 前不需要 to。"
+        }
+      ],
+      "supplements": [
+        {
+          "title": "先礼貌提问，再确认路线",
+          "content": "用 Could you tell me how to get to…? 问路；听完后可用 So I turn left at the library? 确认。",
+          "related_ore_id": 101,
+          "relation": "同一虚构课程中的关联知识"
+        }
+      ],
+      "structured_content": [
+        {
+          "section": "核心概念",
+          "content": "用 go straight、turn left 和 turn right 按顺序说明路线。"
+        },
+        {
+          "section": "结构",
+          "content": "Go straight. Then turn left/right at + 地标。"
+        },
+        {
+          "section": "例句",
+          "content": "Go straight, then turn left at the library.\nThe station is opposite the library.\nCould you show me the way to the station?"
+        },
+        {
+          "section": "易错点",
+          "content": "表示向左转时，常用 turn left；left 前不需要 to。"
+        }
+      ],
+      "synthetic": true
+    },
+    "demo-hobbies": {
+      "id": "demo-hobbies-deepen",
+      "video_id": "demo-hobbies",
+      "ore_id": 106,
+      "video_title": "聊聊尝试过的爱好（虚构演示）",
+      "brief_comment": "这段虚构对话先问“有没有过这种经历”，再补充“具体什么时候”。有明确且已结束的过去时间时，切换到一般过去时。",
+      "comment_type": "supplement",
+      "corrections": [
+        {
+          "original": "I have joined a painting class last Saturday.",
+          "corrected": "I joined a painting class last Saturday.",
+          "explanation": "last Saturday 是已结束的明确过去时间，因此用 joined，而不是 have joined。"
+        }
+      ],
+      "supplements": [
+        {
+          "title": "ever 和 never 放在哪里？",
+          "content": "谈经历时，ever / never 通常放在 have / has 与过去分词之间：Have you ever tried…? I have never tried…",
+          "related_ore_id": 108,
+          "relation": "同一虚构课程中的关联知识"
+        }
+      ],
+      "structured_content": [
+        {
+          "section": "核心概念",
+          "content": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。"
+        },
+        {
+          "section": "结构",
+          "content": "主语 + have/has + 过去分词；Have/Has + 主语 + 过去分词…?"
+        },
+        {
+          "section": "例句",
+          "content": "I have tried painting, but I have never tried pottery.\nI joined a painting class last Saturday.\nHave you ever tried pottery? I have never tried it."
+        },
+        {
+          "section": "易错点",
+          "content": "last Saturday 是已结束的明确过去时间，因此用 joined，而不是 have joined。"
+        }
+      ],
+      "synthetic": true
+    }
+  },
+  "flashcards": {
+    "demo-cafe": {
+      "flashcards": [
+        {
+          "front": "Could you…?",
+          "back": "你能……吗？礼貌请求：Could you bring the menu, please?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "I’d like…",
+          "back": "我想要……：I’d like a cup of tea.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "a cup of tea",
+          "back": "一杯茶；两杯茶是 two cups of tea。",
+          "trigger_type": "collocation",
+          "difficulty": "A2"
+        },
+        {
+          "front": "as well",
+          "back": "也，还：Could you bring some water as well?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "cards": [
+        {
+          "front": "Could you…?",
+          "back": "你能……吗？礼貌请求：Could you bring the menu, please?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "I’d like…",
+          "back": "我想要……：I’d like a cup of tea.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "a cup of tea",
+          "back": "一杯茶；两杯茶是 two cups of tea。",
+          "trigger_type": "collocation",
+          "difficulty": "A2"
+        },
+        {
+          "front": "as well",
+          "back": "也，还：Could you bring some water as well?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "ore_id": 101,
+      "node_name": "Could you…? 礼貌请求",
+      "synthetic": true
+    },
+    "demo-city": {
+      "flashcards": [
+        {
+          "front": "go straight",
+          "back": "一直走：Go straight for one block.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "turn left",
+          "back": "向左转：Turn left at the library.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "opposite",
+          "back": "在……对面：The station is opposite the park.",
+          "trigger_type": "word",
+          "difficulty": "A2"
+        },
+        {
+          "front": "next to",
+          "back": "紧挨着：The café is next to the station.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "cards": [
+        {
+          "front": "go straight",
+          "back": "一直走：Go straight for one block.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "turn left",
+          "back": "向左转：Turn left at the library.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "opposite",
+          "back": "在……对面：The station is opposite the park.",
+          "trigger_type": "word",
+          "difficulty": "A2"
+        },
+        {
+          "front": "next to",
+          "back": "紧挨着：The café is next to the station.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "ore_id": 104,
+      "node_name": "Turn left / go straight",
+      "synthetic": true
+    },
+    "demo-hobbies": {
+      "flashcards": [
+        {
+          "front": "Have you ever…?",
+          "back": "你曾经……过吗？Have you ever tried painting?",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "I have never…",
+          "back": "我从来没有……过：I have never tried pottery.",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "tried",
+          "back": "try 的过去式和过去分词：尝试过。",
+          "trigger_type": "word",
+          "difficulty": "B1"
+        },
+        {
+          "front": "last Saturday",
+          "back": "上周六；已结束的明确过去时间，通常搭配一般过去时。",
+          "trigger_type": "collocation",
+          "difficulty": "B1"
+        }
+      ],
+      "cards": [
+        {
+          "front": "Have you ever…?",
+          "back": "你曾经……过吗？Have you ever tried painting?",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "I have never…",
+          "back": "我从来没有……过：I have never tried pottery.",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "tried",
+          "back": "try 的过去式和过去分词：尝试过。",
+          "trigger_type": "word",
+          "difficulty": "B1"
+        },
+        {
+          "front": "last Saturday",
+          "back": "上周六；已结束的明确过去时间，通常搭配一般过去时。",
+          "trigger_type": "collocation",
+          "difficulty": "B1"
+        }
+      ],
+      "ore_id": 106,
+      "node_name": "现在完成时：经历",
+      "synthetic": true
+    }
+  },
+  "freeform": {
+    "demo-cafe": {
+      "id": "demo-cafe-freeform",
+      "video_id": "demo-cafe",
+      "ore_id": 101,
+      "question": "请用英文写两句话：点一杯茶，并礼貌请求菜单。",
+      "target_knowledge": "Could you…? 礼貌请求",
+      "evaluation_criteria": [
+        "礼貌表达",
+        "could 后使用动词原形",
+        "需求清楚"
+      ],
+      "reference_answers": [
+        "I’d like a cup of tea, please. Could you bring the menu?"
+      ],
+      "difficulty": "A2",
+      "synthetic": true,
+      "sample_answer": "I’d like a cup of tea, please. Could you bring the menu?"
+    },
+    "demo-city": {
+      "id": "demo-city-freeform",
+      "video_id": "demo-city",
+      "ore_id": 104,
+      "question": "请用英文说明：一直走，在图书馆左转；车站在公园对面。",
+      "target_knowledge": "Turn left / go straight",
+      "evaluation_criteria": [
+        "步骤顺序",
+        "方向表达",
+        "地点介词"
+      ],
+      "reference_answers": [
+        "Go straight, then turn left at the library. The station is opposite the park."
+      ],
+      "difficulty": "A2",
+      "synthetic": true,
+      "sample_answer": "Go straight, then turn left at the library. The station is opposite the park."
+    },
+    "demo-hobbies": {
+      "id": "demo-hobbies-freeform",
+      "video_id": "demo-hobbies",
+      "ore_id": 106,
+      "question": "请用英文说一种尝试过的爱好，再说明你上一次尝试它的具体时间。",
+      "target_knowledge": "现在完成时：经历",
+      "evaluation_criteria": [
+        "经历使用现在完成时",
+        "明确过去时间使用一般过去时",
+        "内容连贯"
+      ],
+      "reference_answers": [
+        "I have tried painting. I painted a small picture last Saturday."
+      ],
+      "difficulty": "B1",
+      "synthetic": true,
+      "sample_answer": "I have tried painting. I painted a small picture last Saturday."
+    }
+  },
+  "migration": {
+    "demo-cafe": {
+      "id": "demo-cafe-migration",
+      "video_id": "demo-cafe",
+      "ore_id": 101,
+      "ore_name": "Could you…? 礼貌请求",
+      "scenario_title": "在虚构的书店寻求帮助",
+      "scenario_description": "你来到一家虚构书店，想找一本英语练习册，并请店员推荐适合初学者的书。",
+      "user_task": "用 2–3 句英文说明你想找什么，并用 Could you 提出一个请求。",
+      "evaluation_criteria": [
+        "明确表达需求",
+        "使用礼貌请求",
+        "语法准确"
+      ],
+      "reference_answer": "I’d like an English workbook, please. Could you recommend a book for beginners?",
+      "difficulty": "A2",
+      "related_ore_ids": [
+        102,
+        103
+      ],
+      "synthetic": true,
+      "sample_answer": "I’d like an English workbook, please. Could you recommend a book for beginners?"
+    },
+    "demo-city": {
+      "id": "demo-city-migration",
+      "video_id": "demo-city",
+      "ore_id": 104,
+      "ore_name": "Turn left / go straight",
+      "scenario_title": "为虚构展览的访客指路",
+      "scenario_description": "在一座虚构展馆中，问讯台旁边是咖啡区。访客需要一直走，在咖啡区右转，才能到画廊。",
+      "user_task": "用 2–3 句英文说明去画廊的路线，至少使用一个地点介词。",
+      "evaluation_criteria": [
+        "路线清楚",
+        "使用方向动词",
+        "地点表达准确"
+      ],
+      "reference_answer": "Go straight and turn right at the café. The café is next to the information desk. The gallery is on your left.",
+      "difficulty": "A2",
+      "related_ore_ids": [
+        105,
+        101
+      ],
+      "synthetic": true,
+      "sample_answer": "Go straight and turn right at the café. The café is next to the information desk. The gallery is on your left."
+    },
+    "demo-hobbies": {
+      "id": "demo-hobbies-migration",
+      "video_id": "demo-hobbies",
+      "ore_id": 106,
+      "ore_name": "现在完成时：经历",
+      "scenario_title": "在虚构兴趣小组中自我介绍",
+      "scenario_description": "你参加一个虚构的周末兴趣小组。大家正在聊尝试过的活动以及想学的新技能。",
+      "user_task": "用 3 句英文说一种尝试过的活动、一个具体过去的经历，以及一种从未尝试过的活动。",
+      "evaluation_criteria": [
+        "区分经历与明确过去时间",
+        "正确使用过去分词",
+        "使用 never 表达未有的经历"
+      ],
+      "reference_answer": "I have tried painting. I painted a landscape last Sunday. I have never tried pottery, but I would like to.",
+      "difficulty": "B1",
+      "related_ore_ids": [
+        107,
+        108
+      ],
+      "synthetic": true,
+      "sample_answer": "I have tried painting. I painted a landscape last Sunday. I have never tried pottery, but I would like to."
+    }
+  },
+  "ores": [
+    {
+      "id": 101,
+      "name": "Could you…? 礼貌请求",
+      "description": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+      "tags": [
+        "日常交流",
+        "礼貌表达"
+      ],
+      "color": "#58CC02",
+      "video_count": 2,
+      "xp_total": 15,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 15,
+      "level": 3,
+      "stage": 3,
+      "mastery": 0.86,
+      "active": true,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "synthetic": true
+    },
+    {
+      "id": 102,
+      "name": "I would like… 点餐表达",
+      "description": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+      "tags": [
+        "日常交流",
+        "礼貌表达"
+      ],
+      "color": "#3B82F6",
+      "video_count": 1,
+      "xp_total": 12,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 12,
+      "level": 2,
+      "stage": 2,
+      "mastery": 0.8,
+      "active": true,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "synthetic": true
+    },
+    {
+      "id": 103,
+      "name": "可数与不可数名词",
+      "description": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+      "tags": [
+        "日常交流",
+        "语法"
+      ],
+      "color": "#A855F7",
+      "video_count": 1,
+      "xp_total": 8,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 8,
+      "level": 1,
+      "stage": 1,
+      "mastery": 0.6,
+      "active": true,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "synthetic": true
+    },
+    {
+      "id": 104,
+      "name": "Turn left / go straight",
+      "description": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+      "tags": [
+        "旅行英语",
+        "日常交流"
+      ],
+      "color": "#F59E0B",
+      "video_count": 1,
+      "xp_total": 10,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 10,
+      "level": 2,
+      "stage": 2,
+      "mastery": 0.72,
+      "active": true,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "synthetic": true
+    },
+    {
+      "id": 105,
+      "name": "地点介词 next to / opposite",
+      "description": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+      "tags": [
+        "旅行英语",
+        "语法"
+      ],
+      "color": "#06B6D4",
+      "video_count": 1,
+      "xp_total": 5,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 5,
+      "level": 1,
+      "stage": 1,
+      "mastery": 0.53,
+      "active": true,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "synthetic": true
+    },
+    {
+      "id": 106,
+      "name": "现在完成时：经历",
+      "description": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。",
+      "tags": [
+        "语法",
+        "经历分享"
+      ],
+      "color": "#EC4899",
+      "video_count": 1,
+      "xp_total": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 0,
+      "level": 0,
+      "stage": 0,
+      "mastery": 0.0,
+      "active": false,
+      "last_review_at": null,
+      "synthetic": true
+    },
+    {
+      "id": 107,
+      "name": "一般过去时：明确时间",
+      "description": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。",
+      "tags": [
+        "语法",
+        "经历分享"
+      ],
+      "color": "#EF4444",
+      "video_count": 1,
+      "xp_total": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 0,
+      "level": 0,
+      "stage": 0,
+      "mastery": 0.0,
+      "active": false,
+      "last_review_at": null,
+      "synthetic": true
+    },
+    {
+      "id": 108,
+      "name": "ever / never 谈论经历",
+      "description": "ever 常用于询问是否有过某种经历；never 表示从未。",
+      "tags": [
+        "经历分享"
+      ],
+      "color": "#84CC16",
+      "video_count": 1,
+      "xp_total": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "xp": 0,
+      "level": 0,
+      "stage": 0,
+      "mastery": 0.0,
+      "active": false,
+      "last_review_at": null,
+      "synthetic": true
+    }
+  ],
+  "tree": {
+    "ores": [
+      {
+        "id": 101,
+        "name": "Could you…? 礼貌请求",
+        "description": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+        "tags": "[\"日常交流\", \"礼貌表达\"]",
+        "color": "#58CC02",
+        "video_count": 2,
+        "xp_total": 15,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 15,
+        "level": 3,
+        "stage": 3,
+        "mastery": 0.86,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 102,
+        "name": "I would like… 点餐表达",
+        "description": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+        "tags": "[\"日常交流\", \"礼貌表达\"]",
+        "color": "#3B82F6",
+        "video_count": 1,
+        "xp_total": 12,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 12,
+        "level": 2,
+        "stage": 2,
+        "mastery": 0.8,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 103,
+        "name": "可数与不可数名词",
+        "description": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+        "tags": "[\"日常交流\", \"语法\"]",
+        "color": "#A855F7",
+        "video_count": 1,
+        "xp_total": 8,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 8,
+        "level": 1,
+        "stage": 1,
+        "mastery": 0.6,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 104,
+        "name": "Turn left / go straight",
+        "description": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+        "tags": "[\"旅行英语\", \"日常交流\"]",
+        "color": "#F59E0B",
+        "video_count": 1,
+        "xp_total": 10,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 10,
+        "level": 2,
+        "stage": 2,
+        "mastery": 0.72,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 105,
+        "name": "地点介词 next to / opposite",
+        "description": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+        "tags": "[\"旅行英语\", \"语法\"]",
+        "color": "#06B6D4",
+        "video_count": 1,
+        "xp_total": 5,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 5,
+        "level": 1,
+        "stage": 1,
+        "mastery": 0.53,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 106,
+        "name": "现在完成时：经历",
+        "description": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。",
+        "tags": "[\"语法\", \"经历分享\"]",
+        "color": "#EC4899",
+        "video_count": 1,
+        "xp_total": 0,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "last_review_at": null,
+        "synthetic": true
+      },
+      {
+        "id": 107,
+        "name": "一般过去时：明确时间",
+        "description": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。",
+        "tags": "[\"语法\", \"经历分享\"]",
+        "color": "#EF4444",
+        "video_count": 1,
+        "xp_total": 0,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "last_review_at": null,
+        "synthetic": true
+      },
+      {
+        "id": 108,
+        "name": "ever / never 谈论经历",
+        "description": "ever 常用于询问是否有过某种经历；never 表示从未。",
+        "tags": "[\"经历分享\"]",
+        "color": "#84CC16",
+        "video_count": 1,
+        "xp_total": 0,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "last_review_at": null,
+        "synthetic": true
+      }
+    ],
+    "stats": {
+      "totalOres": 8,
+      "activatedOres": 5,
+      "totalXp": 50,
+      "tags": [
+        {
+          "name": "日常交流",
+          "color": "#58CC02",
+          "ore_count": 4
+        },
+        {
+          "name": "语法",
+          "color": "#A855F7",
+          "ore_count": 4
+        },
+        {
+          "name": "经历分享",
+          "color": "#EC4899",
+          "ore_count": 3
+        },
+        {
+          "name": "礼貌表达",
+          "color": "#3B82F6",
+          "ore_count": 2
+        },
+        {
+          "name": "旅行英语",
+          "color": "#F59E0B",
+          "ore_count": 2
+        }
+      ],
+      "synthetic": true
+    },
+    "synthetic": true
+  },
+  "treeStats": {
+    "totalOres": 8,
+    "activatedOres": 5,
+    "totalXp": 50,
+    "tags": [
+      {
+        "name": "日常交流",
+        "color": "#58CC02",
+        "ore_count": 4
+      },
+      {
+        "name": "语法",
+        "color": "#A855F7",
+        "ore_count": 4
+      },
+      {
+        "name": "经历分享",
+        "color": "#EC4899",
+        "ore_count": 3
+      },
+      {
+        "name": "礼貌表达",
+        "color": "#3B82F6",
+        "ore_count": 2
+      },
+      {
+        "name": "旅行英语",
+        "color": "#F59E0B",
+        "ore_count": 2
+      }
+    ],
+    "synthetic": true
+  },
+  "userStats": {
+    "totalOres": 8,
+    "activatedOres": 5,
+    "totalXp": 50,
+    "tags": [
+      {
+        "name": "日常交流",
+        "color": "#58CC02",
+        "ore_count": 4
+      },
+      {
+        "name": "语法",
+        "color": "#A855F7",
+        "ore_count": 4
+      },
+      {
+        "name": "经历分享",
+        "color": "#EC4899",
+        "ore_count": 3
+      },
+      {
+        "name": "礼貌表达",
+        "color": "#3B82F6",
+        "ore_count": 2
+      },
+      {
+        "name": "旅行英语",
+        "color": "#F59E0B",
+        "ore_count": 2
+      }
+    ],
+    "synthetic": true,
+    "videosParsed": 3,
+    "totalFlashcardWords": 4,
+    "totalMigrations": 1,
+    "totalMigrationCorrect": 1,
+    "totalChoiceCorrect": 2,
+    "totalFillCorrect": 1
+  },
+  "galaxy": {
+    "nodes": [
+      {
+        "id": 101,
+        "name": "Could you…? 礼貌请求",
+        "description": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+        "tags": [
+          "日常交流",
+          "礼貌表达"
+        ],
+        "color": "#58CC02",
+        "video_count": 2,
+        "xp_total": 15,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 15,
+        "level": 3,
+        "stage": 3,
+        "mastery": 0.86,
+        "active": true,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 102,
+        "name": "I would like… 点餐表达",
+        "description": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+        "tags": [
+          "日常交流",
+          "礼貌表达"
+        ],
+        "color": "#3B82F6",
+        "video_count": 1,
+        "xp_total": 12,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 12,
+        "level": 2,
+        "stage": 2,
+        "mastery": 0.8,
+        "active": true,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 103,
+        "name": "可数与不可数名词",
+        "description": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+        "tags": [
+          "日常交流",
+          "语法"
+        ],
+        "color": "#A855F7",
+        "video_count": 1,
+        "xp_total": 8,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 8,
+        "level": 1,
+        "stage": 1,
+        "mastery": 0.6,
+        "active": true,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 104,
+        "name": "Turn left / go straight",
+        "description": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+        "tags": [
+          "旅行英语",
+          "日常交流"
+        ],
+        "color": "#F59E0B",
+        "video_count": 1,
+        "xp_total": 10,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 10,
+        "level": 2,
+        "stage": 2,
+        "mastery": 0.72,
+        "active": true,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 105,
+        "name": "地点介词 next to / opposite",
+        "description": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+        "tags": [
+          "旅行英语",
+          "语法"
+        ],
+        "color": "#06B6D4",
+        "video_count": 1,
+        "xp_total": 5,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 5,
+        "level": 1,
+        "stage": 1,
+        "mastery": 0.53,
+        "active": true,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "synthetic": true
+      },
+      {
+        "id": 106,
+        "name": "现在完成时：经历",
+        "description": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。",
+        "tags": [
+          "语法",
+          "经历分享"
+        ],
+        "color": "#EC4899",
+        "video_count": 1,
+        "xp_total": 0,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "active": false,
+        "last_review_at": null,
+        "synthetic": true
+      },
+      {
+        "id": 107,
+        "name": "一般过去时：明确时间",
+        "description": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。",
+        "tags": [
+          "语法",
+          "经历分享"
+        ],
+        "color": "#EF4444",
+        "video_count": 1,
+        "xp_total": 0,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "active": false,
+        "last_review_at": null,
+        "synthetic": true
+      },
+      {
+        "id": 108,
+        "name": "ever / never 谈论经历",
+        "description": "ever 常用于询问是否有过某种经历；never 表示从未。",
+        "tags": [
+          "经历分享"
+        ],
+        "color": "#84CC16",
+        "video_count": 1,
+        "xp_total": 0,
+        "created_at": "2026-01-12T10:00:00.000Z",
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "active": false,
+        "last_review_at": null,
+        "synthetic": true
+      }
+    ],
+    "links": [
+      {
+        "a": 101,
+        "b": 102,
+        "strength": 0.33
+      },
+      {
+        "a": 101,
+        "b": 103,
+        "strength": 0.33
+      },
+      {
+        "a": 101,
+        "b": 104,
+        "strength": 0.33
+      },
+      {
+        "a": 101,
+        "b": 105,
+        "strength": 0.33
+      },
+      {
+        "a": 102,
+        "b": 103,
+        "strength": 0.33
+      },
+      {
+        "a": 104,
+        "b": 105,
+        "strength": 0.33
+      },
+      {
+        "a": 106,
+        "b": 107,
+        "strength": 0.33
+      },
+      {
+        "a": 106,
+        "b": 108,
+        "strength": 0.33
+      },
+      {
+        "a": 107,
+        "b": 108,
+        "strength": 0.33
+      }
+    ],
+    "stats": {
+      "totalNodes": 8,
+      "activatedNodes": 5,
+      "totalXp": 50,
+      "linksCount": 9,
+      "tags": [
+        {
+          "name": "日常交流",
+          "color": "#58CC02",
+          "ore_count": 4
+        },
+        {
+          "name": "语法",
+          "color": "#A855F7",
+          "ore_count": 4
+        },
+        {
+          "name": "经历分享",
+          "color": "#EC4899",
+          "ore_count": 3
+        },
+        {
+          "name": "礼貌表达",
+          "color": "#3B82F6",
+          "ore_count": 2
+        },
+        {
+          "name": "旅行英语",
+          "color": "#F59E0B",
+          "ore_count": 2
+        }
+      ]
+    },
+    "synthetic": true
+  },
+  "knowledgeCards": {
+    "101": {
+      "id": 101,
+      "name": "Could you…? 礼貌请求",
+      "description": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+      "tags": [
+        "日常交流",
+        "礼貌表达"
+      ],
+      "color": "#58CC02",
+      "video_count": 2,
+      "xp_total": 15,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 15,
+        "level": 3,
+        "stage": 3,
+        "mastery": 0.86,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "next_review_at": "2026-01-17T10:00:00.000Z",
+        "migration_count": 1
+      },
+      "source_videos": [
+        {
+          "id": "demo-cafe",
+          "title": "咖啡馆里的礼貌点单（虚构演示）",
+          "summary": "虚构课程：用 I’d like 和 Could you 礼貌点单，并练习 a cup of 的数量表达。",
+          "cefr_level": "A2",
+          "created_at": "2026-01-14T10:00:00.000Z"
+        },
+        {
+          "id": "demo-city",
+          "title": "从图书馆到车站（虚构演示）",
+          "summary": "虚构课程：学习问路、按顺序描述路线，以及 next to、opposite 等地点表达。",
+          "cefr_level": "A2",
+          "created_at": "2026-01-13T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 102,
+          "related_name": "I would like… 点餐表达",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-cafe\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 103,
+          "related_name": "可数与不可数名词",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-cafe\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 104,
+          "related_name": "Turn left / go straight",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-city\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 105,
+          "related_name": "地点介词 next to / opposite",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-city\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [
+          {
+            "original": "Could you brings the menu?",
+            "corrected": "Could you bring the menu?",
+            "explanation": "情态动词 could 后接动词原形，不随主语变化。"
+          }
+        ],
+        "supplements": [
+          {
+            "title": "想点餐，还是想做某事？",
+            "content": "I’d like tea 表示想要茶；I’d like to sit here 表示想坐在这里。to 后接动词原形。",
+            "related_ore_id": 102,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。"
+          },
+          {
+            "section": "结构",
+            "content": "Could you + 动词原形 + …?"
+          },
+          {
+            "section": "例句",
+            "content": "Could you show me the way to the station?"
+          },
+          {
+            "section": "易错点",
+            "content": "Could you tells me? → Could you tell me?"
+          }
+        ]
+      },
+      "wrong_answers": [],
+      "migrations": [
+        {
+          "scenario_title": "在虚构的书店寻求帮助",
+          "user_input": "I’d like an English workbook, please. Could you recommend a book for beginners?",
+          "score": 92,
+          "accuracy": 95,
+          "xp_gained": 15,
+          "created_at": "2026-01-14T10:00:00.000Z",
+          "synthetic": true
+        }
+      ],
+      "flashcards": [
+        {
+          "front": "Could you…?",
+          "back": "你能……吗？礼貌请求：Could you bring the menu, please?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "I’d like…",
+          "back": "我想要……：I’d like a cup of tea.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "a cup of tea",
+          "back": "一杯茶；两杯茶是 two cups of tea。",
+          "trigger_type": "collocation",
+          "difficulty": "A2"
+        },
+        {
+          "front": "as well",
+          "back": "也，还：Could you bring some water as well?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "synthetic": true
+    },
+    "102": {
+      "id": 102,
+      "name": "I would like… 点餐表达",
+      "description": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+      "tags": [
+        "日常交流",
+        "礼貌表达"
+      ],
+      "color": "#3B82F6",
+      "video_count": 1,
+      "xp_total": 12,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 12,
+        "level": 2,
+        "stage": 2,
+        "mastery": 0.8,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "next_review_at": "2026-01-17T10:00:00.000Z",
+        "migration_count": 0
+      },
+      "source_videos": [
+        {
+          "id": "demo-cafe",
+          "title": "咖啡馆里的礼貌点单（虚构演示）",
+          "summary": "虚构课程：用 I’d like 和 Could you 礼貌点单，并练习 a cup of 的数量表达。",
+          "cefr_level": "A2",
+          "created_at": "2026-01-14T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 101,
+          "related_name": "Could you…? 礼貌请求",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-cafe\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 103,
+          "related_name": "可数与不可数名词",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-cafe\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [],
+        "supplements": [
+          {
+            "title": "想点餐，还是想做某事？",
+            "content": "I’d like tea 表示想要茶；I’d like to sit here 表示想坐在这里。to 后接动词原形。",
+            "related_ore_id": 102,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。"
+          },
+          {
+            "section": "结构",
+            "content": "I would like + 名词；I would like to + 动词原形。"
+          },
+          {
+            "section": "例句",
+            "content": "I’d like a cup of tea, please."
+          },
+          {
+            "section": "易错点",
+            "content": "I’d like drink tea. → I’d like to drink tea."
+          }
+        ]
+      },
+      "wrong_answers": [],
+      "migrations": [],
+      "flashcards": [
+        {
+          "front": "Could you…?",
+          "back": "你能……吗？礼貌请求：Could you bring the menu, please?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "I’d like…",
+          "back": "我想要……：I’d like a cup of tea.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "a cup of tea",
+          "back": "一杯茶；两杯茶是 two cups of tea。",
+          "trigger_type": "collocation",
+          "difficulty": "A2"
+        },
+        {
+          "front": "as well",
+          "back": "也，还：Could you bring some water as well?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "synthetic": true
+    },
+    "103": {
+      "id": 103,
+      "name": "可数与不可数名词",
+      "description": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+      "tags": [
+        "日常交流",
+        "语法"
+      ],
+      "color": "#A855F7",
+      "video_count": 1,
+      "xp_total": 8,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 8,
+        "level": 1,
+        "stage": 1,
+        "mastery": 0.6,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "next_review_at": "2026-01-17T10:00:00.000Z",
+        "migration_count": 0
+      },
+      "source_videos": [
+        {
+          "id": "demo-cafe",
+          "title": "咖啡馆里的礼貌点单（虚构演示）",
+          "summary": "虚构课程：用 I’d like 和 Could you 礼貌点单，并练习 a cup of 的数量表达。",
+          "cefr_level": "A2",
+          "created_at": "2026-01-14T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 101,
+          "related_name": "Could you…? 礼貌请求",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-cafe\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 102,
+          "related_name": "I would like… 点餐表达",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-cafe\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [],
+        "supplements": [
+          {
+            "title": "想点餐，还是想做某事？",
+            "content": "I’d like tea 表示想要茶；I’d like to sit here 表示想坐在这里。to 后接动词原形。",
+            "related_ore_id": 102,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。"
+          },
+          {
+            "section": "结构",
+            "content": "a sandwich / two sandwiches；a cup of tea / two cups of tea。"
+          },
+          {
+            "section": "例句",
+            "content": "Two cups of tea and a sandwich, please."
+          },
+          {
+            "section": "易错点",
+            "content": "two tea 在初学者的基础表达中可用 two cups of tea 更明确。"
+          }
+        ]
+      },
+      "wrong_answers": [
+        {
+          "question": "I’d like two ___ of tea, please.",
+          "correct_answer": "cups",
+          "explanation": "two 后接复数 cups。此为虚构错题示例。",
+          "user_answer": "cup",
+          "created_at": "2026-01-14T10:00:00.000Z"
+        }
+      ],
+      "migrations": [],
+      "flashcards": [
+        {
+          "front": "Could you…?",
+          "back": "你能……吗？礼貌请求：Could you bring the menu, please?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "I’d like…",
+          "back": "我想要……：I’d like a cup of tea.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "a cup of tea",
+          "back": "一杯茶；两杯茶是 two cups of tea。",
+          "trigger_type": "collocation",
+          "difficulty": "A2"
+        },
+        {
+          "front": "as well",
+          "back": "也，还：Could you bring some water as well?",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "synthetic": true
+    },
+    "104": {
+      "id": 104,
+      "name": "Turn left / go straight",
+      "description": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+      "tags": [
+        "旅行英语",
+        "日常交流"
+      ],
+      "color": "#F59E0B",
+      "video_count": 1,
+      "xp_total": 10,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 10,
+        "level": 2,
+        "stage": 2,
+        "mastery": 0.72,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "next_review_at": "2026-01-17T10:00:00.000Z",
+        "migration_count": 0
+      },
+      "source_videos": [
+        {
+          "id": "demo-city",
+          "title": "从图书馆到车站（虚构演示）",
+          "summary": "虚构课程：学习问路、按顺序描述路线，以及 next to、opposite 等地点表达。",
+          "cefr_level": "A2",
+          "created_at": "2026-01-13T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 101,
+          "related_name": "Could you…? 礼貌请求",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-city\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 105,
+          "related_name": "地点介词 next to / opposite",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-city\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [
+          {
+            "original": "Turn to left at the library.",
+            "corrected": "Turn left at the library.",
+            "explanation": "表示向左转时，常用 turn left；left 前不需要 to。"
+          }
+        ],
+        "supplements": [
+          {
+            "title": "先礼貌提问，再确认路线",
+            "content": "用 Could you tell me how to get to…? 问路；听完后可用 So I turn left at the library? 确认。",
+            "related_ore_id": 101,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "用 go straight、turn left 和 turn right 按顺序说明路线。"
+          },
+          {
+            "section": "结构",
+            "content": "Go straight. Then turn left/right at + 地标。"
+          },
+          {
+            "section": "例句",
+            "content": "Go straight, then turn left at the library."
+          },
+          {
+            "section": "易错点",
+            "content": "用 turn left，而不是 turn to left。"
+          }
+        ]
+      },
+      "wrong_answers": [],
+      "migrations": [],
+      "flashcards": [
+        {
+          "front": "go straight",
+          "back": "一直走：Go straight for one block.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "turn left",
+          "back": "向左转：Turn left at the library.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "opposite",
+          "back": "在……对面：The station is opposite the park.",
+          "trigger_type": "word",
+          "difficulty": "A2"
+        },
+        {
+          "front": "next to",
+          "back": "紧挨着：The café is next to the station.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "synthetic": true
+    },
+    "105": {
+      "id": 105,
+      "name": "地点介词 next to / opposite",
+      "description": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+      "tags": [
+        "旅行英语",
+        "语法"
+      ],
+      "color": "#06B6D4",
+      "video_count": 1,
+      "xp_total": 5,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 5,
+        "level": 1,
+        "stage": 1,
+        "mastery": 0.53,
+        "last_review_at": "2026-01-14T10:00:00.000Z",
+        "next_review_at": "2026-01-17T10:00:00.000Z",
+        "migration_count": 0
+      },
+      "source_videos": [
+        {
+          "id": "demo-city",
+          "title": "从图书馆到车站（虚构演示）",
+          "summary": "虚构课程：学习问路、按顺序描述路线，以及 next to、opposite 等地点表达。",
+          "cefr_level": "A2",
+          "created_at": "2026-01-13T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 101,
+          "related_name": "Could you…? 礼貌请求",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-city\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 104,
+          "related_name": "Turn left / go straight",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-city\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [],
+        "supplements": [
+          {
+            "title": "先礼貌提问，再确认路线",
+            "content": "用 Could you tell me how to get to…? 问路；听完后可用 So I turn left at the library? 确认。",
+            "related_ore_id": 101,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。"
+          },
+          {
+            "section": "结构",
+            "content": "A is next to B. / A is opposite B. / A is between B and C."
+          },
+          {
+            "section": "例句",
+            "content": "The station is opposite the library."
+          },
+          {
+            "section": "易错点",
+            "content": "between 后通常要交代两个边界，例如 between the café and the park。"
+          }
+        ]
+      },
+      "wrong_answers": [],
+      "migrations": [],
+      "flashcards": [
+        {
+          "front": "go straight",
+          "back": "一直走：Go straight for one block.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "turn left",
+          "back": "向左转：Turn left at the library.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        },
+        {
+          "front": "opposite",
+          "back": "在……对面：The station is opposite the park.",
+          "trigger_type": "word",
+          "difficulty": "A2"
+        },
+        {
+          "front": "next to",
+          "back": "紧挨着：The café is next to the station.",
+          "trigger_type": "phrase",
+          "difficulty": "A2"
+        }
+      ],
+      "synthetic": true
+    },
+    "106": {
+      "id": 106,
+      "name": "现在完成时：经历",
+      "description": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。",
+      "tags": [
+        "语法",
+        "经历分享"
+      ],
+      "color": "#EC4899",
+      "video_count": 1,
+      "xp_total": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "last_review_at": null,
+        "next_review_at": null,
+        "migration_count": 0
+      },
+      "source_videos": [
+        {
+          "id": "demo-hobbies",
+          "title": "聊聊尝试过的爱好（虚构演示）",
+          "summary": "虚构课程：用现在完成时谈经历，再用一般过去时补充具体时间。",
+          "cefr_level": "B1",
+          "created_at": "2026-01-12T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 107,
+          "related_name": "一般过去时：明确时间",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-hobbies\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 108,
+          "related_name": "ever / never 谈论经历",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-hobbies\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [
+          {
+            "original": "I have joined a painting class last Saturday.",
+            "corrected": "I joined a painting class last Saturday.",
+            "explanation": "last Saturday 是已结束的明确过去时间，因此用 joined，而不是 have joined。"
+          }
+        ],
+        "supplements": [
+          {
+            "title": "ever 和 never 放在哪里？",
+            "content": "谈经历时，ever / never 通常放在 have / has 与过去分词之间：Have you ever tried…? I have never tried…",
+            "related_ore_id": 108,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。"
+          },
+          {
+            "section": "结构",
+            "content": "主语 + have/has + 过去分词；Have/Has + 主语 + 过去分词…?"
+          },
+          {
+            "section": "例句",
+            "content": "I have tried painting, but I have never tried pottery."
+          },
+          {
+            "section": "易错点",
+            "content": "I have went. → I have gone."
+          }
+        ]
+      },
+      "wrong_answers": [],
+      "migrations": [],
+      "flashcards": [
+        {
+          "front": "Have you ever…?",
+          "back": "你曾经……过吗？Have you ever tried painting?",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "I have never…",
+          "back": "我从来没有……过：I have never tried pottery.",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "tried",
+          "back": "try 的过去式和过去分词：尝试过。",
+          "trigger_type": "word",
+          "difficulty": "B1"
+        },
+        {
+          "front": "last Saturday",
+          "back": "上周六；已结束的明确过去时间，通常搭配一般过去时。",
+          "trigger_type": "collocation",
+          "difficulty": "B1"
+        }
+      ],
+      "synthetic": true
+    },
+    "107": {
+      "id": 107,
+      "name": "一般过去时：明确时间",
+      "description": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。",
+      "tags": [
+        "语法",
+        "经历分享"
+      ],
+      "color": "#EF4444",
+      "video_count": 1,
+      "xp_total": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "last_review_at": null,
+        "next_review_at": null,
+        "migration_count": 0
+      },
+      "source_videos": [
+        {
+          "id": "demo-hobbies",
+          "title": "聊聊尝试过的爱好（虚构演示）",
+          "summary": "虚构课程：用现在完成时谈经历，再用一般过去时补充具体时间。",
+          "cefr_level": "B1",
+          "created_at": "2026-01-12T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 106,
+          "related_name": "现在完成时：经历",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-hobbies\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 108,
+          "related_name": "ever / never 谈论经历",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-hobbies\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [],
+        "supplements": [
+          {
+            "title": "ever 和 never 放在哪里？",
+            "content": "谈经历时，ever / never 通常放在 have / has 与过去分词之间：Have you ever tried…? I have never tried…",
+            "related_ore_id": 108,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。"
+          },
+          {
+            "section": "结构",
+            "content": "主语 + 过去式；Did + 主语 + 动词原形…?"
+          },
+          {
+            "section": "例句",
+            "content": "I joined a painting class last Saturday."
+          },
+          {
+            "section": "易错点",
+            "content": "I have joined last Saturday. → I joined last Saturday."
+          }
+        ]
+      },
+      "wrong_answers": [],
+      "migrations": [],
+      "flashcards": [
+        {
+          "front": "Have you ever…?",
+          "back": "你曾经……过吗？Have you ever tried painting?",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "I have never…",
+          "back": "我从来没有……过：I have never tried pottery.",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "tried",
+          "back": "try 的过去式和过去分词：尝试过。",
+          "trigger_type": "word",
+          "difficulty": "B1"
+        },
+        {
+          "front": "last Saturday",
+          "back": "上周六；已结束的明确过去时间，通常搭配一般过去时。",
+          "trigger_type": "collocation",
+          "difficulty": "B1"
+        }
+      ],
+      "synthetic": true
+    },
+    "108": {
+      "id": 108,
+      "name": "ever / never 谈论经历",
+      "description": "ever 常用于询问是否有过某种经历；never 表示从未。",
+      "tags": [
+        "经历分享"
+      ],
+      "color": "#84CC16",
+      "video_count": 1,
+      "xp_total": 0,
+      "created_at": "2026-01-12T10:00:00.000Z",
+      "progress": {
+        "xp": 0,
+        "level": 0,
+        "stage": 0,
+        "mastery": 0.0,
+        "last_review_at": null,
+        "next_review_at": null,
+        "migration_count": 0
+      },
+      "source_videos": [
+        {
+          "id": "demo-hobbies",
+          "title": "聊聊尝试过的爱好（虚构演示）",
+          "summary": "虚构课程：用现在完成时谈经历，再用一般过去时补充具体时间。",
+          "cefr_level": "B1",
+          "created_at": "2026-01-12T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "related_id": 106,
+          "related_name": "现在完成时：经历",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-hobbies\"]",
+          "co_count": 1
+        },
+        {
+          "related_id": 107,
+          "related_name": "一般过去时：明确时间",
+          "link_type": "co_occurrence",
+          "strength": 0.33,
+          "confirm_count": 1,
+          "source_videos": "[\"demo-hobbies\"]",
+          "co_count": 1
+        }
+      ],
+      "deepen": {
+        "corrections": [],
+        "supplements": [
+          {
+            "title": "ever 和 never 放在哪里？",
+            "content": "谈经历时，ever / never 通常放在 have / has 与过去分词之间：Have you ever tried…? I have never tried…",
+            "related_ore_id": 108,
+            "relation": "同一虚构课程中的关联知识"
+          }
+        ],
+        "structured_content": [
+          {
+            "section": "核心概念",
+            "content": "ever 常用于询问是否有过某种经历；never 表示从未。"
+          },
+          {
+            "section": "结构",
+            "content": "Have you ever + 过去分词…? / I have never + 过去分词…。"
+          },
+          {
+            "section": "例句",
+            "content": "Have you ever tried pottery? I have never tried it."
+          },
+          {
+            "section": "易错点",
+            "content": "never 本身包含否定，不再加 not。"
+          }
+        ]
+      },
+      "wrong_answers": [],
+      "migrations": [],
+      "flashcards": [
+        {
+          "front": "Have you ever…?",
+          "back": "你曾经……过吗？Have you ever tried painting?",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "I have never…",
+          "back": "我从来没有……过：I have never tried pottery.",
+          "trigger_type": "phrase",
+          "difficulty": "B1"
+        },
+        {
+          "front": "tried",
+          "back": "try 的过去式和过去分词：尝试过。",
+          "trigger_type": "word",
+          "difficulty": "B1"
+        },
+        {
+          "front": "last Saturday",
+          "back": "上周六；已结束的明确过去时间，通常搭配一般过去时。",
+          "trigger_type": "collocation",
+          "difficulty": "B1"
+        }
+      ],
+      "synthetic": true
+    }
+  },
+  "cards": [
+    {
+      "node_id": "101",
+      "name": "Could you…? 礼貌请求",
+      "definition": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+      "sub_branch": "礼貌表达",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#58CC02",
+      "xp": 15,
+      "level": 3,
+      "mastery": 86,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": false,
+      "mastery_color": "green",
+      "synthetic": true
+    },
+    {
+      "node_id": "102",
+      "name": "I would like… 点餐表达",
+      "definition": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+      "sub_branch": "礼貌表达",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#3B82F6",
+      "xp": 12,
+      "level": 2,
+      "mastery": 80,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": false,
+      "mastery_color": "green",
+      "synthetic": true
+    },
+    {
+      "node_id": "103",
+      "name": "可数与不可数名词",
+      "definition": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+      "sub_branch": "语法",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#A855F7",
+      "xp": 8,
+      "level": 1,
+      "mastery": 60,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": true,
+      "mastery_color": "orange",
+      "synthetic": true
+    },
+    {
+      "node_id": "104",
+      "name": "Turn left / go straight",
+      "definition": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+      "sub_branch": "日常交流",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#F59E0B",
+      "xp": 10,
+      "level": 2,
+      "mastery": 72,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": false,
+      "mastery_color": "green",
+      "synthetic": true
+    },
+    {
+      "node_id": "105",
+      "name": "地点介词 next to / opposite",
+      "definition": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+      "sub_branch": "语法",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#06B6D4",
+      "xp": 5,
+      "level": 1,
+      "mastery": 53,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": true,
+      "mastery_color": "orange",
+      "synthetic": true
+    }
+  ],
+  "reviewCards": [
+    {
+      "node_id": "103",
+      "name": "可数与不可数名词",
+      "definition": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+      "sub_branch": "语法",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#A855F7",
+      "xp": 8,
+      "level": 1,
+      "mastery": 60,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": true,
+      "mastery_color": "orange",
+      "synthetic": true,
+      "review_count": 2
+    },
+    {
+      "node_id": "105",
+      "name": "地点介词 next to / opposite",
+      "definition": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+      "sub_branch": "语法",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#06B6D4",
+      "xp": 5,
+      "level": 1,
+      "mastery": 53,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": true,
+      "mastery_color": "orange",
+      "synthetic": true,
+      "review_count": 2
+    }
+  ],
+  "cardDetails": {
+    "101": {
+      "node_id": "101",
+      "name": "Could you…? 礼貌请求",
+      "definition": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+      "sub_branch": "礼貌表达",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#58CC02",
+      "xp": 15,
+      "level": 3,
+      "mastery": 86,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": false,
+      "mastery_color": "green",
+      "synthetic": true,
+      "review_count": 2,
+      "core_concept": "用 Could you + 动词原形提出礼貌请求，适用于问路、点餐和寻求帮助。",
+      "structure": "Could you + 动词原形 + …?",
+      "examples": [
+        "Could you show me the way to the station?"
+      ],
+      "pitfalls": [
+        "Could you tells me? → Could you tell me?"
+      ],
+      "source_videos": [
+        {
+          "id": "demo-cafe",
+          "title": "咖啡馆里的礼貌点单（虚构演示）",
+          "date": "2026-01-14T10:00:00.000Z"
+        },
+        {
+          "id": "demo-city",
+          "title": "从图书馆到车站（虚构演示）",
+          "date": "2026-01-13T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [],
+      "migration_records": [
+        {
+          "scenario_title": "在虚构的书店寻求帮助",
+          "overall_score": 92,
+          "accuracy_score": 95,
+          "xp_gained": 15,
+          "date": "2026-01-14T10:00:00.000Z"
+        }
+      ],
+      "backlinks": [
+        {
+          "node_id": "102",
+          "node_name": "I would like… 点餐表达",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "103",
+          "node_name": "可数与不可数名词",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "104",
+          "node_name": "Turn left / go straight",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "105",
+          "node_name": "地点介词 next to / opposite",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        }
+      ]
+    },
+    "102": {
+      "node_id": "102",
+      "name": "I would like… 点餐表达",
+      "definition": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+      "sub_branch": "礼貌表达",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#3B82F6",
+      "xp": 12,
+      "level": 2,
+      "mastery": 80,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": false,
+      "mastery_color": "green",
+      "synthetic": true,
+      "review_count": 2,
+      "core_concept": "用 I would like / I’d like 表达想要，比 I want 更适合礼貌点餐。",
+      "structure": "I would like + 名词；I would like to + 动词原形。",
+      "examples": [
+        "I’d like a cup of tea, please."
+      ],
+      "pitfalls": [
+        "I’d like drink tea. → I’d like to drink tea."
+      ],
+      "source_videos": [
+        {
+          "id": "demo-cafe",
+          "title": "咖啡馆里的礼貌点单（虚构演示）",
+          "date": "2026-01-14T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [],
+      "migration_records": [],
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "103",
+          "node_name": "可数与不可数名词",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        }
+      ]
+    },
+    "103": {
+      "node_id": "103",
+      "name": "可数与不可数名词",
+      "definition": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+      "sub_branch": "语法",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#A855F7",
+      "xp": 8,
+      "level": 1,
+      "mastery": 60,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": true,
+      "mastery_color": "orange",
+      "synthetic": true,
+      "review_count": 2,
+      "core_concept": "可数名词可以搭配 a/an 和复数；tea 等不可数名词常借助 a cup of 等量词表达数量。",
+      "structure": "a sandwich / two sandwiches；a cup of tea / two cups of tea。",
+      "examples": [
+        "Two cups of tea and a sandwich, please."
+      ],
+      "pitfalls": [
+        "two tea 在初学者的基础表达中可用 two cups of tea 更明确。"
+      ],
+      "source_videos": [
+        {
+          "id": "demo-cafe",
+          "title": "咖啡馆里的礼貌点单（虚构演示）",
+          "date": "2026-01-14T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [
+        {
+          "question": "I’d like two ___ of tea, please.",
+          "user_answer": "cup",
+          "correct_answer": "cups",
+          "options": null,
+          "type": "fill",
+          "explanation": "two 后接复数 cups。此为虚构错题示例。"
+        }
+      ],
+      "migration_records": [],
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "102",
+          "node_name": "I would like… 点餐表达",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        }
+      ]
+    },
+    "104": {
+      "node_id": "104",
+      "name": "Turn left / go straight",
+      "definition": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+      "sub_branch": "日常交流",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#F59E0B",
+      "xp": 10,
+      "level": 2,
+      "mastery": 72,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": false,
+      "mastery_color": "green",
+      "synthetic": true,
+      "review_count": 2,
+      "core_concept": "用 go straight、turn left 和 turn right 按顺序说明路线。",
+      "structure": "Go straight. Then turn left/right at + 地标。",
+      "examples": [
+        "Go straight, then turn left at the library."
+      ],
+      "pitfalls": [
+        "用 turn left，而不是 turn to left。"
+      ],
+      "source_videos": [
+        {
+          "id": "demo-city",
+          "title": "从图书馆到车站（虚构演示）",
+          "date": "2026-01-13T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [],
+      "migration_records": [],
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "105",
+          "node_name": "地点介词 next to / opposite",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        }
+      ]
+    },
+    "105": {
+      "node_id": "105",
+      "name": "地点介词 next to / opposite",
+      "definition": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+      "sub_branch": "语法",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#06B6D4",
+      "xp": 5,
+      "level": 1,
+      "mastery": 53,
+      "last_review_at": "2026-01-14T10:00:00.000Z",
+      "next_review_date": "2026-01-17T10:00:00.000Z",
+      "due_today": true,
+      "mastery_color": "orange",
+      "synthetic": true,
+      "review_count": 2,
+      "core_concept": "next to 表示紧挨着；opposite 表示在对面；between 表示在两者之间。",
+      "structure": "A is next to B. / A is opposite B. / A is between B and C.",
+      "examples": [
+        "The station is opposite the library."
+      ],
+      "pitfalls": [
+        "between 后通常要交代两个边界，例如 between the café and the park。"
+      ],
+      "source_videos": [
+        {
+          "id": "demo-city",
+          "title": "从图书馆到车站（虚构演示）",
+          "date": "2026-01-13T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [],
+      "migration_records": [],
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "104",
+          "node_name": "Turn left / go straight",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        }
+      ]
+    },
+    "106": {
+      "node_id": "106",
+      "name": "现在完成时：经历",
+      "definition": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。",
+      "sub_branch": "经历分享",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#EC4899",
+      "xp": 0,
+      "level": 0,
+      "mastery": 0,
+      "last_review_at": null,
+      "next_review_date": null,
+      "due_today": false,
+      "mastery_color": "red",
+      "synthetic": true,
+      "review_count": 0,
+      "core_concept": "have / has + 过去分词可以谈论到现在为止的经历，不强调已结束的具体过去时间。",
+      "structure": "主语 + have/has + 过去分词；Have/Has + 主语 + 过去分词…?",
+      "examples": [
+        "I have tried painting, but I have never tried pottery."
+      ],
+      "pitfalls": [
+        "I have went. → I have gone."
+      ],
+      "source_videos": [
+        {
+          "id": "demo-hobbies",
+          "title": "聊聊尝试过的爱好（虚构演示）",
+          "date": "2026-01-12T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [],
+      "migration_records": [],
+      "backlinks": [
+        {
+          "node_id": "107",
+          "node_name": "一般过去时：明确时间",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "108",
+          "node_name": "ever / never 谈论经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        }
+      ]
+    },
+    "107": {
+      "node_id": "107",
+      "name": "一般过去时：明确时间",
+      "definition": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。",
+      "sub_branch": "经历分享",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#EF4444",
+      "xp": 0,
+      "level": 0,
+      "mastery": 0,
+      "last_review_at": null,
+      "next_review_date": null,
+      "due_today": false,
+      "mastery_color": "red",
+      "synthetic": true,
+      "review_count": 0,
+      "core_concept": "描述昨天、上周等已结束时间中的动作时，使用一般过去时。",
+      "structure": "主语 + 过去式；Did + 主语 + 动词原形…?",
+      "examples": [
+        "I joined a painting class last Saturday."
+      ],
+      "pitfalls": [
+        "I have joined last Saturday. → I joined last Saturday."
+      ],
+      "source_videos": [
+        {
+          "id": "demo-hobbies",
+          "title": "聊聊尝试过的爱好（虚构演示）",
+          "date": "2026-01-12T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [],
+      "migration_records": [],
+      "backlinks": [
+        {
+          "node_id": "106",
+          "node_name": "现在完成时：经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "108",
+          "node_name": "ever / never 谈论经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        }
+      ]
+    },
+    "108": {
+      "node_id": "108",
+      "name": "ever / never 谈论经历",
+      "definition": "ever 常用于询问是否有过某种经历；never 表示从未。",
+      "sub_branch": "经历分享",
+      "top_branch": "demo-english",
+      "top_branch_name": "虚构英语课程",
+      "color": "#84CC16",
+      "xp": 0,
+      "level": 0,
+      "mastery": 0,
+      "last_review_at": null,
+      "next_review_date": null,
+      "due_today": false,
+      "mastery_color": "red",
+      "synthetic": true,
+      "review_count": 0,
+      "core_concept": "ever 常用于询问是否有过某种经历；never 表示从未。",
+      "structure": "Have you ever + 过去分词…? / I have never + 过去分词…。",
+      "examples": [
+        "Have you ever tried pottery? I have never tried it."
+      ],
+      "pitfalls": [
+        "never 本身包含否定，不再加 not。"
+      ],
+      "source_videos": [
+        {
+          "id": "demo-hobbies",
+          "title": "聊聊尝试过的爱好（虚构演示）",
+          "date": "2026-01-12T10:00:00.000Z"
+        }
+      ],
+      "wrong_exercises": [],
+      "migration_records": [],
+      "backlinks": [
+        {
+          "node_id": "106",
+          "node_name": "现在完成时：经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "107",
+          "node_name": "一般过去时：明确时间",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        }
+      ]
+    }
+  },
+  "cardBacklinks": {
+    "101": {
+      "backlinks": [
+        {
+          "node_id": "102",
+          "node_name": "I would like… 点餐表达",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "103",
+          "node_name": "可数与不可数名词",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "104",
+          "node_name": "Turn left / go straight",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "105",
+          "node_name": "地点介词 next to / opposite",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    },
+    "102": {
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "103",
+          "node_name": "可数与不可数名词",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    },
+    "103": {
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "102",
+          "node_name": "I would like… 点餐表达",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-cafe"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    },
+    "104": {
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "105",
+          "node_name": "地点介词 next to / opposite",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    },
+    "105": {
+      "backlinks": [
+        {
+          "node_id": "101",
+          "node_name": "Could you…? 礼貌请求",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "104",
+          "node_name": "Turn left / go straight",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-city"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    },
+    "106": {
+      "backlinks": [
+        {
+          "node_id": "107",
+          "node_name": "一般过去时：明确时间",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "108",
+          "node_name": "ever / never 谈论经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    },
+    "107": {
+      "backlinks": [
+        {
+          "node_id": "106",
+          "node_name": "现在完成时：经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "108",
+          "node_name": "ever / never 谈论经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    },
+    "108": {
+      "backlinks": [
+        {
+          "node_id": "106",
+          "node_name": "现在完成时：经历",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        },
+        {
+          "node_id": "107",
+          "node_name": "一般过去时：明确时间",
+          "branch": "虚构英语课程",
+          "link_type": "co_occurrence",
+          "source_videos": [
+            "demo-hobbies"
+          ],
+          "strength": 0.33
+        }
+      ],
+      "synthetic": true
+    }
+  }
+}

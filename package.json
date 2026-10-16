@@ -9,7 +9,7 @@
     "dev": "node --watch src/server.js",
     "migrate": "node src/db/migrate.js",
     "seed": "node src/db/migrate.js --seed",
-    "test": "node --test test/*.test.js",
+    "test": "node --test test/*.test.js && npm --prefix frontend test",
     "build:frontend": "npm --prefix frontend run build",
     "pretest": "npm run build:frontend"
   },

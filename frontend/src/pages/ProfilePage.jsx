@@ -5,51 +5,53 @@ import { getUserStats } from '../api/user.js';
 
 export default function ProfilePage() {
   const [stats, setStats] = useState(null);
-  const { user } = useAuth();
+  const [error, setError] = useState('');
+  const { user, readOnly } = useAuth();
 
   const loadStats = useCallback(async () => {
     try {
+      setError('');
       const data = await getUserStats();
       setStats(data);
     } catch (err) {
-      console.error('Failed to load stats:', err);
+      setError(err.message);
     }
   }, []);
 
   useEffect(() => { loadStats(); }, [loadStats]);
 
-  const weekData = [40, 65, 30, 80, 50, 0, 55];
-  const maxVal = Math.max(...weekData);
-  const days = ['一','二','三','四','五','六','日'];
-
   return (
     <div className="page active me-page">
-      <TopBar title="个人中心" />
+      <TopBar title={readOnly ? "示例学习档案" : "个人中心"} />
       <div className="me-header">
         <div className="me-avatar">
           <img src="/assets/crystal-mascot.png" width="48" height="48" style={{ objectFit: 'contain' }} alt="mascot" />
         </div>
         <div className="me-name">{user?.nickname || '未登录'}</div>
       </div>
+      {readOnly && <p className="demo-profile-note">等级、XP 和徽章均为虚构示例，不代表你的学习记录。</p>}
+      {error && <div className="demo-empty" role="alert">
+        <p>{error}</p><button className="btn3d btn-gray" onClick={loadStats}>重新加载</button>
+      </div>}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon">💎</div>
-          <div className="stat-num"><span className="count-up">{stats?.activatedOres || 0}</span></div>
+          <div className="stat-num"><span className="count-up">{stats?.activatedOres ?? '—'}</span></div>
           <div className="stat-label">点亮矿石</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">🔥</div>
-          <div className="stat-num"><span className="count-up">5</span></div>
-          <div className="stat-label">连续天数</div>
+          <div className="stat-num"><span className="count-up">{stats?.streakDays ?? '—'}</span></div>
+          <div className="stat-label">{readOnly ? '示例连续天数' : '连续天数'}</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">⚡</div>
-          <div className="stat-num"><span className="count-up">{stats?.totalXp || 0}</span></div>
-          <div className="stat-label">总 XP</div>
+          <div className="stat-num"><span className="count-up">{stats?.totalXp ?? '—'}</span></div>
+          <div className="stat-label">{readOnly ? '示例总 XP' : '总 XP'}</div>
         </div>
       </div>
       <div className="achievements">
-        <div className="me-section-title">成就徽章</div>
+        <div className="me-section-title">{readOnly ? '示例成就徽章' : '成就徽章'}</div>
         <div className="ach-grid">
           {[
             { name: '语感捕手',   img: '/assets/badges/badge-yugan.png',   unlocked: (stats?.totalMigrationCorrect || 0) >= 20 },
